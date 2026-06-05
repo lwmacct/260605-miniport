@@ -2,10 +2,12 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"database/sql"
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -67,14 +69,33 @@ func Run(ctx context.Context, cfg *config.Config) error {
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
+	var reloader *tlsCertificateReloader
+	if cfg.Server.HTTP.UsesTLS() {
+		reloader, err = newTLSCertificateReloader(cfg.Server.HTTP.SSLCertFile, cfg.Server.HTTP.SSLKeyFile)
+		if err != nil {
+			return err
+		}
+		srv.TLSConfig = &tls.Config{
+			GetCertificate: reloader.GetCertificate,
+			MinVersion:     tls.VersionTLS12,
+		}
+	}
+
+	control := newControlPlane(cfg.Server.Control.Listen, func() error {
+		if reloader == nil {
+			return fmt.Errorf("tls is disabled")
+		}
+		return reloader.Reload()
+	})
+	if err := control.start(ctx); err != nil {
+		return err
+	}
+	defer control.stop()
+
 	errCh := make(chan error, 1)
 	go func() {
-		slog.Info("web backend starting", "listen", cfg.Server.HTTP.Listen, "database", cfg.Server.Database, "tls", cfg.Server.HTTP.UsesTLS())
-		if cfg.Server.HTTP.UsesTLS() {
-			errCh <- srv.ListenAndServeTLS(cfg.Server.HTTP.SSLCertFile, cfg.Server.HTTP.SSLKeyFile)
-			return
-		}
-		errCh <- srv.ListenAndServe()
+		slog.Info("web backend starting", "listen", cfg.Server.HTTP.Listen, "database", cfg.Server.Database, "tls", cfg.Server.HTTP.UsesTLS(), "control", cfg.Server.Control.Listen)
+		errCh <- serveHTTP(srv, cfg)
 	}()
 
 	select {
@@ -153,4 +174,17 @@ func registerRoutes(api huma.API, db *bun.DB, cfg *config.Config) {
 		out.Body.DocsPath = "/api"
 		return out, nil
 	})
+}
+
+func serveHTTP(srv *http.Server, cfg *config.Config) error {
+	ln, err := net.Listen("tcp", cfg.Server.HTTP.Listen)
+	if err != nil {
+		return fmt.Errorf("listen tcp: %w", err)
+	}
+
+	if !cfg.Server.HTTP.UsesTLS() {
+		return srv.Serve(ln)
+	}
+
+	return srv.ServeTLS(ln, "", "")
 }

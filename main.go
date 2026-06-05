@@ -2,8 +2,12 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"log/slog"
+	"net"
 	"os"
+	"strings"
 
 	"github.com/urfave/cli/v3"
 
@@ -17,6 +21,7 @@ import (
 func buildCommands() []*cli.Command {
 	return []*cli.Command{
 		serverCommand(),
+		controlCommand(),
 		version.Command,
 	}
 }
@@ -50,6 +55,11 @@ func serverCommand() *cli.Command {
 				Usage: "SQLite 数据库文件路径",
 				Value: defaults.Server.Database,
 			},
+			&cli.StringFlag{
+				Name:  "control.listen",
+				Usage: "Unix socket 控制面监听地址",
+				Value: defaults.Server.Control.Listen,
+			},
 		},
 	}
 }
@@ -57,6 +67,52 @@ func serverCommand() *cli.Command {
 func serveAction(ctx context.Context, cmd *cli.Command) error {
 	cfg := cfgm.MustLoadCmd(cmd, config.DefaultConfig(), version.AppVersion)
 	return appserver.Run(ctx, cfg)
+}
+
+func controlCommand() *cli.Command {
+	defaults := config.DefaultConfig()
+	return &cli.Command{
+		Name:  "control",
+		Usage: "向本地控制面发送命令",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "socket",
+				Usage: "控制面 Unix socket 路径",
+				Value: defaults.Server.Control.Listen,
+			},
+		},
+		Commands: []*cli.Command{
+			{
+				Name:  "reload-cert",
+				Usage: "重载 TLS 证书",
+				Action: func(ctx context.Context, cmd *cli.Command) error {
+					socket := cmd.String("socket")
+					if socket == "" {
+						return fmt.Errorf("socket is required")
+					}
+					conn, err := net.Dial("unix", socket)
+					if err != nil {
+						return err
+					}
+					defer conn.Close()
+
+					if _, err := io.WriteString(conn, "reload-cert\n"); err != nil {
+						return err
+					}
+					resp, err := io.ReadAll(conn)
+					if err != nil {
+						return err
+					}
+					out := strings.TrimSpace(string(resp))
+					if strings.HasPrefix(out, "ERR ") {
+						return fmt.Errorf("%s", strings.TrimPrefix(out, "ERR "))
+					}
+					slog.Info("control command completed", "response", out)
+					return nil
+				},
+			},
+		},
+	}
 }
 
 func main() {
