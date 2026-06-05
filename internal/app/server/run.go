@@ -25,92 +25,68 @@ import (
 	"github.com/uptrace/bun/driver/sqliteshim"
 )
 
-// Run starts the HTTP server and blocks until shutdown.
+// Run starts the server application and blocks until shutdown.
 func Run(ctx context.Context, cfg *config.Config) error {
 	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	if err := cfg.Server.HTTP.Validate(); err != nil {
+	app := &serverApp{cfg: cfg}
+	if err := app.run(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
+type serverApp struct {
+	cfg      *config.Config
+	db       *bun.DB
+	srv      *http.Server
+	reloader *tlsCertificateReloader
+	control  *controlPlane
+}
+
+func (app *serverApp) run(ctx context.Context) error {
+	if err := app.prepareDatabase(ctx); err != nil {
+		return err
+	}
+	defer app.close()
+
+	if err := app.buildHTTPServer(); err != nil {
+		return err
+	}
+	if err := app.startControlPlane(ctx); err != nil {
+		return err
+	}
+	defer app.stopControlPlane()
+
+	return app.serve(ctx)
+}
+
+func (app *serverApp) prepareDatabase(ctx context.Context) error {
+	if err := app.cfg.Server.HTTP.Validate(); err != nil {
 		return err
 	}
 
-	if err := os.MkdirAll(filepath.Dir(cfg.Server.Database), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(app.cfg.Server.Database), 0o755); err != nil {
 		return fmt.Errorf("prepare database directory: %w", err)
 	}
 
-	sqldb, err := sql.Open(sqliteshim.ShimName, cfg.Server.Database)
+	sqldb, err := sql.Open(sqliteshim.ShimName, app.cfg.Server.Database)
 	if err != nil {
 		return fmt.Errorf("open sqlite database: %w", err)
 	}
-	defer sqldb.Close()
-
 	if err := sqldb.PingContext(ctx); err != nil {
+		_ = sqldb.Close()
 		return fmt.Errorf("ping sqlite database: %w", err)
 	}
 
-	db := bun.NewDB(sqldb, sqlitedialect.New())
-	defer db.Close()
+	app.db = bun.NewDB(sqldb, sqlitedialect.New())
+	return nil
+}
 
-	router := chi.NewRouter()
-	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		_, _ = w.Write([]byte(`{"message":"webapp backend is running","api":"/api"}`))
-	})
-
-	apiRouter := chi.NewRouter()
-	router.Mount("/api", apiRouter)
-
-	api := humachi.New(apiRouter, huma.DefaultConfig("Web App Skeleton", version.AppVersion))
-	registerRoutes(api, db, cfg)
-
-	srv := &http.Server{
-		Addr:              cfg.Server.HTTP.Listen,
-		Handler:           router,
-		ReadHeaderTimeout: 5 * time.Second,
-	}
-
-	var reloader *tlsCertificateReloader
-	if cfg.Server.HTTP.UsesTLS() {
-		reloader, err = newTLSCertificateReloader(cfg.Server.HTTP.SSLCertFile, cfg.Server.HTTP.SSLKeyFile)
-		if err != nil {
-			return err
-		}
-		srv.TLSConfig = &tls.Config{
-			GetCertificate: reloader.GetCertificate,
-			MinVersion:     tls.VersionTLS12,
-		}
-	}
-
-	control := newControlPlane(cfg.Server.Control.Listen, func() error {
-		if reloader == nil {
-			return fmt.Errorf("tls is disabled")
-		}
-		return reloader.Reload()
-	})
-	if err := control.start(ctx); err != nil {
-		return err
-	}
-	defer control.stop()
-
-	errCh := make(chan error, 1)
-	go func() {
-		slog.Info("web backend starting", "listen", cfg.Server.HTTP.Listen, "database", cfg.Server.Database, "tls", cfg.Server.HTTP.UsesTLS(), "control", cfg.Server.Control.Listen)
-		errCh <- serveHTTP(srv, cfg)
-	}()
-
-	select {
-	case <-ctx.Done():
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		if err := srv.Shutdown(shutdownCtx); err != nil {
-			return fmt.Errorf("shutdown http server: %w", err)
-		}
-		return nil
-	case err := <-errCh:
-		if err == nil || errors.Is(err, http.ErrServerClosed) {
-			return nil
-		}
-		return fmt.Errorf("run http server: %w", err)
+func (app *serverApp) close() {
+	if app.db != nil {
+		_ = app.db.Close()
 	}
 }
 
@@ -187,4 +163,84 @@ func serveHTTP(srv *http.Server, cfg *config.Config) error {
 	}
 
 	return srv.ServeTLS(ln, "", "")
+}
+
+func (app *serverApp) buildHTTPServer() error {
+	router := chi.NewRouter()
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		_, _ = w.Write([]byte(`{"message":"webapp backend is running","api":"/api"}`))
+	})
+
+	apiRouter := chi.NewRouter()
+	router.Mount("/api", apiRouter)
+
+	api := humachi.New(apiRouter, huma.DefaultConfig("Web App Skeleton", version.AppVersion))
+	registerRoutes(api, app.db, app.cfg)
+
+	app.srv = &http.Server{
+		Addr:              app.cfg.Server.HTTP.Listen,
+		Handler:           router,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+
+	if !app.cfg.Server.HTTP.UsesTLS() {
+		return nil
+	}
+
+	reloader, err := newTLSCertificateReloader(app.cfg.Server.HTTP.SSLCertFile, app.cfg.Server.HTTP.SSLKeyFile)
+	if err != nil {
+		return err
+	}
+	app.reloader = reloader
+	app.srv.TLSConfig = &tls.Config{
+		GetCertificate: reloader.GetCertificate,
+		MinVersion:     tls.VersionTLS12,
+	}
+	return nil
+}
+
+func (app *serverApp) startControlPlane(ctx context.Context) error {
+	app.control = newControlPlane(app.cfg.Server.Control.Listen, func() error {
+		if app.reloader == nil {
+			return fmt.Errorf("tls is disabled")
+		}
+		return app.reloader.Reload()
+	})
+	return app.control.start(ctx)
+}
+
+func (app *serverApp) stopControlPlane() {
+	if app.control != nil {
+		app.control.stop()
+	}
+}
+
+func (app *serverApp) serve(ctx context.Context) error {
+	errCh := make(chan error, 1)
+	go func() {
+		slog.Info(
+			"web backend starting",
+			"listen", app.cfg.Server.HTTP.Listen,
+			"database", app.cfg.Server.Database,
+			"tls", app.cfg.Server.HTTP.UsesTLS(),
+			"control", app.cfg.Server.Control.Listen,
+		)
+		errCh <- serveHTTP(app.srv, app.cfg)
+	}()
+
+	select {
+	case <-ctx.Done():
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := app.srv.Shutdown(shutdownCtx); err != nil {
+			return fmt.Errorf("shutdown http server: %w", err)
+		}
+		return nil
+	case err := <-errCh:
+		if err == nil || errors.Is(err, http.ErrServerClosed) {
+			return nil
+		}
+		return fmt.Errorf("run http server: %w", err)
+	}
 }
