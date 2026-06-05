@@ -1,4 +1,4 @@
-module github.com/lwmacct/webapp
+module github.com/lwmacct/260605-miniport
 
 go 1.26.3
 

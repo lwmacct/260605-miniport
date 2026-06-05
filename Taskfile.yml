@@ -29,7 +29,7 @@ tasks:
   api:
     desc: Run the Go backend
     cmds:
-      - go run . serve
+      - go run . server
 
   web:
     desc: Run the React frontend

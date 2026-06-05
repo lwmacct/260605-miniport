@@ -17,7 +17,7 @@ import (
 	"github.com/danielgtaylor/huma/v2/adapters/humachi"
 	"github.com/go-chi/chi/v5"
 	"github.com/lwmacct/251207-go-pkg-version/pkg/version"
-	"github.com/lwmacct/webapp/internal/config"
+	"github.com/lwmacct/260605-miniport/internal/config"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/driver/sqliteshim"
@@ -27,6 +27,10 @@ import (
 func Run(ctx context.Context, cfg *config.Config) error {
 	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer stop()
+
+	if err := cfg.Server.HTTP.Validate(); err != nil {
+		return err
+	}
 
 	if err := os.MkdirAll(filepath.Dir(cfg.Server.Database), 0o755); err != nil {
 		return fmt.Errorf("prepare database directory: %w", err)
@@ -65,7 +69,11 @@ func Run(ctx context.Context, cfg *config.Config) error {
 
 	errCh := make(chan error, 1)
 	go func() {
-		slog.Info("web backend starting", "listen", cfg.Server.HTTP.Listen, "database", cfg.Server.Database)
+		slog.Info("web backend starting", "listen", cfg.Server.HTTP.Listen, "database", cfg.Server.Database, "tls", cfg.Server.HTTP.UsesTLS())
+		if cfg.Server.HTTP.UsesTLS() {
+			errCh <- srv.ListenAndServeTLS(cfg.Server.HTTP.SSLCertFile, cfg.Server.HTTP.SSLKeyFile)
+			return
+		}
 		errCh <- srv.ListenAndServe()
 	}()
 
@@ -146,4 +154,3 @@ func registerRoutes(api huma.API, db *bun.DB, cfg *config.Config) {
 		return out, nil
 	})
 }
-

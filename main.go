@@ -7,24 +7,24 @@ import (
 
 	"github.com/urfave/cli/v3"
 
-	appserver "github.com/lwmacct/webapp/internal/app/server"
-	"github.com/lwmacct/webapp/internal/config"
 	"github.com/lwmacct/251207-go-pkg-cfgm/pkg/cfgm"
 	"github.com/lwmacct/251207-go-pkg-version/pkg/version"
 	"github.com/lwmacct/251219-go-pkg-logm/pkg/logm"
+	appserver "github.com/lwmacct/260605-miniport/internal/app/server"
+	"github.com/lwmacct/260605-miniport/internal/config"
 )
 
 func buildCommands() []*cli.Command {
 	return []*cli.Command{
-		serveCommand(),
+		serverCommand(),
 		version.Command,
 	}
 }
 
-func serveCommand() *cli.Command {
+func serverCommand() *cli.Command {
 	defaults := config.DefaultConfig()
 	return &cli.Command{
-		Name:            "serve",
+		Name:            "server",
 		Usage:           "启动 Web API 服务",
 		Action:          serveAction,
 		Commands:        []*cli.Command{version.Command},
@@ -34,6 +34,16 @@ func serveCommand() *cli.Command {
 				Name:  "http.listen",
 				Usage: "HTTP 服务监听地址",
 				Value: defaults.Server.HTTP.Listen,
+			},
+			&cli.StringFlag{
+				Name:  "http.ssl-cert-file",
+				Usage: "HTTPS TLS 证书文件",
+				Value: defaults.Server.HTTP.SSLCertFile,
+			},
+			&cli.StringFlag{
+				Name:  "http.ssl-key-file",
+				Usage: "HTTPS TLS 私钥文件",
+				Value: defaults.Server.HTTP.SSLKeyFile,
 			},
 			&cli.StringFlag{
 				Name:  "database",
@@ -68,4 +78,3 @@ func main() {
 		os.Exit(1)
 	}
 }
-
