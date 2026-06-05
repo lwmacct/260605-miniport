@@ -14,16 +14,16 @@ import (
 
 type controlPlane struct {
 	socketPath string
-	reloadCert func() error
+	tlsManager *TLSManager
 
 	mu       sync.Mutex
 	listener net.Listener
 }
 
-func newControlPlane(socketPath string, reloadCert func() error) *controlPlane {
+func newControlPlane(socketPath string, tlsManager *TLSManager) *controlPlane {
 	return &controlPlane{
 		socketPath: socketPath,
-		reloadCert: reloadCert,
+		tlsManager: tlsManager,
 	}
 }
 
@@ -89,7 +89,11 @@ func (p *controlPlane) handleConn(conn net.Conn) {
 	cmd := strings.TrimSpace(scanner.Text())
 	switch cmd {
 	case "reload-cert":
-		if err := p.reloadCert(); err != nil {
+		if p.tlsManager == nil {
+			_, _ = conn.Write([]byte("ERR tls is disabled\n"))
+			return
+		}
+		if err := p.tlsManager.Reload(); err != nil {
 			_, _ = conn.Write([]byte("ERR " + err.Error() + "\n"))
 			return
 		}

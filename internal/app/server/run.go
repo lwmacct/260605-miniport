@@ -38,11 +38,11 @@ func Run(ctx context.Context, cfg *config.Config) error {
 }
 
 type serverApp struct {
-	cfg      *config.Config
-	db       *bun.DB
-	srv      *http.Server
-	reloader *tlsCertificateReloader
-	control  *controlPlane
+	cfg        *config.Config
+	db         *bun.DB
+	srv        *http.Server
+	tlsManager *TLSManager
+	control    *controlPlane
 }
 
 func (app *serverApp) run(ctx context.Context) error {
@@ -188,25 +188,20 @@ func (app *serverApp) buildHTTPServer() error {
 		return nil
 	}
 
-	reloader, err := newTLSCertificateReloader(app.cfg.Server.HTTP.SSLCertFile, app.cfg.Server.HTTP.SSLKeyFile)
+	tlsManager, err := NewTLSManager(app.cfg.Server.HTTP.SSLCertFile, app.cfg.Server.HTTP.SSLKeyFile)
 	if err != nil {
 		return err
 	}
-	app.reloader = reloader
+	app.tlsManager = tlsManager
 	app.srv.TLSConfig = &tls.Config{
-		GetCertificate: reloader.GetCertificate,
+		GetCertificate: tlsManager.GetCertificate,
 		MinVersion:     tls.VersionTLS12,
 	}
 	return nil
 }
 
 func (app *serverApp) startControlPlane(ctx context.Context) error {
-	app.control = newControlPlane(app.cfg.Server.Control.Listen, func() error {
-		if app.reloader == nil {
-			return fmt.Errorf("tls is disabled")
-		}
-		return app.reloader.Reload()
-	})
+	app.control = newControlPlane(app.cfg.Server.Control.Listen, app.tlsManager)
 	return app.control.start(ctx)
 }
 
