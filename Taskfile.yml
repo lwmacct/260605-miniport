@@ -24,3 +24,20 @@ includes:
   cmd:
     taskfile: .task/cmd.yml
     optional: true
+
+tasks:
+  api:
+    desc: Run the Go backend
+    cmds:
+      - go run . serve
+
+  web:
+    desc: Run the React frontend
+    cmds:
+      - npm run dev
+
+  build:
+    desc: Build both frontend and backend
+    cmds:
+      - go build ./...
+      - npm run build

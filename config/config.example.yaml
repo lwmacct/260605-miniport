@@ -1,0 +1,9 @@
+# 配置示例文件, 复制此文件为 config.yaml 并根据需要修改
+
+# 服务端配置
+server:
+  database: ".local/data/app.db" # SQLite 数据库文件路径
+
+  # HTTP 服务配置
+  http:
+    listen: ":8080" # HTTP 服务监听地址
