@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Button, ConfigProvider, Flex, Form, Input, Layout, Menu, Space, Spin, Switch, Tooltip, Typography, message } from "antd";
+import { Alert, Button, ConfigProvider, Flex, Form, Input, Layout, Space, Spin, Switch, Tooltip, Typography, message } from "antd";
 import { MoonOutlined, PlusOutlined, ReloadOutlined, SearchOutlined, SunOutlined } from "@ant-design/icons";
 import { loadInventory, removeHost, removePortGroup, saveHost, savePortGroup } from "./api";
 import { navItems } from "./constants";
+import { AppHeader } from "./components/AppHeader";
 import { GroupDetailDrawer } from "./components/GroupDetailDrawer";
 import { HostDrawer } from "./components/HostDrawer";
 import { PortGroupDrawer } from "./components/PortGroupDrawer";
@@ -40,10 +41,10 @@ export default function App() {
     try {
       const data = await loadInventory();
       setMeta(data.meta);
-      setHosts(data.hosts);
-      setGroups(data.groups);
+      setHosts(data.hosts ?? []);
+      setGroups(data.groups ?? []);
       if (selectedGroup) {
-        setSelectedGroup(data.groups.find((item) => item.id === selectedGroup.id) ?? null);
+        setSelectedGroup((data.groups ?? []).find((item) => item.id === selectedGroup.id) ?? null);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "加载数据失败");
@@ -71,8 +72,11 @@ export default function App() {
 
   const filteredGroups = useMemo(() => {
     const keyword = search.trim().toLowerCase();
-    if (!keyword) return groups;
-    return groups.filter((group) => {
+    const safeGroups = groups ?? [];
+    if (!keyword) return safeGroups;
+    return safeGroups.filter((group) => {
+      const components = group.components ?? [];
+      const repositories = group.repositories ?? [];
       const text = [
         group.host?.ip,
         group.serviceName,
@@ -80,8 +84,8 @@ export default function App() {
         group.dindHost,
         group.owner,
         group.tags,
-        group.components.map((item) => item.name).join(" "),
-        group.repositories.map((item) => item.url).join(" "),
+        components.map((item) => item.name).join(" "),
+        repositories.map((item) => item.url).join(" "),
       ]
         .join(" ")
         .toLowerCase();
@@ -90,19 +94,22 @@ export default function App() {
   }, [groups, search]);
 
   const stats = useMemo(() => {
-    const slots = groups.flatMap((group) => group.slots);
+    const safeHosts = hosts ?? [];
+    const safeGroups = groups ?? [];
+    const slots = safeGroups.flatMap((group) => group.slots ?? []);
     return {
-      hosts: hosts.length,
-      groups: groups.length,
+      hosts: safeHosts.length,
+      groups: safeGroups.length,
       usedSlots: slots.filter((slot) => slot.status !== "empty").length,
       emptySlots: slots.filter((slot) => slot.status === "empty").length,
-      components: groups.reduce((sum, group) => sum + group.components.length, 0),
-      repositories: groups.reduce((sum, group) => sum + group.repositories.length, 0),
+      components: safeGroups.reduce((sum, group) => sum + (group.components ?? []).length, 0),
+      repositories: safeGroups.reduce((sum, group) => sum + (group.repositories ?? []).length, 0),
     };
   }, [groups, hosts]);
 
   const groupsByHost = useMemo(() => {
-    return hosts.map((host) => ({
+    const safeHosts = hosts ?? [];
+    return safeHosts.map((host) => ({
       host,
       groups: filteredGroups
         .filter((group) => group.hostId === host.id)
@@ -123,10 +130,11 @@ export default function App() {
   };
 
   const openCreateGroup = () => {
+    const firstHost = (hosts ?? [])[0];
     setEditingGroup(null);
     groupForm.resetFields();
     groupForm.setFieldsValue({
-      hostId: hosts[0]?.id,
+      hostId: firstHost?.id,
       status: "planned",
       slots: [],
       components: [],
@@ -187,129 +195,114 @@ export default function App() {
     await load();
   };
 
+  const handleNavigate = (key: string) => {
+    const nextSection = key as SectionKey;
+    setSection(nextSection);
+    navigateSectionHash(nextSection);
+  };
+
   const currentNavItem = navItems.find((item) => item.key === section);
+  const visibleHosts = hosts ?? [];
+  const visibleGroups = groups ?? [];
 
   return (
     <ConfigProvider theme={themeConfig}>
       <Layout className="app-shell">
-        <Layout.Sider className="app-sider" width={244}>
-          <div className="brand">
-            <Typography.Text className="brand-label">Miniport</Typography.Text>
-            <Typography.Text className="brand-subtitle">端口服务资产管理</Typography.Text>
-          </div>
-          <Menu
-            selectedKeys={[section]}
-            theme={themeMode === "dark" ? "dark" : "light"}
-            mode="inline"
-            items={navItems}
-            onClick={({ key }) => {
-              const nextSection = key as SectionKey;
-              setSection(nextSection);
-              navigateSectionHash(nextSection);
-            }}
-          />
-          <div className="runtime-card">
-            <Typography.Text className="runtime-title">{meta?.version ?? "-"}</Typography.Text>
-            <Typography.Text className="runtime-line">{meta?.listen ?? "-"}</Typography.Text>
-            <Typography.Text className="runtime-line">{meta?.database ?? "-"}</Typography.Text>
-          </div>
-        </Layout.Sider>
+        <AppHeader
+          activeKey={section}
+          actions={
+            <Tooltip title={themeMode === "dark" ? "切换到明亮模式" : "切换到暗色模式"}>
+              <Switch
+                checked={themeMode === "dark"}
+                checkedChildren={<MoonOutlined />}
+                unCheckedChildren={<SunOutlined />}
+                onChange={(checked) => {
+                  const nextTheme = checked ? "dark" : "light";
+                  applyTheme(nextTheme);
+                  setThemeMode(nextTheme);
+                }}
+              />
+            </Tooltip>
+          }
+          brandName="Miniport"
+          navItems={navItems}
+          onNavigate={handleNavigate}
+          version={meta?.version}
+        />
 
-        <Layout className="app-main">
-          <Layout.Header className="app-header">
-            <Flex align="center" justify="space-between" gap={16}>
-              <Typography.Text type="secondary" className="app-breadcrumb">
-                Miniport / {currentNavItem?.label}
-              </Typography.Text>
-              <Tooltip title={themeMode === "dark" ? "切换到明亮模式" : "切换到暗色模式"}>
-                <Switch
-                  checked={themeMode === "dark"}
-                  checkedChildren={<MoonOutlined />}
-                  unCheckedChildren={<SunOutlined />}
-                  onChange={(checked) => {
-                    const nextTheme = checked ? "dark" : "light";
-                    applyTheme(nextTheme);
-                    setThemeMode(nextTheme);
-                  }}
+        <Layout.Content className="app-page">
+          <section className="app-page-head">
+            <Flex align="flex-start" justify="space-between" gap={24} wrap="wrap">
+              <div>
+                <Typography.Title level={2} className="page-title">
+                  {currentNavItem?.label}
+                </Typography.Title>
+                <Typography.Text type="secondary">按 IP 和 10 端口组维护服务、容器、依赖和仓库。</Typography.Text>
+              </div>
+              <Space wrap>
+                <Input
+                  prefix={<SearchOutlined />}
+                  className="page-search"
+                  placeholder="搜索服务、IP、组件、仓库"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
                 />
-              </Tooltip>
+                <Button icon={<ReloadOutlined />} onClick={() => void load()} loading={loading}>
+                  刷新
+                </Button>
+                <Button icon={<PlusOutlined />} onClick={openCreateHost}>
+                  主机
+                </Button>
+                <Button type="primary" icon={<PlusOutlined />} onClick={openCreateGroup} disabled={visibleHosts.length === 0}>
+                  端口组
+                </Button>
+              </Space>
             </Flex>
-          </Layout.Header>
+          </section>
 
-          <main className="app-page">
-            <section className="app-page-head">
-              <Flex align="flex-start" justify="space-between" gap={24} wrap="wrap">
-                <div>
-                  <Typography.Title level={2} className="page-title">
-                    {currentNavItem?.label}
-                  </Typography.Title>
-                  <Typography.Text type="secondary">按 IP 和 10 端口组维护服务、容器、依赖和仓库。</Typography.Text>
-                </div>
-                <Space wrap>
-                  <Input
-                    prefix={<SearchOutlined />}
-                    className="page-search"
-                    placeholder="搜索服务、IP、组件、仓库"
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
+          <div className="app-content">
+            {error ? <Alert type="error" showIcon message="后端不可用" description={error} /> : null}
+
+            {loading && visibleGroups.length === 0 && visibleHosts.length === 0 ? (
+              <div className="loading-state">
+                <Spin size="large" />
+              </div>
+            ) : (
+              <>
+                {section === "overview" ? (
+                  <OverviewSection
+                    stats={stats}
+                    hosts={visibleHosts}
+                    groupsByHost={groupsByHost}
+                    onCreateHost={openCreateHost}
+                    onEditHost={openEditHost}
+                    onSelectGroup={setSelectedGroup}
                   />
-                  <Button icon={<ReloadOutlined />} onClick={() => void load()} loading={loading}>
-                    刷新
-                  </Button>
-                  <Button icon={<PlusOutlined />} onClick={openCreateHost}>
-                    主机
-                  </Button>
-                  <Button type="primary" icon={<PlusOutlined />} onClick={openCreateGroup} disabled={hosts.length === 0}>
-                    端口组
-                  </Button>
-                </Space>
-              </Flex>
-            </section>
+                ) : null}
 
-            <Layout.Content className="app-content">
-              {error ? <Alert type="error" showIcon message="后端不可用" description={error} /> : null}
+                {section === "services" ? (
+                  <ServicesSection
+                    groups={filteredGroups}
+                    onSelectGroup={setSelectedGroup}
+                    onEditGroup={openEditGroup}
+                    onDeleteGroup={(group) => void handleDeleteGroup(group)}
+                  />
+                ) : null}
 
-              {loading && groups.length === 0 && hosts.length === 0 ? (
-                <div className="loading-state">
-                  <Spin size="large" />
-                </div>
-              ) : (
-                <>
-                  {section === "overview" ? (
-                    <OverviewSection
-                      stats={stats}
-                      hosts={hosts}
-                      groupsByHost={groupsByHost}
-                      onCreateHost={openCreateHost}
-                      onEditHost={openEditHost}
-                      onSelectGroup={setSelectedGroup}
-                    />
-                  ) : null}
+                {section === "hosts" ? (
+                  <HostsSection
+                    hosts={visibleHosts}
+                    groups={visibleGroups}
+                    onEditHost={openEditHost}
+                    onDeleteHost={(host) => void handleDeleteHost(host)}
+                  />
+                ) : null}
 
-                  {section === "services" ? (
-                    <ServicesSection
-                      groups={filteredGroups}
-                      onSelectGroup={setSelectedGroup}
-                      onEditGroup={openEditGroup}
-                      onDeleteGroup={(group) => void handleDeleteGroup(group)}
-                    />
-                  ) : null}
-
-                  {section === "hosts" ? (
-                    <HostsSection
-                      hosts={hosts}
-                      groups={groups}
-                      onEditHost={openEditHost}
-                      onDeleteHost={(host) => void handleDeleteHost(host)}
-                    />
-                  ) : null}
-
-                  {section === "dependencies" ? <DependenciesSection groups={groups} stats={stats} /> : null}
-                </>
-              )}
-            </Layout.Content>
-          </main>
-        </Layout>
+                {section === "dependencies" ? <DependenciesSection groups={visibleGroups} stats={stats} /> : null}
+              </>
+            )}
+          </div>
+        </Layout.Content>
 
         <HostDrawer
           open={hostDrawerOpen}
@@ -323,7 +316,7 @@ export default function App() {
         <PortGroupDrawer
           open={groupDrawerOpen}
           saving={saving}
-          hosts={hosts}
+          hosts={visibleHosts}
           editingGroup={editingGroup}
           form={groupForm}
           onClose={() => setGroupDrawerOpen(false)}

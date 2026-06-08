@@ -9,22 +9,16 @@ body,
 :root,
 :root[data-theme="light"] {
   --app-bg: #f3f3f3;
-  --app-sider-bg: #f3f3f3;
   --app-header-bg: #ffffff;
   --app-border: #d4d4d4;
   --app-brand-text: #1f2328;
   --app-brand-muted: #616161;
-  --app-runtime-bg: #ffffff;
-  --app-runtime-border: #d4d4d4;
-  --app-runtime-muted: #616161;
   --app-text-strong: #1f2328;
   --app-text-muted: #616161;
   --app-tile-bg: #ffffff;
   --app-tile-hover-bg: #e5f1fb;
   --app-tile-border: #d4d4d4;
   --app-accent: #007acc;
-  --app-menu-hover-bg: #e8e8e8;
-  --app-menu-selected-bg: #e5f1fb;
   --slot-empty: #cccccc;
   --slot-used: #007acc;
   --slot-reserved: #b89500;
@@ -32,22 +26,16 @@ body,
 
 :root[data-theme="dark"] {
   --app-bg: #1e1e1e;
-  --app-sider-bg: #252526;
   --app-header-bg: #252526;
   --app-border: #3c3c3c;
   --app-brand-text: #cccccc;
   --app-brand-muted: #858585;
-  --app-runtime-bg: #2d2d30;
-  --app-runtime-border: #3c3c3c;
-  --app-runtime-muted: #858585;
   --app-text-strong: #d4d4d4;
   --app-text-muted: #9cdcfe;
   --app-tile-bg: #252526;
   --app-tile-hover-bg: #2a2d2e;
   --app-tile-border: #3c3c3c;
   --app-accent: #007acc;
-  --app-menu-hover-bg: #2a2d2e;
-  --app-menu-selected-bg: #094771;
   --slot-empty: #3c3c3c;
   --slot-used: #007acc;
   --slot-reserved: #cca700;
@@ -66,122 +54,16 @@ select {
 
 .app-shell {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   background: var(--app-bg);
-  align-items: flex-start;
-}
-
-.app-sider {
-  position: sticky !important;
-  top: 0;
-  align-self: flex-start;
-  background: var(--app-sider-bg) !important;
-  padding: 18px 14px;
-  height: 100vh;
-  overflow: hidden;
-}
-
-.app-sider .ant-layout-sider-children {
-  min-height: 0;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.app-sider .ant-menu {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  border-inline-end: 0 !important;
-}
-
-.app-sider .ant-menu-item {
-  transition:
-    color 140ms ease,
-    box-shadow 140ms ease !important;
-}
-
-.app-sider .ant-menu-item:hover {
-  background: var(--app-menu-hover-bg) !important;
-}
-
-.app-sider .ant-menu-item-selected {
-  background: var(--app-menu-selected-bg) !important;
-  box-shadow: inset 3px 0 0 var(--app-accent);
-}
-
-.brand {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  margin-bottom: 18px;
-  color: #fff;
-  flex: 0 0 auto;
-}
-
-.brand-label {
-  color: var(--app-brand-text) !important;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.brand-subtitle {
-  color: var(--app-brand-muted) !important;
-  font-size: 12px;
-}
-
-.runtime-card {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  flex: 0 0 auto;
-  margin-top: auto;
-  padding: 12px;
-  border: 1px solid var(--app-runtime-border);
-  border-radius: 8px;
-  background: var(--app-runtime-bg);
-}
-
-.runtime-title {
-  color: var(--app-brand-text) !important;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.runtime-line {
-  color: var(--app-runtime-muted) !important;
-  overflow: hidden;
-  font-size: 11px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.app-main {
-  min-width: 0;
-  min-height: 100vh;
-  background: var(--app-bg);
-  overflow: visible;
-}
-
-.app-header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  flex: 0 0 auto;
-  min-height: 58px;
-  height: auto;
-  background: var(--app-header-bg);
-  border-bottom: 1px solid var(--app-border);
-  padding: 12px 34px;
-  line-height: 1.4;
-}
-
-.app-breadcrumb {
-  font-size: 13px;
 }
 
 .app-page {
+  flex: 1 1 auto;
+  min-width: 0;
   padding: 24px 28px 32px;
+  background: var(--app-bg);
 }
 
 .app-page-head {
@@ -300,18 +182,6 @@ select {
 }
 
 @media (max-width: 760px) {
-  .app-sider {
-    display: none;
-  }
-
-  .app-main {
-    width: 100%;
-  }
-
-  .app-header {
-    padding: 12px 16px;
-  }
-
   .app-page {
     padding: 16px 14px 24px;
   }

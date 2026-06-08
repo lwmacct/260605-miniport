@@ -1,0 +1,144 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  height: 45px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--app-border);
+  background: var(--app-header-bg);
+}
+
+.brandSlot,
+.navSlot,
+.actionsSlot {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+}
+
+.brandSlot {
+  position: absolute;
+  top: 50%;
+  left: 18px;
+  z-index: 2;
+  gap: 8px;
+  transform: translateY(-50%);
+}
+
+.brandMark {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--app-accent);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.brandMeta {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.brandMeta strong,
+.brandMeta span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brandMeta strong {
+  color: var(--app-brand-text);
+  font-size: 13px;
+}
+
+.brandMeta span {
+  color: var(--app-brand-muted);
+  font-size: 12px;
+}
+
+.navSlot {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 1;
+  width: calc(100% - 300px);
+  height: 44px;
+  overflow: hidden;
+  justify-content: center;
+  transform: translateX(-50%);
+}
+
+.fullNav {
+  flex: 0 1 auto;
+  width: auto;
+  min-width: 0;
+  justify-content: center;
+  border-bottom: 0 !important;
+  background: transparent !important;
+  line-height: 44px;
+}
+
+.fullNav :global(.ant-menu-item) {
+  top: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.compactNav {
+  display: none;
+  max-width: 100%;
+}
+
+.compactNav :global(.ant-btn-icon) {
+  order: 2;
+  margin-inline-start: 4px;
+  margin-inline-end: 0;
+}
+
+.compactNav span:not(:global(.ant-btn-icon)) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actionsSlot {
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  z-index: 2;
+  justify-content: flex-end;
+  transform: translateY(-50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .brandSlot {
+    left: 12px;
+  }
+
+  .brandMeta {
+    display: none;
+  }
+
+  .navSlot {
+    width: calc(100% - 140px);
+  }
+
+  .actionsSlot {
+    right: 12px;
+  }
+
+  .fullNav {
+    display: none;
+  }
+
+  .compactNav {
+    display: inline-flex;
+  }
+}

@@ -27,7 +27,20 @@ export async function loadInventory() {
     requestJSON<Host[]>("/api/hosts"),
     requestJSON<PortGroup[]>("/api/port-groups"),
   ]);
-  return { meta, hosts, groups };
+  const normalizedHosts = hosts ?? [];
+  const normalizedGroups = groups ?? [];
+
+  return {
+    meta,
+    hosts: normalizedHosts,
+    groups: normalizedGroups.map((group) => ({
+      ...group,
+      tags: group.tags ?? "",
+      slots: group.slots ?? [],
+      components: group.components ?? [],
+      repositories: group.repositories ?? [],
+    })),
+  };
 }
 
 export function saveHost(host: HostForm, editingHost?: Host | null) {
