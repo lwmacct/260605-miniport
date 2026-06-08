@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -21,7 +22,9 @@ import (
 	"github.com/lwmacct/251207-go-pkg-version/pkg/version"
 	"github.com/lwmacct/260605-miniport/internal/config"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
+	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/uptrace/bun/driver/sqliteshim"
 )
 
@@ -67,25 +70,94 @@ func (app *serverApp) prepareDatabase(ctx context.Context) error {
 		return err
 	}
 
-	if err := os.MkdirAll(filepath.Dir(app.cfg.Server.Database), 0o755); err != nil {
-		return fmt.Errorf("prepare database directory: %w", err)
-	}
-
-	sqldb, err := sql.Open(sqliteshim.ShimName, app.cfg.Server.Database)
+	db, err := openDatabase(ctx, app.cfg.Server.DB)
 	if err != nil {
-		return fmt.Errorf("open sqlite database: %w", err)
+		return err
 	}
-	if err := sqldb.PingContext(ctx); err != nil {
-		_ = sqldb.Close()
-		return fmt.Errorf("ping sqlite database: %w", err)
-	}
+	app.db = db
 
-	app.db = bun.NewDB(sqldb, sqlitedialect.New())
 	if err := migrateInventory(ctx, app.db); err != nil {
 		_ = app.db.Close()
 		return err
 	}
 	return nil
+}
+
+func openDatabase(ctx context.Context, cfg config.ServerDB) (*bun.DB, error) {
+	switch strings.ToLower(cfg.Type) {
+	case "sqlite", "":
+		return openSQLiteDatabase(ctx, cfg.SQLite)
+	case "pgsql":
+		return openPGSQLDatabase(ctx, cfg.PGSQL)
+	default:
+		return nil, fmt.Errorf("unsupported database type %q", cfg.Type)
+	}
+}
+
+func openSQLiteDatabase(ctx context.Context, sqlitePath string) (*bun.DB, error) {
+	if err := os.MkdirAll(filepath.Dir(sqlitePath), 0o755); err != nil {
+		return nil, fmt.Errorf("prepare database directory: %w", err)
+	}
+
+	sqldb, err := sql.Open(sqliteshim.ShimName, sqlitePath)
+	if err != nil {
+		return nil, fmt.Errorf("open sqlite database: %w", err)
+	}
+	if err := sqldb.PingContext(ctx); err != nil {
+		_ = sqldb.Close()
+		return nil, fmt.Errorf("ping sqlite database: %w", err)
+	}
+
+	return bun.NewDB(sqldb, sqlitedialect.New()), nil
+}
+
+func openPGSQLDatabase(ctx context.Context, cfg config.ServerDBPGSQL) (*bun.DB, error) {
+	opts := []pgdriver.Option{}
+	if cfg.Host != "" || cfg.Port != "" {
+		host := cfg.Host
+		if host == "" {
+			host = "localhost"
+		}
+		port := cfg.Port
+		if port == "" {
+			port = "5432"
+		}
+		opts = append(opts, pgdriver.WithAddr(net.JoinHostPort(host, port)))
+	}
+	if cfg.User != "" {
+		opts = append(opts, pgdriver.WithUser(cfg.User))
+	}
+	if cfg.Database != "" {
+		opts = append(opts, pgdriver.WithDatabase(cfg.Database))
+	}
+	if cfg.Password != "" {
+		opts = append(opts, pgdriver.WithPassword(cfg.Password))
+	}
+
+	sqldb := sql.OpenDB(pgdriver.NewConnector(opts...))
+	if err := sqldb.PingContext(ctx); err != nil {
+		_ = sqldb.Close()
+		return nil, fmt.Errorf("ping pgsql database: %w", err)
+	}
+
+	return bun.NewDB(sqldb, pgdialect.New()), nil
+}
+
+func databaseDisplay(cfg config.ServerDB) string {
+	switch strings.ToLower(cfg.Type) {
+	case "pgsql":
+		host := cfg.PGSQL.Host
+		if host == "" {
+			host = "localhost"
+		}
+		database := cfg.PGSQL.Database
+		if database == "" {
+			database = "postgres"
+		}
+		return "pgsql://" + host + "/" + database
+	default:
+		return cfg.SQLite
+	}
 }
 
 func (app *serverApp) close() {
@@ -127,7 +199,7 @@ func registerRoutes(api huma.API, db *bun.DB, cfg *config.Config) {
 		out.Body.Status = "ok"
 		out.Body.Version = version.AppVersion
 		out.Body.Time = time.Now().UTC().Format(time.RFC3339)
-		out.Body.Database = cfg.Server.Database
+		out.Body.Database = databaseDisplay(cfg.Server.DB)
 		out.Body.DatabaseState = "up"
 
 		if err := db.DB.PingContext(ctx); err != nil {
@@ -150,7 +222,7 @@ func registerRoutes(api huma.API, db *bun.DB, cfg *config.Config) {
 		out.Body.Name = "Miniport"
 		out.Body.Version = version.AppVersion
 		out.Body.Listen = cfg.Server.HTTP.Listen
-		out.Body.Database = cfg.Server.Database
+		out.Body.Database = databaseDisplay(cfg.Server.DB)
 		out.Body.DocsPath = "/api"
 		return out, nil
 	})
@@ -223,7 +295,7 @@ func (app *serverApp) serve(ctx context.Context) error {
 		slog.Info(
 			"web backend starting",
 			"listen", app.cfg.Server.HTTP.Listen,
-			"database", app.cfg.Server.Database,
+			"database", databaseDisplay(app.cfg.Server.DB),
 			"tls", app.cfg.Server.HTTP.UsesTLS(),
 			"control", app.cfg.Server.Control.Listen,
 		)

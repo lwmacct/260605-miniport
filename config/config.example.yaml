@@ -3,7 +3,19 @@
 
 # 服务端配置
 server:
-  database: ".local/data/app.db" # SQLite 数据库文件路径
+
+  # 数据库配置
+  db:
+    type: "sqlite" # 数据库类型: sqlite 或 pgsql
+    sqlite: ".local/data/app.db" # SQLite 数据库文件路径
+
+    # PostgreSQL 数据库连接参数
+    pgsql:
+      host: "${PGHOST}" # PostgreSQL 主机
+      port: "${PGPORT}" # PostgreSQL 端口
+      user: "${PGUSER}" # PostgreSQL 用户
+      database: "${PGDATABASE}" # PostgreSQL 数据库名
+      password: "${PGPASSWORD}" # PostgreSQL 密码
 
   # HTTP 服务配置
   http:
@@ -13,4 +25,4 @@ server:
 
   # 本地控制面配置
   control:
-    listen: ".local/run/control.sock" # Unix socket path for local control commands
+    listen: ".local/run/control.sock" # 本地控制命令 Unix socket 路径
