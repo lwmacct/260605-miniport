@@ -10,7 +10,7 @@ export default defineConfig({
   },
   server: {
     host: "0.0.0.0",
-    port: 40237,
+    port: 40239,
     proxy: {
       "/api": {
         target: apiTarget,
