@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Button, Form, Input, Layout, Menu, Space, Spin, Typography, message } from "antd";
-import { PlusOutlined, ReloadOutlined, SearchOutlined } from "@ant-design/icons";
+import { Alert, Button, ConfigProvider, Flex, Form, Input, Layout, Menu, Space, Spin, Switch, Tooltip, Typography, message } from "antd";
+import { MoonOutlined, PlusOutlined, ReloadOutlined, SearchOutlined, SunOutlined } from "@ant-design/icons";
 import { loadInventory, removeHost, removePortGroup, saveHost, savePortGroup } from "./api";
 import { navItems } from "./constants";
 import { GroupDetailDrawer } from "./components/GroupDetailDrawer";
@@ -10,10 +10,14 @@ import { DependenciesSection } from "./sections/DependenciesSection";
 import { HostsSection } from "./sections/HostsSection";
 import { OverviewSection } from "./sections/OverviewSection";
 import { ServicesSection } from "./sections/ServicesSection";
+import { navigateSectionHash, readSectionFromHash, replaceSectionHash } from "./routing";
+import { appTheme, readStoredTheme, themeStorageKey } from "./theme";
 import type { GroupForm, Host, HostForm, Meta, PortGroup, SectionKey } from "./types";
+import type { ThemeMode } from "./theme";
 
 export default function App() {
-  const [section, setSection] = useState<SectionKey>("overview");
+  const [section, setSection] = useState<SectionKey>(() => readSectionFromHash());
+  const [themeMode, setThemeMode] = useState<ThemeMode>(() => readStoredTheme());
   const [meta, setMeta] = useState<Meta | null>(null);
   const [hosts, setHosts] = useState<Host[]>([]);
   const [groups, setGroups] = useState<PortGroup[]>([]);
@@ -28,6 +32,7 @@ export default function App() {
   const [editingGroup, setEditingGroup] = useState<PortGroup | null>(null);
   const [hostForm] = Form.useForm<HostForm>();
   const [groupForm] = Form.useForm<GroupForm>();
+  const themeConfig = useMemo(() => appTheme(themeMode), [themeMode]);
 
   const load = async () => {
     setLoading(true);
@@ -50,6 +55,24 @@ export default function App() {
   useEffect(() => {
     void load();
   }, []);
+
+  useEffect(() => {
+    replaceSectionHash(readSectionFromHash());
+
+    const handleHashChange = () => {
+      const nextSection = readSectionFromHash();
+      setSection(nextSection);
+      replaceSectionHash(nextSection);
+    };
+
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = themeMode;
+    window.localStorage.setItem(themeStorageKey, themeMode);
+  }, [themeMode]);
 
   const filteredGroups = useMemo(() => {
     const keyword = search.trim().toLowerCase();
@@ -170,18 +193,23 @@ export default function App() {
   };
 
   return (
-    <Layout className="app-shell">
+    <ConfigProvider theme={themeConfig}>
+      <Layout className="app-shell">
       <Layout.Sider className="app-sider" width={244}>
         <div className="brand">
           <Typography.Text className="brand-label">Miniport</Typography.Text>
           <Typography.Text className="brand-subtitle">端口服务资产管理</Typography.Text>
         </div>
         <Menu
-          className="nav"
           selectedKeys={[section]}
+          theme={themeMode === "dark" ? "dark" : "light"}
           mode="inline"
           items={navItems}
-          onClick={({ key }) => setSection(key as SectionKey)}
+          onClick={({ key }) => {
+            const nextSection = key as SectionKey;
+            setSection(nextSection);
+            navigateSectionHash(nextSection);
+          }}
         />
         <div className="runtime-card">
           <Typography.Text className="runtime-title">{meta?.version ?? "-"}</Typography.Text>
@@ -192,30 +220,40 @@ export default function App() {
 
       <Layout>
         <Layout.Header className="app-header">
-          <div>
-            <Typography.Title level={4} className="header-title">
-              {navItems.find((item) => item.key === section)?.label}
-            </Typography.Title>
-            <Typography.Text type="secondary">按 IP 和 10 端口组维护服务、容器、依赖和仓库。</Typography.Text>
-          </div>
-          <Space>
-            <Input
-              prefix={<SearchOutlined />}
-              className="header-search"
-              placeholder="搜索服务、IP、组件、仓库"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-            <Button icon={<ReloadOutlined />} onClick={() => void load()} loading={loading}>
-              刷新
-            </Button>
-            <Button icon={<PlusOutlined />} onClick={openCreateHost}>
-              主机
-            </Button>
-            <Button type="primary" icon={<PlusOutlined />} onClick={openCreateGroup} disabled={hosts.length === 0}>
-              端口组
-            </Button>
-          </Space>
+          <Flex align="center" justify="space-between" gap={18} wrap="wrap">
+            <div>
+              <Typography.Title level={4} className="header-title">
+                {navItems.find((item) => item.key === section)?.label}
+              </Typography.Title>
+              <Typography.Text type="secondary">按 IP 和 10 端口组维护服务、容器、依赖和仓库。</Typography.Text>
+            </div>
+            <Space wrap>
+              <Tooltip title={themeMode === "dark" ? "切换到明亮模式" : "切换到暗色模式"}>
+                <Switch
+                  checked={themeMode === "dark"}
+                  checkedChildren={<MoonOutlined />}
+                  unCheckedChildren={<SunOutlined />}
+                  onChange={(checked) => setThemeMode(checked ? "dark" : "light")}
+                />
+              </Tooltip>
+              <Input
+                prefix={<SearchOutlined />}
+                className="header-search"
+                placeholder="搜索服务、IP、组件、仓库"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+              <Button icon={<ReloadOutlined />} onClick={() => void load()} loading={loading}>
+                刷新
+              </Button>
+              <Button icon={<PlusOutlined />} onClick={openCreateHost}>
+                主机
+              </Button>
+              <Button type="primary" icon={<PlusOutlined />} onClick={openCreateGroup} disabled={hosts.length === 0}>
+                端口组
+              </Button>
+            </Space>
+          </Flex>
         </Layout.Header>
 
         <Layout.Content className="app-content">
@@ -287,6 +325,7 @@ export default function App() {
         onEdit={openEditGroup}
         onDelete={handleDeleteGroup}
       />
-    </Layout>
+      </Layout>
+    </ConfigProvider>
   );
 }

@@ -1,8 +1,7 @@
-import { Button, Card, Empty, Space, Tag, Typography } from "antd";
+import { Button, Card, Col, Empty, Row, Space, Statistic, Tag, Typography } from "antd";
 import { EditOutlined, PlusOutlined } from "@ant-design/icons";
 import type { AppStats, Host, PortGroup } from "../types";
 import { statusTag } from "../utils";
-import { Metric } from "../components/Metric";
 
 type OverviewSectionProps = {
   stats: AppStats;
@@ -23,12 +22,20 @@ export function OverviewSection({
 }: OverviewSectionProps) {
   return (
     <Space orientation="vertical" size={16} className="content-stack">
-      <div className="metric-grid">
-        <Card><Metric label="主机" value={stats.hosts} /></Card>
-        <Card><Metric label="端口组" value={stats.groups} /></Card>
-        <Card><Metric label="已分配端口" value={stats.usedSlots} /></Card>
-        <Card><Metric label="空闲槽位" value={stats.emptySlots} /></Card>
-      </div>
+      <Row gutter={[12, 12]}>
+        <Col xs={24} sm={12} xl={6}>
+          <Card><Statistic title="主机" value={stats.hosts} /></Card>
+        </Col>
+        <Col xs={24} sm={12} xl={6}>
+          <Card><Statistic title="端口组" value={stats.groups} /></Card>
+        </Col>
+        <Col xs={24} sm={12} xl={6}>
+          <Card><Statistic title="已分配端口" value={stats.usedSlots} /></Card>
+        </Col>
+        <Col xs={24} sm={12} xl={6}>
+          <Card><Statistic title="空闲槽位" value={stats.emptySlots} /></Card>
+        </Col>
+      </Row>
       {hosts.length === 0 ? (
         <Empty description="还没有主机">
           <Button type="primary" icon={<PlusOutlined />} onClick={onCreateHost}>
@@ -36,47 +43,48 @@ export function OverviewSection({
           </Button>
         </Empty>
       ) : (
-        <div className="host-grid">
+        <Row gutter={[14, 14]}>
           {groupsByHost.map(({ host, groups }) => (
-            <Card
-              key={host.id}
-              title={
-                <Space>
-                  <span>{host.ip}</span>
-                  {host.environment ? <Tag>{host.environment}</Tag> : null}
+            <Col key={host.id} xs={24} xl={12}>
+              <Card
+                title={
+                  <Space>
+                    <span>{host.ip}</span>
+                    {host.environment ? <Tag>{host.environment}</Tag> : null}
+                  </Space>
+                }
+                extra={<Button size="small" icon={<EditOutlined />} onClick={() => onEditHost(host)} />}
+              >
+                <Typography.Text type="secondary">{host.name || host.network || "未命名主机"}</Typography.Text>
+                <Space orientation="vertical" size={8} className="content-stack host-groups">
+                  {groups.length === 0 ? (
+                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="无端口组" />
+                  ) : (
+                    groups.map((group) => (
+                      <button key={group.id} className="group-tile" onClick={() => onSelectGroup(group)}>
+                        <span className="group-range">{group.portStart}-{group.portEnd}</span>
+                        <span className="group-main">
+                          <strong>{group.serviceName}</strong>
+                          <small>{group.containerName || group.dindHost || "未填写容器"}</small>
+                        </span>
+                        <span>{statusTag(group.status)}</span>
+                        <span className="slot-strip">
+                          {group.slots.map((slot) => (
+                            <i
+                              key={slot.port}
+                              className={`slot-dot slot-${slot.status}`}
+                              title={`${slot.port} ${slot.name || ""}`}
+                            />
+                          ))}
+                        </span>
+                      </button>
+                    ))
+                  )}
                 </Space>
-              }
-              extra={<Button size="small" icon={<EditOutlined />} onClick={() => onEditHost(host)} />}
-            >
-              <Typography.Text type="secondary">{host.name || host.network || "未命名主机"}</Typography.Text>
-              <div className="group-stack">
-                {groups.length === 0 ? (
-                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="无端口组" />
-                ) : (
-                  groups.map((group) => (
-                    <button key={group.id} className="group-tile" onClick={() => onSelectGroup(group)}>
-                      <span className="group-range">{group.portStart}-{group.portEnd}</span>
-                      <span className="group-main">
-                        <strong>{group.serviceName}</strong>
-                        <small>{group.containerName || group.dindHost || "未填写容器"}</small>
-                      </span>
-                      <span>{statusTag(group.status)}</span>
-                      <span className="slot-strip">
-                        {group.slots.map((slot) => (
-                          <i
-                            key={slot.port}
-                            className={`slot-dot slot-${slot.status}`}
-                            title={`${slot.port} ${slot.name || ""}`}
-                          />
-                        ))}
-                      </span>
-                    </button>
-                  ))
-                )}
-              </div>
-            </Card>
+              </Card>
+            </Col>
           ))}
-        </div>
+        </Row>
       )}
     </Space>
   );

@@ -1,4 +1,4 @@
-import { Button, Card, Popconfirm, Space, Table, Tag, Tooltip } from "antd";
+import { Button, Card, Popconfirm, Space, Table, Tag, Tooltip, Typography } from "antd";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import type { PortGroup } from "../types";
@@ -17,9 +17,9 @@ export function ServicesSection({ groups, onSelectGroup, onEditGroup, onDeleteGr
       title: "服务",
       dataIndex: "serviceName",
       render: (_, group) => (
-        <Button type="link" className="table-link" onClick={() => onSelectGroup(group)}>
+        <Typography.Link onClick={() => onSelectGroup(group)}>
           {group.serviceName}
-        </Button>
+        </Typography.Link>
       ),
     },
     {

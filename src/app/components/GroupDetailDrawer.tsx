@@ -1,9 +1,8 @@
-import { Button, Card, Drawer, Modal, Space, Table, Tag, Typography } from "antd";
+import { Button, Card, Descriptions, Drawer, Modal, Space, Table, Tag, Typography } from "antd";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { statusOptions } from "../constants";
 import type { PortGroup, PortSlot } from "../types";
 import { splitTags } from "../utils";
-import { Detail } from "./Detail";
 
 type GroupDetailDrawerProps = {
   group: PortGroup | null;
@@ -45,14 +44,22 @@ export function GroupDetailDrawer({ group, onClose, onEdit, onDelete }: GroupDet
       {group ? (
         <Space orientation="vertical" size={16} className="content-stack">
           <Card>
-            <div className="detail-grid">
-              <Detail label="IP" value={group.host?.ip ?? "-"} />
-              <Detail label="端口组" value={`${group.portStart}-${group.portEnd}`} />
-              <Detail label="容器" value={group.containerName || "-"} />
-              <Detail label="DIND" value={group.dindHost || "-"} />
-              <Detail label="负责人" value={group.owner || "-"} />
-              <Detail label="状态" value={statusOptions.find((item) => item.value === group.status)?.label ?? group.status} />
-            </div>
+            <Descriptions
+              size="small"
+              column={{ xs: 1, sm: 2 }}
+              items={[
+                { key: "ip", label: "IP", children: group.host?.ip ?? "-" },
+                { key: "ports", label: "端口组", children: `${group.portStart}-${group.portEnd}` },
+                { key: "container", label: "容器", children: group.containerName || "-" },
+                { key: "dind", label: "DIND", children: group.dindHost || "-" },
+                { key: "owner", label: "负责人", children: group.owner || "-" },
+                {
+                  key: "status",
+                  label: "状态",
+                  children: statusOptions.find((item) => item.value === group.status)?.label ?? group.status,
+                },
+              ]}
+            />
             <Space size={[4, 4]} wrap className="detail-tags">
               {splitTags(group.tags).map((tag) => (
                 <Tag key={tag}>{tag}</Tag>
