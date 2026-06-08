@@ -1,4 +1,4 @@
-package server
+package inventory
 
 import (
 	"time"
@@ -78,60 +78,4 @@ type Repository struct {
 	Notes       string    `bun:"notes" json:"notes"`
 	CreatedAt   time.Time `bun:"created_at,notnull" json:"createdAt"`
 	UpdatedAt   time.Time `bun:"updated_at,notnull" json:"updatedAt"`
-}
-
-type hostPayload struct {
-	IP          string `json:"ip" example:"172.22.11.12"`
-	Name        string `json:"name,omitempty" example:"node-12"`
-	Network     string `json:"network,omitempty" example:"172.22.11.0/24"`
-	Environment string `json:"environment,omitempty" example:"dev"`
-	Notes       string `json:"notes,omitempty"`
-}
-
-type portSlotPayload struct {
-	Port     int    `json:"port" example:"11120"`
-	Name     string `json:"name,omitempty" example:"nginx"`
-	Protocol string `json:"protocol,omitempty" example:"tcp"`
-	Purpose  string `json:"purpose,omitempty" example:"reverse proxy"`
-	Status   string `json:"status,omitempty" example:"used"`
-	Notes    string `json:"notes,omitempty"`
-}
-
-type componentPayload struct {
-	Name    string `json:"name" example:"redis"`
-	Type    string `json:"type,omitempty" example:"opensource"`
-	URL     string `json:"url,omitempty" example:"https://redis.io"`
-	Version string `json:"version,omitempty" example:"7"`
-	Notes   string `json:"notes,omitempty"`
-}
-
-type repositoryPayload struct {
-	Name  string `json:"name" example:"service-api"`
-	URL   string `json:"url" example:"https://git.example.com/team/service-api"`
-	Kind  string `json:"kind,omitempty" example:"backend"`
-	Notes string `json:"notes,omitempty"`
-}
-
-type portGroupPayload struct {
-	HostID        int64               `json:"hostId" example:"1"`
-	PortStart     int                 `json:"portStart" example:"11120"`
-	PortEnd       int                 `json:"portEnd" example:"11129"`
-	ServiceName   string              `json:"serviceName" example:"order-service"`
-	ContainerName string              `json:"containerName,omitempty" example:"order-service-dind"`
-	DindHost      string              `json:"dindHost,omitempty" example:"dind-01"`
-	Status        string              `json:"status,omitempty" example:"running"`
-	Owner         string              `json:"owner,omitempty" example:"platform"`
-	Tags          string              `json:"tags,omitempty" example:"api,redis"`
-	Notes         string              `json:"notes,omitempty"`
-	Slots         []portSlotPayload   `json:"slots,omitempty"`
-	Components    []componentPayload  `json:"components,omitempty"`
-	Repositories  []repositoryPayload `json:"repositories,omitempty"`
-}
-
-type portGroupView struct {
-	PortGroup
-
-	Slots        []PortSlot   `json:"slots"`
-	Components   []Component  `json:"components"`
-	Repositories []Repository `json:"repositories"`
 }

@@ -6,7 +6,7 @@ server:
 
   # 数据库配置
   db:
-    type: "sqlite" # 数据库类型: sqlite 或 pgsql
+    type: "pgsql" # 数据库类型: sqlite 或 pgsql
     sqlite: ".local/data/app.db" # SQLite 数据库文件路径
 
     # PostgreSQL 数据库连接参数

@@ -68,7 +68,7 @@ func DefaultConfig() Config {
 	return Config{
 		Server: Server{
 			DB: ServerDB{
-				Type:   "sqlite",
+				Type:   "pgsql",
 				SQLite: ".local/data/app.db",
 				PGSQL: ServerDBPGSQL{
 					Host:     "${PGHOST}",

@@ -21,6 +21,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/lwmacct/251207-go-pkg-version/pkg/version"
 	"github.com/lwmacct/260605-miniport/internal/config"
+	"github.com/lwmacct/260605-miniport/internal/modules/inventory"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
@@ -76,7 +77,7 @@ func (app *serverApp) prepareDatabase(ctx context.Context) error {
 	}
 	app.db = db
 
-	if err := migrateInventory(ctx, app.db); err != nil {
+	if err := inventory.ApplySchema(ctx, app.db); err != nil {
 		_ = app.db.Close()
 		return err
 	}
@@ -112,7 +113,7 @@ func openSQLiteDatabase(ctx context.Context, sqlitePath string) (*bun.DB, error)
 }
 
 func openPGSQLDatabase(ctx context.Context, cfg config.ServerDBPGSQL) (*bun.DB, error) {
-	opts := []pgdriver.Option{}
+	opts := []pgdriver.Option{pgdriver.WithInsecure(true)}
 	if cfg.Host != "" || cfg.Port != "" {
 		host := cfg.Host
 		if host == "" {
@@ -227,7 +228,7 @@ func registerRoutes(api huma.API, db *bun.DB, cfg *config.Config) {
 		return out, nil
 	})
 
-	registerInventoryRoutes(api, db)
+	inventory.RegisterAPI(api, inventory.NewService(db))
 }
 
 func serveHTTP(srv *http.Server, cfg *config.Config) error {
