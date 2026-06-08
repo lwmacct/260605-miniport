@@ -187,42 +187,40 @@ export default function App() {
     await load();
   };
 
+  const currentNavItem = navItems.find((item) => item.key === section);
+
   return (
     <ConfigProvider theme={themeConfig}>
       <Layout className="app-shell">
-      <Layout.Sider className="app-sider" width={244}>
-        <div className="brand">
-          <Typography.Text className="brand-label">Miniport</Typography.Text>
-          <Typography.Text className="brand-subtitle">端口服务资产管理</Typography.Text>
-        </div>
-        <Menu
-          selectedKeys={[section]}
-          theme={themeMode === "dark" ? "dark" : "light"}
-          mode="inline"
-          items={navItems}
-          onClick={({ key }) => {
-            const nextSection = key as SectionKey;
-            setSection(nextSection);
-            navigateSectionHash(nextSection);
-          }}
-        />
-        <div className="runtime-card">
-          <Typography.Text className="runtime-title">{meta?.version ?? "-"}</Typography.Text>
-          <Typography.Text className="runtime-line">{meta?.listen ?? "-"}</Typography.Text>
-          <Typography.Text className="runtime-line">{meta?.database ?? "-"}</Typography.Text>
-        </div>
-      </Layout.Sider>
+        <Layout.Sider className="app-sider" width={244}>
+          <div className="brand">
+            <Typography.Text className="brand-label">Miniport</Typography.Text>
+            <Typography.Text className="brand-subtitle">端口服务资产管理</Typography.Text>
+          </div>
+          <Menu
+            selectedKeys={[section]}
+            theme={themeMode === "dark" ? "dark" : "light"}
+            mode="inline"
+            items={navItems}
+            onClick={({ key }) => {
+              const nextSection = key as SectionKey;
+              setSection(nextSection);
+              navigateSectionHash(nextSection);
+            }}
+          />
+          <div className="runtime-card">
+            <Typography.Text className="runtime-title">{meta?.version ?? "-"}</Typography.Text>
+            <Typography.Text className="runtime-line">{meta?.listen ?? "-"}</Typography.Text>
+            <Typography.Text className="runtime-line">{meta?.database ?? "-"}</Typography.Text>
+          </div>
+        </Layout.Sider>
 
-      <Layout>
-        <Layout.Header className="app-header">
-          <Flex align="center" justify="space-between" gap={18} wrap="wrap">
-            <div>
-              <Typography.Title level={4} className="header-title">
-                {navItems.find((item) => item.key === section)?.label}
-              </Typography.Title>
-              <Typography.Text type="secondary">按 IP 和 10 端口组维护服务、容器、依赖和仓库。</Typography.Text>
-            </div>
-            <Space wrap>
+        <Layout className="app-main">
+          <Layout.Header className="app-header">
+            <Flex align="center" justify="space-between" gap={16}>
+              <Typography.Text type="secondary" className="app-breadcrumb">
+                Miniport / {currentNavItem?.label}
+              </Typography.Text>
               <Tooltip title={themeMode === "dark" ? "切换到明亮模式" : "切换到暗色模式"}>
                 <Switch
                   checked={themeMode === "dark"}
@@ -235,95 +233,109 @@ export default function App() {
                   }}
                 />
               </Tooltip>
-              <Input
-                prefix={<SearchOutlined />}
-                className="header-search"
-                placeholder="搜索服务、IP、组件、仓库"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-              />
-              <Button icon={<ReloadOutlined />} onClick={() => void load()} loading={loading}>
-                刷新
-              </Button>
-              <Button icon={<PlusOutlined />} onClick={openCreateHost}>
-                主机
-              </Button>
-              <Button type="primary" icon={<PlusOutlined />} onClick={openCreateGroup} disabled={hosts.length === 0}>
-                端口组
-              </Button>
-            </Space>
-          </Flex>
-        </Layout.Header>
+            </Flex>
+          </Layout.Header>
 
-        <Layout.Content className="app-content">
-          {error ? <Alert type="error" showIcon message="后端不可用" description={error} /> : null}
+          <main className="app-page">
+            <section className="app-page-head">
+              <Flex align="flex-start" justify="space-between" gap={24} wrap="wrap">
+                <div>
+                  <Typography.Title level={2} className="page-title">
+                    {currentNavItem?.label}
+                  </Typography.Title>
+                  <Typography.Text type="secondary">按 IP 和 10 端口组维护服务、容器、依赖和仓库。</Typography.Text>
+                </div>
+                <Space wrap>
+                  <Input
+                    prefix={<SearchOutlined />}
+                    className="page-search"
+                    placeholder="搜索服务、IP、组件、仓库"
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                  />
+                  <Button icon={<ReloadOutlined />} onClick={() => void load()} loading={loading}>
+                    刷新
+                  </Button>
+                  <Button icon={<PlusOutlined />} onClick={openCreateHost}>
+                    主机
+                  </Button>
+                  <Button type="primary" icon={<PlusOutlined />} onClick={openCreateGroup} disabled={hosts.length === 0}>
+                    端口组
+                  </Button>
+                </Space>
+              </Flex>
+            </section>
 
-          {loading && groups.length === 0 && hosts.length === 0 ? (
-            <div className="loading-state">
-              <Spin size="large" />
-            </div>
-          ) : (
-            <>
-              {section === "overview" ? (
-                <OverviewSection
-                  stats={stats}
-                  hosts={hosts}
-                  groupsByHost={groupsByHost}
-                  onCreateHost={openCreateHost}
-                  onEditHost={openEditHost}
-                  onSelectGroup={setSelectedGroup}
-                />
-              ) : null}
+            <Layout.Content className="app-content">
+              {error ? <Alert type="error" showIcon message="后端不可用" description={error} /> : null}
 
-              {section === "services" ? (
-                <ServicesSection
-                  groups={filteredGroups}
-                  onSelectGroup={setSelectedGroup}
-                  onEditGroup={openEditGroup}
-                  onDeleteGroup={(group) => void handleDeleteGroup(group)}
-                />
-              ) : null}
+              {loading && groups.length === 0 && hosts.length === 0 ? (
+                <div className="loading-state">
+                  <Spin size="large" />
+                </div>
+              ) : (
+                <>
+                  {section === "overview" ? (
+                    <OverviewSection
+                      stats={stats}
+                      hosts={hosts}
+                      groupsByHost={groupsByHost}
+                      onCreateHost={openCreateHost}
+                      onEditHost={openEditHost}
+                      onSelectGroup={setSelectedGroup}
+                    />
+                  ) : null}
 
-              {section === "hosts" ? (
-                <HostsSection
-                  hosts={hosts}
-                  groups={groups}
-                  onEditHost={openEditHost}
-                  onDeleteHost={(host) => void handleDeleteHost(host)}
-                />
-              ) : null}
+                  {section === "services" ? (
+                    <ServicesSection
+                      groups={filteredGroups}
+                      onSelectGroup={setSelectedGroup}
+                      onEditGroup={openEditGroup}
+                      onDeleteGroup={(group) => void handleDeleteGroup(group)}
+                    />
+                  ) : null}
 
-              {section === "dependencies" ? <DependenciesSection groups={groups} stats={stats} /> : null}
-            </>
-          )}
-        </Layout.Content>
-      </Layout>
+                  {section === "hosts" ? (
+                    <HostsSection
+                      hosts={hosts}
+                      groups={groups}
+                      onEditHost={openEditHost}
+                      onDeleteHost={(host) => void handleDeleteHost(host)}
+                    />
+                  ) : null}
 
-      <HostDrawer
-        open={hostDrawerOpen}
-        saving={saving}
-        editingHost={editingHost}
-        form={hostForm}
-        onClose={() => setHostDrawerOpen(false)}
-        onSave={(values) => void handleSaveHost(values)}
-      />
+                  {section === "dependencies" ? <DependenciesSection groups={groups} stats={stats} /> : null}
+                </>
+              )}
+            </Layout.Content>
+          </main>
+        </Layout>
 
-      <PortGroupDrawer
-        open={groupDrawerOpen}
-        saving={saving}
-        hosts={hosts}
-        editingGroup={editingGroup}
-        form={groupForm}
-        onClose={() => setGroupDrawerOpen(false)}
-        onSave={(values) => void handleSaveGroup(values)}
-      />
+        <HostDrawer
+          open={hostDrawerOpen}
+          saving={saving}
+          editingHost={editingHost}
+          form={hostForm}
+          onClose={() => setHostDrawerOpen(false)}
+          onSave={(values) => void handleSaveHost(values)}
+        />
 
-      <GroupDetailDrawer
-        group={selectedGroup}
-        onClose={() => setSelectedGroup(null)}
-        onEdit={openEditGroup}
-        onDelete={handleDeleteGroup}
-      />
+        <PortGroupDrawer
+          open={groupDrawerOpen}
+          saving={saving}
+          hosts={hosts}
+          editingGroup={editingGroup}
+          form={groupForm}
+          onClose={() => setGroupDrawerOpen(false)}
+          onSave={(values) => void handleSaveGroup(values)}
+        />
+
+        <GroupDetailDrawer
+          group={selectedGroup}
+          onClose={() => setSelectedGroup(null)}
+          onEdit={openEditGroup}
+          onDelete={handleDeleteGroup}
+        />
       </Layout>
     </ConfigProvider>
   );

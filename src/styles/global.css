@@ -2,7 +2,7 @@ html,
 body,
 #root {
   width: 100%;
-  height: 100%;
+  min-height: 100%;
   margin: 0;
 }
 
@@ -67,11 +67,32 @@ select {
 .app-shell {
   min-height: 100vh;
   background: var(--app-bg);
+  align-items: flex-start;
 }
 
 .app-sider {
+  position: sticky !important;
+  top: 0;
+  align-self: flex-start;
   background: var(--app-sider-bg) !important;
-  padding: 20px 14px;
+  padding: 18px 14px;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app-sider .ant-layout-sider-children {
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-sider .ant-menu {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-inline-end: 0 !important;
 }
 
 .app-sider .ant-menu-item {
@@ -93,8 +114,9 @@ select {
   display: flex;
   flex-direction: column;
   gap: 5px;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
   color: #fff;
+  flex: 0 0 auto;
 }
 
 .brand-label {
@@ -109,13 +131,11 @@ select {
 }
 
 .runtime-card {
-  position: absolute;
-  right: 14px;
-  bottom: 16px;
-  left: 14px;
   display: flex;
   flex-direction: column;
   gap: 5px;
+  flex: 0 0 auto;
+  margin-top: auto;
   padding: 12px;
   border: 1px solid var(--app-runtime-border);
   border-radius: 8px;
@@ -136,26 +156,48 @@ select {
   white-space: nowrap;
 }
 
+.app-main {
+  min-width: 0;
+  min-height: 100vh;
+  background: var(--app-bg);
+  overflow: visible;
+}
+
 .app-header {
-  min-height: 72px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  flex: 0 0 auto;
+  min-height: 58px;
   height: auto;
   background: var(--app-header-bg);
   border-bottom: 1px solid var(--app-border);
-  padding: 12px 24px;
+  padding: 12px 34px;
   line-height: 1.4;
 }
 
-.header-title {
-  margin: 0 0 2px !important;
+.app-breadcrumb {
+  font-size: 13px;
 }
 
-.header-search {
-  width: 280px;
+.app-page {
+  padding: 24px 28px 32px;
+}
+
+.app-page-head {
+  margin-bottom: 16px;
+}
+
+.page-title {
+  margin: 0 0 6px !important;
+}
+
+.page-search {
+  width: min(360px, 100%);
 }
 
 .app-content {
-  padding: 22px;
-  background: var(--app-bg);
+  background: transparent;
 }
 
 .content-stack {
@@ -163,7 +205,7 @@ select {
 }
 
 .loading-state {
-  min-height: calc(100vh - 160px);
+  min-height: 420px;
   display: grid;
   place-items: center;
 }
@@ -252,7 +294,7 @@ select {
 }
 
 @media (max-width: 1180px) {
-  .header-search {
+  .page-search {
     width: 240px;
   }
 }
@@ -262,15 +304,23 @@ select {
     display: none;
   }
 
-  .app-content {
-    padding: 14px;
+  .app-main {
+    width: 100%;
+  }
+
+  .app-header {
+    padding: 12px 16px;
+  }
+
+  .app-page {
+    padding: 16px 14px 24px;
   }
 
   .group-tile {
     grid-template-columns: 1fr;
   }
 
-  .header-search {
+  .page-search {
     width: 100%;
   }
 }
