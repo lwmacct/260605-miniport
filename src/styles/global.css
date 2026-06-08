@@ -23,6 +23,8 @@ body,
   --app-tile-hover-bg: #e5f1fb;
   --app-tile-border: #d4d4d4;
   --app-accent: #007acc;
+  --app-menu-hover-bg: #e8e8e8;
+  --app-menu-selected-bg: #e5f1fb;
   --slot-empty: #cccccc;
   --slot-used: #007acc;
   --slot-reserved: #b89500;
@@ -44,6 +46,8 @@ body,
   --app-tile-hover-bg: #2a2d2e;
   --app-tile-border: #3c3c3c;
   --app-accent: #007acc;
+  --app-menu-hover-bg: #2a2d2e;
+  --app-menu-selected-bg: #094771;
   --slot-empty: #3c3c3c;
   --slot-used: #007acc;
   --slot-reserved: #cca700;
@@ -68,6 +72,21 @@ select {
 .app-sider {
   background: var(--app-sider-bg) !important;
   padding: 20px 14px;
+}
+
+.app-sider .ant-menu-item {
+  transition:
+    color 140ms ease,
+    box-shadow 140ms ease !important;
+}
+
+.app-sider .ant-menu-item:hover {
+  background: var(--app-menu-hover-bg) !important;
+}
+
+.app-sider .ant-menu-item-selected {
+  background: var(--app-menu-selected-bg) !important;
+  box-shadow: inset 3px 0 0 var(--app-accent);
 }
 
 .brand {

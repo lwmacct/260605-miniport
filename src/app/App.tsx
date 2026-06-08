@@ -11,13 +11,13 @@ import { HostsSection } from "./sections/HostsSection";
 import { OverviewSection } from "./sections/OverviewSection";
 import { ServicesSection } from "./sections/ServicesSection";
 import { navigateSectionHash, readSectionFromHash, replaceSectionHash } from "./routing";
-import { appTheme, readStoredTheme, themeStorageKey } from "./theme";
+import { appTheme, applyTheme, readInitialTheme } from "./theme";
 import type { GroupForm, Host, HostForm, Meta, PortGroup, SectionKey } from "./types";
 import type { ThemeMode } from "./theme";
 
 export default function App() {
   const [section, setSection] = useState<SectionKey>(() => readSectionFromHash());
-  const [themeMode, setThemeMode] = useState<ThemeMode>(() => readStoredTheme());
+  const [themeMode, setThemeMode] = useState<ThemeMode>(() => readInitialTheme());
   const [meta, setMeta] = useState<Meta | null>(null);
   const [hosts, setHosts] = useState<Host[]>([]);
   const [groups, setGroups] = useState<PortGroup[]>([]);
@@ -68,11 +68,6 @@ export default function App() {
     window.addEventListener("hashchange", handleHashChange);
     return () => window.removeEventListener("hashchange", handleHashChange);
   }, []);
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = themeMode;
-    window.localStorage.setItem(themeStorageKey, themeMode);
-  }, [themeMode]);
 
   const filteredGroups = useMemo(() => {
     const keyword = search.trim().toLowerCase();
@@ -233,7 +228,11 @@ export default function App() {
                   checked={themeMode === "dark"}
                   checkedChildren={<MoonOutlined />}
                   unCheckedChildren={<SunOutlined />}
-                  onChange={(checked) => setThemeMode(checked ? "dark" : "light")}
+                  onChange={(checked) => {
+                    const nextTheme = checked ? "dark" : "light";
+                    applyTheme(nextTheme);
+                    setThemeMode(nextTheme);
+                  }}
                 />
               </Tooltip>
               <Input

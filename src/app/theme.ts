@@ -5,12 +5,32 @@ export type ThemeMode = "light" | "dark";
 
 export const themeStorageKey = "miniport-theme";
 
-export function readStoredTheme(): ThemeMode {
+function isThemeMode(value: string | undefined | null): value is ThemeMode {
+  return value === "light" || value === "dark";
+}
+
+function preferredTheme(): ThemeMode {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+export function readInitialTheme(): ThemeMode {
+  const bootTheme = document.documentElement.dataset.theme;
+  if (isThemeMode(bootTheme)) {
+    return bootTheme;
+  }
+
   const stored = window.localStorage.getItem(themeStorageKey);
-  if (stored === "light" || stored === "dark") {
+  if (isThemeMode(stored)) {
     return stored;
   }
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+
+  return preferredTheme();
+}
+
+export function applyTheme(mode: ThemeMode) {
+  document.documentElement.dataset.theme = mode;
+  document.documentElement.style.colorScheme = mode;
+  window.localStorage.setItem(themeStorageKey, mode);
 }
 
 const sharedTokens = {
@@ -41,6 +61,9 @@ export function appTheme(mode: ThemeMode): ThemeConfig {
         Menu: {
           darkItemBg: "#252526",
           darkSubMenuItemBg: "#252526",
+          darkItemColor: "#cccccc",
+          darkItemHoverBg: "#2a2d2e",
+          darkItemHoverColor: "#ffffff",
           darkItemSelectedBg: "#094771",
           darkItemSelectedColor: "#ffffff",
         },
