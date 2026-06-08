@@ -81,6 +81,10 @@ func (app *serverApp) prepareDatabase(ctx context.Context) error {
 	}
 
 	app.db = bun.NewDB(sqldb, sqlitedialect.New())
+	if err := migrateInventory(ctx, app.db); err != nil {
+		_ = app.db.Close()
+		return err
+	}
 	return nil
 }
 
@@ -143,13 +147,15 @@ func registerRoutes(api huma.API, db *bun.DB, cfg *config.Config) {
 		Tags:        []string{"system"},
 	}, func(ctx context.Context, _ *struct{}) (*metaOutput, error) {
 		out := &metaOutput{}
-		out.Body.Name = "Web App Skeleton"
+		out.Body.Name = "Miniport"
 		out.Body.Version = version.AppVersion
 		out.Body.Listen = cfg.Server.HTTP.Listen
 		out.Body.Database = cfg.Server.Database
 		out.Body.DocsPath = "/api"
 		return out, nil
 	})
+
+	registerInventoryRoutes(api, db)
 }
 
 func serveHTTP(srv *http.Server, cfg *config.Config) error {
@@ -175,7 +181,7 @@ func (app *serverApp) buildHTTPServer() error {
 	apiRouter := chi.NewRouter()
 	router.Mount("/api", apiRouter)
 
-	api := humachi.New(apiRouter, huma.DefaultConfig("Web App Skeleton", version.AppVersion))
+	api := humachi.New(apiRouter, huma.DefaultConfig("Miniport", version.AppVersion))
 	registerRoutes(api, app.db, app.cfg)
 
 	app.srv = &http.Server{
