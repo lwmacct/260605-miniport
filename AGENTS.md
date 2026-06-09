@@ -8,7 +8,7 @@
 
 - Go 服务模块: `github.com/lwmacct/260605-miniport`。
 - 服务入口在 `main.go`; 后端启动、命令和基础设施代码放 `internal/app/`。
-- 领域代码放 `internal/modules/<domain>`, 例如 `inventory`。
+- 领域代码放 `internal/modules/<domain>`。
 - `internal/modules/<domain>/` 内文件名使用通用职责语义, 例如 `model.go`, `dto.go`, `handler.go`, `service.go`, `repository.go`, `schema.go`, `validation.go`, `errors.go`, `utils.go`。
 - 仅明确要对外复用的共享包放 `pkg/`。
 - 前端是 React/Vite, 代码在 `src/`, 静态资源在 `public/`, 不提交构建产物。
