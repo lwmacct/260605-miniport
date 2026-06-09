@@ -69,7 +69,7 @@ func DefaultConfig() Config {
 		Server: Server{
 			DB: ServerDB{
 				Type:   "pgsql",
-				SQLite: ".local/data/app.db",
+				SQLite: "${APP_DATA:-.local/data}/sqlite.db",
 				PGSQL: ServerDBPGSQL{
 					Host:     "${PGHOST}",
 					Port:     "${PGPORT}",
@@ -83,7 +83,7 @@ func DefaultConfig() Config {
 				Listen: ":40238",
 			},
 			Control: ServerControl{
-				Listen: ".local/run/control.sock",
+				Listen: "${APP_RUN:-.local/run}/control.sock",
 			},
 		},
 	}
