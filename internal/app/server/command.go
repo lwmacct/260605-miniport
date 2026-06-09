@@ -29,6 +29,11 @@ var Command = &cli.Command{
 			Value: defaults.Server.HTTP.Listen,
 		},
 		&cli.StringFlag{
+			Name:  "http.web-root",
+			Usage: usage.MustUsage("http.web-root"),
+			Value: defaults.Server.HTTP.WebRoot,
+		},
+		&cli.StringFlag{
 			Name:  "http.ssl-cert-file",
 			Usage: usage.MustUsage("http.ssl-cert-file"),
 			Value: defaults.Server.HTTP.SSLCertFile,

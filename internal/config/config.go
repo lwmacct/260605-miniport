@@ -39,6 +39,7 @@ type ServerDBPGSQL struct {
 //nolint:tagliatelle // 对外配置键使用 kebab-case。
 type ServerHTTP struct {
 	Listen      string `json:"listen" desc:"HTTP 服务监听地址"`
+	WebRoot     string `json:"web-root" desc:"静态 Web 根目录, 为空时不托管前端"`
 	SSLCertFile string `json:"ssl-cert-file" desc:"SSL 证书文件路径"`
 	SSLKeyFile  string `json:"ssl-key-file" desc:"SSL 密钥文件路径"`
 }
@@ -80,7 +81,8 @@ func DefaultConfig() Config {
 				},
 			},
 			HTTP: ServerHTTP{
-				Listen: ":40238",
+				Listen:  ":40238",
+				WebRoot: "${WEB_ROOT:-dist}",
 			},
 			Control: ServerControl{
 				Listen: "${APP_RUN:-.local/run}/control.sock",

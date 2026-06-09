@@ -20,6 +20,7 @@ server:
   # HTTP 服务配置
   http:
     listen: ":40238" # HTTP 服务监听地址
+    web-root: "${WEB_ROOT:-dist}" # 静态 Web 根目录, 为空时不托管前端
     ssl-cert-file: "" # SSL 证书文件路径
     ssl-key-file: "" # SSL 密钥文件路径
 

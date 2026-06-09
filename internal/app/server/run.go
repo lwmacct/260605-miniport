@@ -246,16 +246,19 @@ func serveHTTP(srv *http.Server, cfg *config.Config) error {
 
 func (app *serverApp) buildHTTPServer() error {
 	router := chi.NewRouter()
-	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		_, _ = w.Write([]byte(`{"message":"webapp backend is running","api":"/api"}`))
-	})
 
 	apiRouter := chi.NewRouter()
 	router.Mount("/api", apiRouter)
 
 	api := humachi.New(apiRouter, huma.DefaultConfig("Miniport", version.AppVersion))
 	registerRoutes(api, app.db, app.cfg)
+
+	if !registerFrontendRoutes(router, app.cfg.Server.HTTP.WebRoot) {
+		router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			_, _ = w.Write([]byte(`{"message":"webapp backend is running","api":"/api"}`))
+		})
+	}
 
 	app.srv = &http.Server{
 		Addr:              app.cfg.Server.HTTP.Listen,
