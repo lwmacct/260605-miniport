@@ -1,11 +1,35 @@
 import { apiGet, apiSend } from "../../shared/api/client";
-import type { GroupForm, Host, HostForm, InventorySnapshot, Meta, PortGroup } from "./types";
+import type { GroupForm, Host, HostForm, InventoryQuery, InventorySnapshot, Meta, PortGroup } from "./types";
 
-export async function loadInventory(): Promise<InventorySnapshot> {
+function buildQueryString(params: Record<string, string | number | undefined>) {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === "") {
+      continue;
+    }
+    search.set(key, String(value));
+  }
+  const text = search.toString();
+  return text ? `?${text}` : "";
+}
+
+export async function loadInventory(query: InventoryQuery): Promise<InventorySnapshot> {
+  const hostsPath = "/api/hosts" + buildQueryString({
+    environment: query.environment,
+    q: query.hostQuery,
+    sort: query.hostSort,
+  });
+  const groupsPath = "/api/port-groups" + buildQueryString({
+    hostId: query.hostId,
+    q: query.portGroupQuery,
+    sort: query.portGroupSort,
+    status: query.status,
+  });
+
   const [meta, hosts, groups] = await Promise.all([
     apiGet<Meta>("/api/meta"),
-    apiGet<Host[]>("/api/hosts"),
-    apiGet<PortGroup[]>("/api/port-groups"),
+    apiGet<Host[]>(hostsPath),
+    apiGet<PortGroup[]>(groupsPath),
   ]);
 
   return {
@@ -66,4 +90,13 @@ export function savePortGroup(group: GroupForm, editingGroup?: PortGroup | null)
 
 export function removePortGroup(group: PortGroup) {
   return apiSend<{ body: { deleted: boolean } }>(`/api/port-groups/${group.id}`, { method: "DELETE" });
+}
+
+export function exportPortGroupsURL(query: InventoryQuery) {
+  return "/api/exports/port-groups.csv" + buildQueryString({
+    hostId: query.hostId,
+    q: query.portGroupQuery,
+    sort: query.portGroupSort,
+    status: query.status,
+  });
 }

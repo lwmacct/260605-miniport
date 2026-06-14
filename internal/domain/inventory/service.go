@@ -2,6 +2,7 @@ package inventory
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/uptrace/bun"
@@ -15,8 +16,8 @@ func NewService(db *bun.DB) *Service {
 	return &Service{store: newStore(db)}
 }
 
-func (svc *Service) ListHosts(ctx context.Context) ([]Host, error) {
-	return svc.store.listHosts(ctx)
+func (svc *Service) ListHosts(ctx context.Context, params HostListParams) ([]Host, error) {
+	return svc.store.listHosts(ctx, params)
 }
 
 func (svc *Service) CreateHost(ctx context.Context, payload HostPayload) (*Host, error) {
@@ -52,8 +53,8 @@ func (svc *Service) DeleteHost(ctx context.Context, id int64) error {
 	return svc.store.deleteHost(ctx, id)
 }
 
-func (svc *Service) ListPortGroups(ctx context.Context) ([]PortGroupView, error) {
-	groups, err := svc.store.listPortGroups(ctx)
+func (svc *Service) ListPortGroups(ctx context.Context, params PortGroupListParams) ([]PortGroupView, error) {
+	groups, err := svc.store.listPortGroups(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -135,4 +136,60 @@ func (svc *Service) DeletePortGroup(ctx context.Context, id int64) error {
 	return svc.store.runInTx(ctx, func(ctx context.Context, tx *store) error {
 		return tx.deletePortGroup(ctx, id)
 	})
+}
+
+func (svc *Service) ExportPortGroupsCSV(ctx context.Context, params PortGroupListParams) ([]byte, error) {
+	groups, err := svc.ListPortGroups(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	records := [][]string{{
+		"host_ip",
+		"host_name",
+		"environment",
+		"service_name",
+		"status",
+		"port_start",
+		"port_end",
+		"container_name",
+		"dind_host",
+		"owner",
+		"tags",
+		"components",
+		"repositories",
+		"slots",
+		"notes",
+	}}
+
+	for _, group := range groups {
+		hostIP := ""
+		hostName := ""
+		hostEnvironment := ""
+		if group.Host != nil {
+			hostIP = group.Host.IP
+			hostName = group.Host.Name
+			hostEnvironment = group.Host.Environment
+		}
+
+		records = append(records, []string{
+			hostIP,
+			hostName,
+			hostEnvironment,
+			group.ServiceName,
+			group.Status,
+			strconv.Itoa(group.PortStart),
+			strconv.Itoa(group.PortEnd),
+			group.ContainerName,
+			group.DindHost,
+			group.Owner,
+			group.Tags,
+			formatPortGroupComponents(group.Components),
+			formatPortGroupRepositories(group.Repositories),
+			formatPortGroupSlots(group.Slots),
+			group.Notes,
+		})
+	}
+
+	return csvBytes(records)
 }

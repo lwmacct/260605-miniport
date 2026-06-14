@@ -48,10 +48,23 @@ type PortGroupPayload struct {
 	Repositories  []RepositoryPayload `json:"repositories,omitempty"`
 }
 
+type HostListParams struct {
+	Environment string
+	Query       string
+	Sort        string
+}
+
 type PortGroupView struct {
 	PortGroup
 
 	Slots        []PortSlot   `json:"slots"`
 	Components   []Component  `json:"components"`
 	Repositories []Repository `json:"repositories"`
+}
+
+type PortGroupListParams struct {
+	HostID int64
+	Query  string
+	Sort   string
+	Status string
 }

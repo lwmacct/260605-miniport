@@ -40,6 +40,7 @@ func (app *App) newHTTPServer() (*http.Server, error) {
 
 	api := humachi.New(apiRouter, httpAPIConfig())
 	app.registerHTTPAPI(api)
+	inventoryhttp.RegisterExportRoutes(apiRouter, app.inventory)
 
 	if !frontend.RegisterRoutes(router, app.cfg.Server.HTTP.WebRoot) {
 		router.Get("/", func(w http.ResponseWriter, _ *http.Request) {

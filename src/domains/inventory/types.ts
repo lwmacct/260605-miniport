@@ -77,6 +77,16 @@ export type InventorySnapshot = {
   groups: PortGroup[];
 };
 
+export type InventoryQuery = {
+  environment?: string;
+  hostSort?: string;
+  hostQuery?: string;
+  hostId?: number;
+  portGroupQuery?: string;
+  portGroupSort?: string;
+  status?: string;
+};
+
 export type AppStats = {
   hosts: number;
   groups: number;

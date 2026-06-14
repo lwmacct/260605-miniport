@@ -3,11 +3,19 @@ package inventoryhttp
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/go-chi/chi/v5"
 
 	"github.com/lwmacct/260605-miniport/internal/domain/inventory"
 )
+
+type hostListInput struct {
+	Environment string `query:"environment" example:"dev"`
+	Query       string `query:"q" example:"172.22.11"`
+	Sort        string `query:"sort" example:"ip"`
+}
 
 type hostListOutput struct {
 	Body []inventory.Host `json:"body"`
@@ -32,6 +40,13 @@ type hostUpdateInput struct {
 
 type portGroupListOutput struct {
 	Body []inventory.PortGroupView `json:"body"`
+}
+
+type portGroupListInput struct {
+	HostID int64  `query:"hostId" example:"1"`
+	Query  string `query:"q" example:"order-service"`
+	Sort   string `query:"sort" example:"host_port"`
+	Status string `query:"status" example:"running"`
 }
 
 type portGroupOutput struct {
@@ -64,9 +79,12 @@ func Register(api huma.API, service *inventory.Service) {
 		Path:        "/hosts",
 		Summary:     "List hosts",
 		Tags:        []string{"inventory"},
-	}, func(ctx context.Context, input *struct{}) (*hostListOutput, error) {
-		_ = input
-		hosts, err := service.ListHosts(ctx)
+	}, func(ctx context.Context, input *hostListInput) (*hostListOutput, error) {
+		hosts, err := service.ListHosts(ctx, inventory.HostListParams{
+			Environment: input.Environment,
+			Query:       input.Query,
+			Sort:        input.Sort,
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -122,9 +140,13 @@ func Register(api huma.API, service *inventory.Service) {
 		Path:        "/port-groups",
 		Summary:     "List port groups",
 		Tags:        []string{"inventory"},
-	}, func(ctx context.Context, input *struct{}) (*portGroupListOutput, error) {
-		_ = input
-		groups, err := service.ListPortGroups(ctx)
+	}, func(ctx context.Context, input *portGroupListInput) (*portGroupListOutput, error) {
+		groups, err := service.ListPortGroups(ctx, inventory.PortGroupListParams{
+			HostID: input.HostID,
+			Query:  input.Query,
+			Sort:   input.Sort,
+			Status: input.Status,
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -186,5 +208,25 @@ func Register(api huma.API, service *inventory.Service) {
 		out := &deleteOutput{}
 		out.Body.Deleted = true
 		return out, nil
+	})
+}
+
+func RegisterExportRoutes(router chi.Router, service *inventory.Service) {
+	router.Get("/exports/port-groups.csv", func(w http.ResponseWriter, r *http.Request) {
+		hostID, _ := strconv.ParseInt(r.URL.Query().Get("hostId"), 10, 64)
+		body, err := service.ExportPortGroupsCSV(r.Context(), inventory.PortGroupListParams{
+			HostID: hostID,
+			Query:  r.URL.Query().Get("q"),
+			Sort:   r.URL.Query().Get("sort"),
+			Status: r.URL.Query().Get("status"),
+		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		w.Header().Set("Content-Type", "text/csv; charset=utf-8")
+		w.Header().Set("Content-Disposition", `attachment; filename="miniport-port-groups.csv"`)
+		_, _ = w.Write(body)
 	})
 }

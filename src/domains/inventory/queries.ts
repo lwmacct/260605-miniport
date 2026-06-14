@@ -1,13 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { loadInventory } from "./api";
+import type { InventoryQuery } from "./types";
 
 export const inventoryKeys = {
-  snapshot: ["inventory", "snapshot"] as const,
+  snapshot: (query: InventoryQuery) => ["inventory", "snapshot", query] as const,
 };
 
-export function useInventoryQuery() {
+export function useInventoryQuery(query: InventoryQuery) {
   return useQuery({
-    queryKey: inventoryKeys.snapshot,
-    queryFn: loadInventory,
+    queryKey: inventoryKeys.snapshot(query),
+    queryFn: () => loadInventory(query),
   });
 }

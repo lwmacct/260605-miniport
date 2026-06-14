@@ -1,11 +1,12 @@
-import { PlusOutlined, ReloadOutlined, SearchOutlined } from "@ant-design/icons";
-import { Alert, Button, Flex, Form, Input, Space, Spin, Typography, message } from "antd";
+import { DownloadOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from "@ant-design/icons";
+import { Alert, Button, Flex, Form, Input, Select, Space, Spin, Typography, message } from "antd";
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useInventoryQuery, inventoryKeys } from "../queries";
-import { removeHost, removePortGroup, saveHost, savePortGroup } from "../api";
-import type { GroupForm, Host, HostForm, PortGroup } from "../types";
+import { exportPortGroupsURL, removeHost, removePortGroup, saveHost, savePortGroup } from "../api";
+import { statusOptions } from "../constants";
+import type { GroupForm, Host, HostForm, InventoryQuery, PortGroup } from "../types";
 import { buildStats } from "../utils";
 import { OverviewSection } from "./OverviewSection";
 import { ServicesSection } from "./ServicesSection";
@@ -29,8 +30,10 @@ export function InventoryWorkspace({
   view,
 }: InventoryWorkspaceProps) {
   const queryClient = useQueryClient();
-  const inventoryQuery = useInventoryQuery();
   const [search, setSearch] = useState("");
+  const [environment, setEnvironment] = useState<string>();
+  const [status, setStatus] = useState<string>();
+  const [sort, setSort] = useState<string>(view === "hosts" ? "ip" : "host_port");
   const [saving, setSaving] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<PortGroup | null>(null);
   const [hostDrawerOpen, setHostDrawerOpen] = useState(false);
@@ -40,32 +43,29 @@ export function InventoryWorkspace({
   const [hostForm] = Form.useForm<HostForm>();
   const [groupForm] = Form.useForm<GroupForm>();
 
+  const query = useMemo<InventoryQuery>(() => {
+    if (view === "hosts") {
+      return {
+        environment,
+        hostQuery: search.trim(),
+        hostSort: sort,
+      };
+    }
+
+    return {
+      hostQuery: "",
+      portGroupQuery: search.trim(),
+      portGroupSort: sort,
+      status,
+    };
+  }, [environment, search, sort, status, view]);
+
+  const inventoryQuery = useInventoryQuery(query);
+
   const snapshot = inventoryQuery.data;
   const hosts: Host[] = snapshot?.hosts ?? [];
   const groups: PortGroup[] = snapshot?.groups ?? [];
   const meta = snapshot?.meta;
-
-  const filteredGroups = useMemo(() => {
-    const keyword = search.trim().toLowerCase();
-    if (!keyword) {
-      return groups;
-    }
-    return groups.filter((group) => {
-      const text = [
-        group.host?.ip,
-        group.serviceName,
-        group.containerName,
-        group.dindHost,
-        group.owner,
-        group.tags,
-        group.components.map((item) => item.name).join(" "),
-        group.repositories.map((item) => item.url).join(" "),
-      ]
-        .join(" ")
-        .toLowerCase();
-      return text.includes(keyword);
-    });
-  }, [groups, search]);
 
   const stats = useMemo(() => buildStats(groups, hosts), [groups, hosts]);
 
@@ -73,15 +73,15 @@ export function InventoryWorkspace({
     () =>
       hosts.map((host) => ({
         host,
-        groups: filteredGroups
+        groups: groups
           .filter((group) => group.hostId === host.id)
           .sort((left, right) => left.portStart - right.portStart),
       })),
-    [filteredGroups, hosts],
+    [groups, hosts],
   );
 
   async function refresh() {
-    await queryClient.invalidateQueries({ queryKey: inventoryKeys.snapshot });
+    await queryClient.invalidateQueries({ queryKey: inventoryKeys.snapshot(query) });
   }
 
   function openCreateHost() {
@@ -162,6 +162,31 @@ export function InventoryWorkspace({
     await refresh();
   }
 
+  const canExport = view !== "hosts";
+  const exportURL = exportPortGroupsURL(query);
+  const environmentOptions = useMemo(
+    () =>
+      Array.from(new Set((snapshot?.hosts ?? []).map((host) => host.environment).filter(Boolean))).map((value) => ({
+        label: value,
+        value,
+      })),
+    [snapshot?.hosts],
+  );
+
+  const sortOptions =
+    view === "hosts"
+      ? [
+          { label: "IP", value: "ip" },
+          { label: "环境", value: "environment" },
+          { label: "最近更新", value: "updated_desc" },
+        ]
+      : [
+          { label: "主机 + 端口", value: "host_port" },
+          { label: "服务名", value: "service" },
+          { label: "状态", value: "status" },
+          { label: "最近更新", value: "updated_desc" },
+        ];
+
   let content: ReactNode;
   if (inventoryQuery.isPending) {
     content = (
@@ -176,7 +201,7 @@ export function InventoryWorkspace({
       case "services":
         content = (
           <ServicesSection
-            groups={filteredGroups}
+            groups={groups}
             onDeleteGroup={(group) => void handleDeleteGroup(group)}
             onEditGroup={openEditGroup}
             onSelectGroup={setSelectedGroup}
@@ -194,7 +219,7 @@ export function InventoryWorkspace({
         );
         break;
       case "dependencies":
-        content = <DependenciesSection groups={filteredGroups} stats={stats} />;
+        content = <DependenciesSection groups={groups} stats={stats} />;
         break;
       default:
         content = (
@@ -230,13 +255,38 @@ export function InventoryWorkspace({
             <Input
               prefix={<SearchOutlined />}
               className="page-search"
-              placeholder="搜索服务、IP、组件、仓库"
+              placeholder={view === "hosts" ? "搜索 IP、名称、网段、备注" : "搜索服务、IP、组件、仓库"}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
+            {view === "hosts" ? (
+              <Select
+                allowClear
+                placeholder="环境"
+                style={{ width: 140 }}
+                value={environment}
+                options={environmentOptions}
+                onChange={setEnvironment}
+              />
+            ) : (
+              <Select
+                allowClear
+                placeholder="状态"
+                style={{ width: 140 }}
+                value={status}
+                options={statusOptions}
+                onChange={setStatus}
+              />
+            )}
+            <Select style={{ width: 150 }} value={sort} options={sortOptions} onChange={setSort} />
             <Button icon={<ReloadOutlined />} onClick={() => void refresh()} loading={inventoryQuery.isFetching}>
               刷新
             </Button>
+            {canExport ? (
+              <Button icon={<DownloadOutlined />} href={exportURL} target="_blank">
+                导出 CSV
+              </Button>
+            ) : null}
             <Button icon={<PlusOutlined />} onClick={openCreateHost}>
               主机
             </Button>

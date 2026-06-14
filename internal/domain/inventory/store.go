@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strings"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/uptrace/bun"
@@ -23,9 +24,31 @@ func (st *store) runInTx(ctx context.Context, fn func(context.Context, *store) e
 	})
 }
 
-func (st *store) listHosts(ctx context.Context) ([]Host, error) {
+func (st *store) listHosts(ctx context.Context, params HostListParams) ([]Host, error) {
 	var hosts []Host
-	if err := st.db.NewSelect().Model(&hosts).Order("ip ASC").Scan(ctx); err != nil {
+	query := st.db.NewSelect().Model(&hosts)
+
+	if environment := compactString(params.Environment); environment != "" {
+		query = query.Where("environment = ?", environment)
+	}
+	if keyword := compactString(params.Query); keyword != "" {
+		pattern := searchPattern(keyword)
+		query = query.Where(
+			joinSearchClauses([]string{"ip", "name", "network", "environment", "notes"}),
+			joinSearchArgs(pattern, 5)...,
+		)
+	}
+
+	switch strings.ToLower(params.Sort) {
+	case "environment":
+		query = query.Order("environment ASC", "ip ASC")
+	case "updated_desc":
+		query = query.Order("updated_at DESC", "ip ASC")
+	default:
+		query = query.Order("ip ASC")
+	}
+
+	if err := query.Scan(ctx); err != nil {
 		return nil, err
 	}
 	return hosts, nil
@@ -81,13 +104,47 @@ func (st *store) getHost(ctx context.Context, id int64) (*Host, error) {
 	return host, nil
 }
 
-func (st *store) listPortGroups(ctx context.Context) ([]PortGroup, error) {
+func (st *store) listPortGroups(ctx context.Context, params PortGroupListParams) ([]PortGroup, error) {
 	var groups []PortGroup
-	if err := st.db.NewSelect().
+	query := st.db.NewSelect().
 		Model(&groups).
-		Relation("Host").
-		Order("host.ip ASC", "port_group.port_start ASC").
-		Scan(ctx); err != nil {
+		Relation("Host")
+
+	if params.HostID > 0 {
+		query = query.Where("port_group.host_id = ?", params.HostID)
+	}
+	if status := compactString(params.Status); status != "" {
+		query = query.Where("port_group.status = ?", status)
+	}
+	if keyword := compactString(params.Query); keyword != "" {
+		pattern := searchPattern(keyword)
+		query = query.Where(
+			joinSearchClauses([]string{
+				"port_group.service_name",
+				"port_group.container_name",
+				"port_group.dind_host",
+				"port_group.owner",
+				"port_group.tags",
+				"port_group.notes",
+				"host.ip",
+				"host.name",
+			}),
+			joinSearchArgs(pattern, 8)...,
+		)
+	}
+
+	switch strings.ToLower(params.Sort) {
+	case "service":
+		query = query.Order("port_group.service_name ASC", "host.ip ASC", "port_group.port_start ASC")
+	case "status":
+		query = query.Order("port_group.status ASC", "host.ip ASC", "port_group.port_start ASC")
+	case "updated_desc":
+		query = query.Order("port_group.updated_at DESC", "host.ip ASC", "port_group.port_start ASC")
+	default:
+		query = query.Order("host.ip ASC", "port_group.port_start ASC")
+	}
+
+	if err := query.Scan(ctx); err != nil {
 		return nil, err
 	}
 	return groups, nil
