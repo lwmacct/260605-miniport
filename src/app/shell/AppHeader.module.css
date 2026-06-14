@@ -1,0 +1,156 @@
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 45px;
+  min-height: 45px;
+  padding: 0 16px;
+  background: var(--app-header-bg);
+  border-bottom: 1px solid var(--app-border);
+}
+
+.brandSlot,
+.navSlot,
+.actionsSlot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.brandSlot {
+  flex: 0 0 auto;
+}
+
+.brandMark {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  color: #ffffff;
+  background: var(--app-accent);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.brandMeta {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.brandMeta strong {
+  max-width: 180px;
+  overflow: hidden;
+  color: var(--app-text-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brandMeta span {
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.navSlot {
+  flex: 1 1 auto;
+  height: 44px;
+  overflow: hidden;
+  justify-content: flex-start;
+}
+
+.fullNav {
+  flex: 1 1 auto;
+}
+
+.navSlot :global(.ant-menu) {
+  flex: 1 1 auto;
+  min-width: 0;
+  border-bottom: 0;
+  background: transparent;
+}
+
+.navSlot :global(.ant-menu-horizontal) {
+  justify-content: flex-start;
+  line-height: 45px;
+}
+
+.navSlot :global(.ant-menu-item) {
+  color: var(--app-text-muted);
+}
+
+.navSlot :global(.ant-menu-item:hover),
+.navSlot :global(.ant-menu-item-selected) {
+  color: var(--app-accent-hover) !important;
+}
+
+.navSlot :global(.ant-menu-item::after) {
+  border-bottom-color: transparent !important;
+}
+
+.navSlot :global(.ant-menu-item-selected::after) {
+  border-bottom-color: var(--app-accent) !important;
+}
+
+.compactNav {
+  display: none;
+}
+
+.actionsSlot {
+  flex: 0 0 auto;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .header {
+    gap: 10px;
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 520px) {
+  .header {
+    padding: 0 10px;
+  }
+
+  .brandMeta {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .fullNav {
+    display: none;
+  }
+
+  .brandSlot {
+    gap: 0;
+  }
+
+  .navSlot {
+    flex: 1 1 auto;
+    overflow: visible;
+  }
+
+  .compactNav {
+    display: inline-flex;
+    max-width: 100%;
+  }
+
+  .compactNav :global(.ant-btn-icon) {
+    order: 2;
+    margin-inline-start: 4px;
+    margin-inline-end: 0;
+  }
+
+  .compactNav span:not(:global(.ant-btn-icon)) {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

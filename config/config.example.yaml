@@ -3,27 +3,31 @@
 
 # 服务端配置
 server:
+  debug: false # 启用调试日志和诊断信息
 
   # 数据库配置
-  db:
-    type: "pgsql" # 数据库类型: sqlite 或 pgsql
+  database:
+    type: "sqlite" # 数据库类型：sqlite、pgsql
     sqlite: "${APP_DATA:-.local/data}/sqlite.db" # SQLite 数据库文件路径
 
-    # PostgreSQL 数据库连接参数
+    # PostgreSQL 连接参数
     pgsql:
       host: "${PGHOST}" # PostgreSQL 主机
       port: "${PGPORT}" # PostgreSQL 端口
-      user: "${PGUSER}" # PostgreSQL 用户
+      user: "${PGUSER}" # PostgreSQL 用户名
       database: "${PGDATABASE}" # PostgreSQL 数据库名
       password: "${PGPASSWORD}" # PostgreSQL 密码
 
   # HTTP 服务配置
   http:
     listen: ":40238" # HTTP 服务监听地址
-    web-root: "${WEB_ROOT:-dist}" # 静态 Web 根目录, 为空时不托管前端
-    ssl-cert-file: "" # SSL 证书文件路径
-    ssl-key-file: "" # SSL 密钥文件路径
+    web-root: "${WEB_ROOT:-dist}" # 静态 Web 根目录，留空则不托管前端
 
-  # 本地控制面配置
-  control:
-    listen: "${APP_RUN:-.local/run}/control.sock" # 本地控制命令 Unix socket 路径
+    # HTTPS TLS 配置
+    tls:
+      cert-file: "" # TLS 证书文件路径
+      key-file: "" # TLS 私钥文件路径
+    read-timeout: 15s # HTTP 读取超时时间
+    write-timeout: 30s # HTTP 写入超时时间
+    idle-timeout: 2m0s # HTTP 空闲连接超时时间
+    max-api-body-bytes: 1048576 # HTTP API 最大请求体字节数，0 表示不限制

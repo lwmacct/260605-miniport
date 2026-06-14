@@ -26,18 +26,39 @@ includes:
     optional: true
 
 tasks:
-  api:
-    desc: Run the Go backend
+  install:
+    desc: Install frontend dependencies
+    cmds:
+      - npm install
+
+  dev:server:
+    desc: Start the Go backend
     cmds:
       - go run . server
 
-  web:
-    desc: Run the React frontend
+  dev:web:
+    desc: Start the Vite frontend
     cmds:
-      - npm run dev
+      - npm run dev -- --port 40239 --strictPort
+
+  build:server:
+    desc: Build backend binary
+    cmds:
+      - mkdir -p bin
+      - go build -o bin/miniport .
+
+  build:web:
+    desc: Build frontend
+    cmds:
+      - npm run build
 
   build:
-    desc: Build both frontend and backend
+    desc: Build frontend and backend
+    deps:
+      - build:web
+      - build:server
+
+  test:
+    desc: Run backend tests
     cmds:
-      - go build ./...
-      - npm run build
+      - go list ./... | grep -v '/node_modules/' | xargs go test
