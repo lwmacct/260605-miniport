@@ -87,6 +87,12 @@ export type InventoryQuery = {
   status?: string;
 };
 
+export type BatchPortGroupUpdate = {
+  owner?: string;
+  status?: string;
+  tags?: string;
+};
+
 export type AppStats = {
   hosts: number;
   groups: number;

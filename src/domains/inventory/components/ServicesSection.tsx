@@ -1,21 +1,26 @@
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { Button, Card, Popconfirm, Space, Table, Tag, Tooltip, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import type { Key } from "react";
 import type { PortGroup } from "../types";
 import { statusTag } from "../utils";
 
 type ServicesSectionProps = {
   groups: PortGroup[];
+  onChangeSelection: (ids: number[]) => void;
   onDeleteGroup: (group: PortGroup) => void;
   onEditGroup: (group: PortGroup) => void;
   onSelectGroup: (group: PortGroup) => void;
+  selectedRowKeys: number[];
 };
 
 export function ServicesSection({
   groups,
+  onChangeSelection,
   onDeleteGroup,
   onEditGroup,
   onSelectGroup,
+  selectedRowKeys,
 }: ServicesSectionProps) {
   const columns: ColumnsType<PortGroup> = [
     {
@@ -77,6 +82,10 @@ export function ServicesSection({
         columns={columns}
         dataSource={groups}
         pagination={{ pageSize: 12 }}
+        rowSelection={{
+          selectedRowKeys,
+          onChange: (keys: Key[]) => onChangeSelection(keys.map((key) => Number(key))),
+        }}
         scroll={{ x: 980 }}
       />
     </Card>

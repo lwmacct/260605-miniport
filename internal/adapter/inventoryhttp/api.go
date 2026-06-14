@@ -66,6 +66,14 @@ type portGroupUpdateInput struct {
 	Body inventory.PortGroupPayload
 }
 
+type portGroupBatchUpdateBodyInput struct {
+	Body inventory.PortGroupBatchUpdateInput
+}
+
+type portGroupBatchDeleteBodyInput struct {
+	Body inventory.PortGroupBatchDeleteInput
+}
+
 type deleteOutput struct {
 	Body struct {
 		Deleted bool `json:"deleted" example:"true"`
@@ -203,6 +211,35 @@ func Register(api huma.API, service *inventory.Service) {
 		Tags:        []string{"inventory"},
 	}, func(ctx context.Context, input *portGroupInput) (*deleteOutput, error) {
 		if err := service.DeletePortGroup(ctx, input.ID); err != nil {
+			return nil, err
+		}
+		out := &deleteOutput{}
+		out.Body.Deleted = true
+		return out, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "batch-update-port-groups",
+		Method:      http.MethodPost,
+		Path:        "/port-groups/batch-update",
+		Summary:     "Batch update port groups",
+		Tags:        []string{"inventory"},
+	}, func(ctx context.Context, input *portGroupBatchUpdateBodyInput) (*portGroupListOutput, error) {
+		groups, err := service.UpdatePortGroups(ctx, input.Body)
+		if err != nil {
+			return nil, err
+		}
+		return &portGroupListOutput{Body: groups}, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "batch-delete-port-groups",
+		Method:      http.MethodPost,
+		Path:        "/port-groups/batch-delete",
+		Summary:     "Batch delete port groups",
+		Tags:        []string{"inventory"},
+	}, func(ctx context.Context, input *portGroupBatchDeleteBodyInput) (*deleteOutput, error) {
+		if err := service.DeletePortGroups(ctx, input.Body); err != nil {
 			return nil, err
 		}
 		out := &deleteOutput{}

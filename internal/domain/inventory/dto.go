@@ -68,3 +68,14 @@ type PortGroupListParams struct {
 	Sort   string
 	Status string
 }
+
+type PortGroupBatchUpdateInput struct {
+	IDs    []int64 `json:"ids"`
+	Owner  *string `json:"owner,omitempty"`
+	Status *string `json:"status,omitempty"`
+	Tags   *string `json:"tags,omitempty"`
+}
+
+type PortGroupBatchDeleteInput struct {
+	IDs []int64 `json:"ids"`
+}

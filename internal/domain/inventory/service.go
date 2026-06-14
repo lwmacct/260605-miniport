@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/danielgtaylor/huma/v2"
 	"github.com/uptrace/bun"
 )
 
@@ -135,6 +136,58 @@ func (svc *Service) UpdatePortGroup(ctx context.Context, id int64, payload PortG
 func (svc *Service) DeletePortGroup(ctx context.Context, id int64) error {
 	return svc.store.runInTx(ctx, func(ctx context.Context, tx *store) error {
 		return tx.deletePortGroup(ctx, id)
+	})
+}
+
+func (svc *Service) UpdatePortGroups(ctx context.Context, input PortGroupBatchUpdateInput) ([]PortGroupView, error) {
+	normalized, err := normalizeBatchUpdateInput(input)
+	if err != nil {
+		return nil, err
+	}
+
+	var out []PortGroupView
+	err = svc.store.runInTx(ctx, func(ctx context.Context, tx *store) error {
+		count, err := tx.countPortGroupsByIDs(ctx, normalized.IDs)
+		if err != nil {
+			return err
+		}
+		if count != len(normalized.IDs) {
+			return huma.Error404NotFound("one or more port groups were not found")
+		}
+
+		if err := tx.batchUpdatePortGroups(ctx, normalized, time.Now().UTC()); err != nil {
+			return err
+		}
+
+		groups, err := tx.listPortGroupsByIDs(ctx, normalized.IDs)
+		if err != nil {
+			return err
+		}
+		views, err := tx.buildPortGroupViews(ctx, groups)
+		if err != nil {
+			return err
+		}
+		out = views
+		return nil
+	})
+	return out, err
+}
+
+func (svc *Service) DeletePortGroups(ctx context.Context, input PortGroupBatchDeleteInput) error {
+	normalized, err := normalizeBatchDeleteInput(input)
+	if err != nil {
+		return err
+	}
+
+	return svc.store.runInTx(ctx, func(ctx context.Context, tx *store) error {
+		count, err := tx.countPortGroupsByIDs(ctx, normalized.IDs)
+		if err != nil {
+			return err
+		}
+		if count != len(normalized.IDs) {
+			return huma.Error404NotFound("one or more port groups were not found")
+		}
+		return tx.deletePortGroups(ctx, normalized.IDs)
 	})
 }
 

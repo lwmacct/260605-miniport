@@ -1,5 +1,14 @@
 import { apiGet, apiSend } from "../../shared/api/client";
-import type { GroupForm, Host, HostForm, InventoryQuery, InventorySnapshot, Meta, PortGroup } from "./types";
+import type {
+  BatchPortGroupUpdate,
+  GroupForm,
+  Host,
+  HostForm,
+  InventoryQuery,
+  InventorySnapshot,
+  Meta,
+  PortGroup,
+} from "./types";
 
 function buildQueryString(params: Record<string, string | number | undefined>) {
   const search = new URLSearchParams();
@@ -98,5 +107,22 @@ export function exportPortGroupsURL(query: InventoryQuery) {
     q: query.portGroupQuery,
     sort: query.portGroupSort,
     status: query.status,
+  });
+}
+
+export function batchUpdatePortGroups(ids: number[], changes: BatchPortGroupUpdate) {
+  return apiSend<{ body: PortGroup[] }>("/api/port-groups/batch-update", {
+    method: "POST",
+    body: JSON.stringify({
+      ids,
+      ...changes,
+    }),
+  });
+}
+
+export function batchDeletePortGroups(ids: number[]) {
+  return apiSend<{ body: { deleted: boolean } }>("/api/port-groups/batch-delete", {
+    method: "POST",
+    body: JSON.stringify({ ids }),
   });
 }

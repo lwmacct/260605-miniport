@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/uptrace/bun"
@@ -166,6 +167,13 @@ func (st *store) createPortGroup(ctx context.Context, group *PortGroup) error {
 	return err
 }
 
+func (st *store) countPortGroupsByIDs(ctx context.Context, ids []int64) (int, error) {
+	return st.db.NewSelect().
+		Model((*PortGroup)(nil)).
+		Where("id IN (?)", bun.In(ids)).
+		Count(ctx)
+}
+
 func (st *store) updatePortGroup(ctx context.Context, id int64, group *PortGroup) error {
 	res, err := st.db.NewUpdate().
 		Model(group).
@@ -179,6 +187,26 @@ func (st *store) updatePortGroup(ctx context.Context, id int64, group *PortGroup
 		return huma.Error404NotFound("port group not found")
 	}
 	return nil
+}
+
+func (st *store) batchUpdatePortGroups(ctx context.Context, input PortGroupBatchUpdateInput, updatedAt time.Time) error {
+	query := st.db.NewUpdate().
+		Model((*PortGroup)(nil)).
+		Set("updated_at = ?", updatedAt).
+		Where("id IN (?)", bun.In(input.IDs))
+
+	if input.Status != nil {
+		query = query.Set("status = ?", *input.Status)
+	}
+	if input.Owner != nil {
+		query = query.Set("owner = ?", *input.Owner)
+	}
+	if input.Tags != nil {
+		query = query.Set("tags = ?", *input.Tags)
+	}
+
+	_, err := query.Exec(ctx)
+	return err
 }
 
 func (st *store) deletePortGroup(ctx context.Context, id int64) error {
@@ -198,6 +226,22 @@ func (st *store) deletePortGroup(ctx context.Context, id int64) error {
 	}
 	if rows, _ := res.RowsAffected(); rows == 0 {
 		return huma.Error404NotFound("port group not found")
+	}
+	return nil
+}
+
+func (st *store) deletePortGroups(ctx context.Context, ids []int64) error {
+	if _, err := st.db.NewDelete().Model((*Repository)(nil)).Where("port_group_id IN (?)", bun.In(ids)).Exec(ctx); err != nil {
+		return err
+	}
+	if _, err := st.db.NewDelete().Model((*Component)(nil)).Where("port_group_id IN (?)", bun.In(ids)).Exec(ctx); err != nil {
+		return err
+	}
+	if _, err := st.db.NewDelete().Model((*PortSlot)(nil)).Where("port_group_id IN (?)", bun.In(ids)).Exec(ctx); err != nil {
+		return err
+	}
+	if _, err := st.db.NewDelete().Model((*PortGroup)(nil)).Where("id IN (?)", bun.In(ids)).Exec(ctx); err != nil {
+		return err
 	}
 	return nil
 }
@@ -271,6 +315,18 @@ func (st *store) getPortGroupView(ctx context.Context, id int64) (*PortGroupView
 		return nil, err
 	}
 	return &views[0], nil
+}
+
+func (st *store) listPortGroupsByIDs(ctx context.Context, ids []int64) ([]PortGroup, error) {
+	var groups []PortGroup
+	if err := st.db.NewSelect().
+		Model(&groups).
+		Relation("Host").
+		Where("port_group.id IN (?)", bun.In(ids)).
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+	return groups, nil
 }
 
 func (st *store) buildPortGroupViews(ctx context.Context, groups []PortGroup) ([]PortGroupView, error) {

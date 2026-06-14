@@ -74,3 +74,19 @@ func formatPortGroupSlots(items []PortSlot) string {
 	}
 	return strings.Join(parts, "; ")
 }
+
+func uniqueInt64s(items []int64) []int64 {
+	seen := make(map[int64]struct{}, len(items))
+	out := make([]int64, 0, len(items))
+	for _, item := range items {
+		if item <= 0 {
+			continue
+		}
+		if _, ok := seen[item]; ok {
+			continue
+		}
+		seen[item] = struct{}{}
+		out = append(out, item)
+	}
+	return out
+}

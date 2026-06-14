@@ -1,13 +1,22 @@
-import { DownloadOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from "@ant-design/icons";
-import { Alert, Button, Flex, Form, Input, Select, Space, Spin, Typography, message } from "antd";
-import { useMemo, useState } from "react";
+import { DeleteOutlined, DownloadOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from "@ant-design/icons";
+import { Alert, Button, Flex, Form, Input, Modal, Select, Space, Spin, Typography, message } from "antd";
+import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useInventoryQuery, inventoryKeys } from "../queries";
-import { exportPortGroupsURL, removeHost, removePortGroup, saveHost, savePortGroup } from "../api";
+import {
+  batchDeletePortGroups,
+  batchUpdatePortGroups,
+  exportPortGroupsURL,
+  removeHost,
+  removePortGroup,
+  saveHost,
+  savePortGroup,
+} from "../api";
 import { statusOptions } from "../constants";
-import type { GroupForm, Host, HostForm, InventoryQuery, PortGroup } from "../types";
+import type { BatchPortGroupUpdate, GroupForm, Host, HostForm, InventoryQuery, PortGroup } from "../types";
 import { buildStats } from "../utils";
+import { BatchPortGroupModal, type BatchPortGroupForm } from "./BatchPortGroupModal";
 import { OverviewSection } from "./OverviewSection";
 import { ServicesSection } from "./ServicesSection";
 import { HostsSection } from "./HostsSection";
@@ -40,8 +49,11 @@ export function InventoryWorkspace({
   const [groupDrawerOpen, setGroupDrawerOpen] = useState(false);
   const [editingHost, setEditingHost] = useState<Host | null>(null);
   const [editingGroup, setEditingGroup] = useState<PortGroup | null>(null);
+  const [selectedGroupIDs, setSelectedGroupIDs] = useState<number[]>([]);
+  const [batchModalOpen, setBatchModalOpen] = useState(false);
   const [hostForm] = Form.useForm<HostForm>();
   const [groupForm] = Form.useForm<GroupForm>();
+  const [batchForm] = Form.useForm<BatchPortGroupForm>();
 
   const query = useMemo<InventoryQuery>(() => {
     if (view === "hosts") {
@@ -66,6 +78,10 @@ export function InventoryWorkspace({
   const hosts: Host[] = snapshot?.hosts ?? [];
   const groups: PortGroup[] = snapshot?.groups ?? [];
   const meta = snapshot?.meta;
+
+  useEffect(() => {
+    setSelectedGroupIDs([]);
+  }, [query]);
 
   const stats = useMemo(() => buildStats(groups, hosts), [groups, hosts]);
 
@@ -162,6 +178,52 @@ export function InventoryWorkspace({
     await refresh();
   }
 
+  function openBatchModal() {
+    batchForm.resetFields();
+    setBatchModalOpen(true);
+  }
+
+  async function handleBatchUpdate(values: BatchPortGroupForm) {
+    const changes: BatchPortGroupUpdate = {};
+    if (values.applyStatus) {
+      changes.status = values.status;
+    }
+    if (values.applyOwner) {
+      changes.owner = values.owner ?? "";
+    }
+    if (values.applyTags) {
+      changes.tags = values.tags ?? "";
+    }
+
+    setSaving(true);
+    try {
+      await batchUpdatePortGroups(selectedGroupIDs, changes);
+      message.success(`已批量更新 ${selectedGroupIDs.length} 个端口组`);
+      setBatchModalOpen(false);
+      setSelectedGroupIDs([]);
+      await refresh();
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : "批量更新失败");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function confirmBatchDelete() {
+    Modal.confirm({
+      title: "批量删除端口组",
+      content: `确认删除已选择的 ${selectedGroupIDs.length} 个端口组？`,
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        await batchDeletePortGroups(selectedGroupIDs);
+        message.success(`已删除 ${selectedGroupIDs.length} 个端口组`);
+        setSelectedGroupIDs([]);
+        await refresh();
+      },
+    });
+  }
+
+  const canBatchOperate = view === "services" && selectedGroupIDs.length > 0;
   const canExport = view !== "hosts";
   const exportURL = exportPortGroupsURL(query);
   const environmentOptions = useMemo(
@@ -202,9 +264,11 @@ export function InventoryWorkspace({
         content = (
           <ServicesSection
             groups={groups}
+            onChangeSelection={setSelectedGroupIDs}
             onDeleteGroup={(group) => void handleDeleteGroup(group)}
             onEditGroup={openEditGroup}
             onSelectGroup={setSelectedGroup}
+            selectedRowKeys={selectedGroupIDs}
           />
         );
         break;
@@ -287,6 +351,17 @@ export function InventoryWorkspace({
                 导出 CSV
               </Button>
             ) : null}
+            {canBatchOperate ? (
+              <>
+                <Typography.Text type="secondary">{`已选 ${selectedGroupIDs.length} 项`}</Typography.Text>
+                <Button icon={<EditOutlined />} onClick={openBatchModal}>
+                  批量编辑
+                </Button>
+                <Button danger icon={<DeleteOutlined />} onClick={confirmBatchDelete}>
+                  批量删除
+                </Button>
+              </>
+            ) : null}
             <Button icon={<PlusOutlined />} onClick={openCreateHost}>
               主机
             </Button>
@@ -323,6 +398,14 @@ export function InventoryWorkspace({
         onClose={() => setGroupDrawerOpen(false)}
         onSave={(values) => void handleSaveGroup(values)}
         open={groupDrawerOpen}
+        saving={saving}
+      />
+      <BatchPortGroupModal
+        form={batchForm}
+        onCancel={() => setBatchModalOpen(false)}
+        onSubmit={(values) => void handleBatchUpdate(values)}
+        open={batchModalOpen}
+        selectedCount={selectedGroupIDs.length}
         saving={saving}
       />
     </>

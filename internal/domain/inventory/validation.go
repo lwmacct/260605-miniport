@@ -205,3 +205,43 @@ func repositoriesFromPayload(groupID int64, payload []RepositoryPayload, now tim
 	}
 	return items, nil
 }
+
+func normalizeBatchUpdateInput(input PortGroupBatchUpdateInput) (PortGroupBatchUpdateInput, error) {
+	input.IDs = uniqueInt64s(input.IDs)
+	if len(input.IDs) == 0 {
+		return input, huma.Error400BadRequest("ids are required")
+	}
+
+	hasChanges := false
+	if input.Status != nil {
+		status := strings.TrimSpace(*input.Status)
+		if status == "" {
+			return input, huma.Error400BadRequest("status cannot be empty")
+		}
+		input.Status = &status
+		hasChanges = true
+	}
+	if input.Owner != nil {
+		owner := strings.TrimSpace(*input.Owner)
+		input.Owner = &owner
+		hasChanges = true
+	}
+	if input.Tags != nil {
+		tags := strings.TrimSpace(*input.Tags)
+		input.Tags = &tags
+		hasChanges = true
+	}
+	if !hasChanges {
+		return input, huma.Error400BadRequest("at least one field must be provided")
+	}
+
+	return input, nil
+}
+
+func normalizeBatchDeleteInput(input PortGroupBatchDeleteInput) (PortGroupBatchDeleteInput, error) {
+	input.IDs = uniqueInt64s(input.IDs)
+	if len(input.IDs) == 0 {
+		return input, huma.Error400BadRequest("ids are required")
+	}
+	return input, nil
+}
