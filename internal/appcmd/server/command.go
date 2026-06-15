@@ -62,6 +62,21 @@ var Command = &cli.Command{
 			Usage: usage.MustUsage("database.pgsql.password"),
 			Value: defaults.Server.Database.PGSQL.Password,
 		},
+		&cli.StringSliceFlag{
+			Name:  "auth.admins",
+			Usage: usage.MustUsage("auth.admins"),
+			Value: defaults.Server.Auth.Admins,
+		},
+		&cli.BoolFlag{
+			Name:  "auth.local.login-enabled",
+			Usage: usage.MustUsage("auth.local.login-enabled"),
+			Value: defaults.Server.Auth.Local.LoginEnabled,
+		},
+		&cli.BoolFlag{
+			Name:  "auth.local.registration-enabled",
+			Usage: usage.MustUsage("auth.local.registration-enabled"),
+			Value: defaults.Server.Auth.Local.RegistrationEnabled,
+		},
 		&cli.StringFlag{
 			Name:  "http.listen",
 			Usage: usage.MustUsage("http.listen"),
@@ -71,6 +86,11 @@ var Command = &cli.Command{
 			Name:  "http.web-root",
 			Usage: usage.MustUsage("http.web-root"),
 			Value: defaults.Server.HTTP.WebRoot,
+		},
+		&cli.DurationFlag{
+			Name:  "http.session-ttl",
+			Usage: usage.MustUsage("http.session-ttl"),
+			Value: defaults.Server.HTTP.SessionTTL,
 		},
 		&cli.StringFlag{
 			Name:  "http.tls.cert-file",
@@ -101,6 +121,11 @@ var Command = &cli.Command{
 			Name:  "http.max-api-body-bytes",
 			Usage: usage.MustUsage("http.max-api-body-bytes"),
 			Value: defaults.Server.HTTP.MaxAPIBodyBytes,
+		},
+		&cli.StringSliceFlag{
+			Name:  "http.trusted-proxies",
+			Usage: usage.MustUsage("http.trusted-proxies"),
+			Value: defaults.Server.HTTP.TrustedProxies,
 		},
 	},
 }

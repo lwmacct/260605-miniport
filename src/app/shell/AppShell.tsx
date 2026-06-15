@@ -1,22 +1,30 @@
 import { MoonOutlined, SunOutlined } from "@ant-design/icons";
-import { Layout, Switch, Tooltip, type MenuProps } from "antd";
+import { Layout, Space, Switch, Tooltip, type MenuProps } from "antd";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { AppHeader } from "./AppHeader";
 import { appPaths, topNavFromPathname, type TopNavKey } from "../router/navigation";
 import { APP_NAME, DISPLAY_VERSION } from "../../shared/config/appConfig";
 import { useThemeModeContext } from "../../shared/theme/ThemeModeContext";
+import { useAuthStateQuery } from "../../domains/auth/queries";
+import { useLogoutMutation } from "../../domains/auth/mutations";
+import { UserMenu } from "../../domains/auth/components/UserMenu";
 import styles from "./AppShell.module.css";
 
-function navItems(): MenuProps["items"] {
-  return [
+function navItems(admin: boolean): MenuProps["items"] {
+  const items: MenuProps["items"] = [
     { key: "overview", label: "端口总览" },
     { key: "services", label: "服务列表" },
     { key: "hosts", label: "主机管理" },
     { key: "dependencies", label: "依赖与仓库" },
   ];
+  if (admin) {
+    items.push({ key: "admin", label: "管理员" });
+  }
+  return items;
 }
 
 const navTargets: Record<TopNavKey, string> = {
+  admin: appPaths.admin,
   dependencies: appPaths.dependencies,
   hosts: appPaths.hosts,
   overview: appPaths.overview,
@@ -27,24 +35,30 @@ export function AppShell() {
   const navigate = useNavigate();
   const location = useLocation();
   const { themeMode, toggleTheme } = useThemeModeContext();
+  const authState = useAuthStateQuery();
+  const logoutMutation = useLogoutMutation();
   const activeNavKey = topNavFromPathname(location.pathname);
+  const user = authState.data?.session.user;
 
   return (
     <Layout className={styles.shell}>
       <AppHeader
         actions={
-          <Tooltip title={themeMode === "dark" ? "切换到明亮模式" : "切换到暗色模式"}>
-            <Switch
-              checked={themeMode === "dark"}
-              checkedChildren={<MoonOutlined />}
-              unCheckedChildren={<SunOutlined />}
-              onChange={toggleTheme}
-            />
-          </Tooltip>
+          <Space>
+            <Tooltip title={themeMode === "dark" ? "切换到明亮模式" : "切换到暗色模式"}>
+              <Switch
+                checked={themeMode === "dark"}
+                checkedChildren={<MoonOutlined />}
+                unCheckedChildren={<SunOutlined />}
+                onChange={toggleTheme}
+              />
+            </Tooltip>
+            <UserMenu username={user?.username} onLogout={() => void logoutMutation.mutateAsync()} />
+          </Space>
         }
         activeNavKeys={[activeNavKey]}
         brandName={APP_NAME}
-        navItems={navItems()}
+        navItems={navItems(Boolean(user?.admin))}
         onNavigate={(key) => navigate(navTargets[key as TopNavKey])}
         version={DISPLAY_VERSION}
       />

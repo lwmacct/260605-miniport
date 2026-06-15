@@ -3,6 +3,7 @@ import { Alert, Button, Flex, Form, Input, Modal, Select, Space, Spin, Typograph
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
+import { useAuthStateQuery } from "../../auth/queries";
 import { useInventoryQuery, inventoryKeys } from "../queries";
 import {
   batchDeletePortGroups,
@@ -39,6 +40,7 @@ export function InventoryWorkspace({
   view,
 }: InventoryWorkspaceProps) {
   const queryClient = useQueryClient();
+  const authState = useAuthStateQuery();
   const [search, setSearch] = useState("");
   const [environment, setEnvironment] = useState<string>();
   const [status, setStatus] = useState<string>();
@@ -78,6 +80,7 @@ export function InventoryWorkspace({
   const hosts: Host[] = snapshot?.hosts ?? [];
   const groups: PortGroup[] = snapshot?.groups ?? [];
   const meta = snapshot?.meta;
+  const canManage = Boolean(authState.data?.session.user?.admin);
 
   useEffect(() => {
     setSelectedGroupIDs([]);
@@ -223,7 +226,7 @@ export function InventoryWorkspace({
     });
   }
 
-  const canBatchOperate = view === "services" && selectedGroupIDs.length > 0;
+  const canBatchOperate = canManage && view === "services" && selectedGroupIDs.length > 0;
   const canExport = view !== "hosts";
   const exportURL = exportPortGroupsURL(query);
   const environmentOptions = useMemo(
@@ -263,6 +266,7 @@ export function InventoryWorkspace({
       case "services":
         content = (
           <ServicesSection
+            canManage={canManage}
             groups={groups}
             onChangeSelection={setSelectedGroupIDs}
             onDeleteGroup={(group) => void handleDeleteGroup(group)}
@@ -275,6 +279,7 @@ export function InventoryWorkspace({
       case "hosts":
         content = (
           <HostsSection
+            canManage={canManage}
             groups={groups}
             hosts={hosts}
             onDeleteHost={(host) => void handleDeleteHost(host)}
@@ -288,6 +293,7 @@ export function InventoryWorkspace({
       default:
         content = (
           <OverviewSection
+            canManage={canManage}
             groupsByHost={groupsByHost}
             hosts={hosts}
             onCreateHost={openCreateHost}
@@ -362,10 +368,15 @@ export function InventoryWorkspace({
                 </Button>
               </>
             ) : null}
-            <Button icon={<PlusOutlined />} onClick={openCreateHost}>
+            <Button icon={<PlusOutlined />} onClick={openCreateHost} disabled={!canManage}>
               主机
             </Button>
-            <Button type="primary" icon={<PlusOutlined />} onClick={openCreateGroup} disabled={hosts.length === 0}>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={openCreateGroup}
+              disabled={!canManage || hosts.length === 0}
+            >
               端口组
             </Button>
           </Space>
@@ -375,6 +386,7 @@ export function InventoryWorkspace({
       <section className="app-content">{content}</section>
 
       <GroupDetailDrawer
+        canManage={canManage}
         group={selectedGroup}
         onClose={() => setSelectedGroup(null)}
         onDelete={handleDeleteGroup}

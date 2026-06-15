@@ -4,6 +4,7 @@ import type { AppStats, Host, PortGroup } from "../types";
 import { statusTag } from "../utils";
 
 type OverviewSectionProps = {
+  canManage: boolean;
   groupsByHost: Array<{ host: Host; groups: PortGroup[] }>;
   hosts: Host[];
   onCreateHost: () => void;
@@ -13,6 +14,7 @@ type OverviewSectionProps = {
 };
 
 export function OverviewSection({
+  canManage,
   groupsByHost,
   hosts,
   onCreateHost,
@@ -38,7 +40,7 @@ export function OverviewSection({
       </Row>
       {hosts.length === 0 ? (
         <Empty description="还没有主机">
-          <Button type="primary" icon={<PlusOutlined />} onClick={onCreateHost}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={onCreateHost} disabled={!canManage}>
             新建主机
           </Button>
         </Empty>
@@ -53,7 +55,11 @@ export function OverviewSection({
                     {host.environment ? <Tag>{host.environment}</Tag> : null}
                   </Space>
                 }
-                extra={<Button size="small" icon={<EditOutlined />} onClick={() => onEditHost(host)} />}
+                extra={
+                  canManage ? (
+                    <Button size="small" icon={<EditOutlined />} onClick={() => onEditHost(host)} />
+                  ) : null
+                }
               >
                 <Typography.Text type="secondary">{host.name || host.network || "未命名主机"}</Typography.Text>
                 <Space direction="vertical" size={8} className="content-stack host-groups">

@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/lwmacct/251207-go-pkg-version/pkg/version"
 
+	"github.com/lwmacct/260605-miniport/internal/adapter/httpauth"
 	"github.com/lwmacct/260605-miniport/internal/adapter/inventoryhttp"
 	"github.com/lwmacct/260605-miniport/internal/infra/frontend"
 )
@@ -40,7 +41,16 @@ func (app *App) newHTTPServer() (*http.Server, error) {
 
 	api := humachi.New(apiRouter, httpAPIConfig())
 	app.registerHTTPAPI(api)
-	inventoryhttp.RegisterExportRoutes(apiRouter, app.inventory)
+
+	readGroup := huma.NewGroup(api)
+	readGroup.UseMiddleware(app.requireAuthenticatedHuma(api))
+	inventoryhttp.RegisterRead(readGroup, app.inventory)
+
+	writeGroup := huma.NewGroup(api)
+	writeGroup.UseMiddleware(app.requireAdminHuma(api))
+	inventoryhttp.RegisterWrite(writeGroup, app.inventory)
+
+	apiRouter.With(app.requireAuthenticatedHTTP).Get("/exports/port-groups.csv", inventoryhttp.ExportPortGroupsHandler(app.inventory))
 
 	if !frontend.RegisterRoutes(router, app.cfg.Server.HTTP.WebRoot) {
 		router.Get("/", func(w http.ResponseWriter, _ *http.Request) {
@@ -50,6 +60,9 @@ func (app *App) newHTTPServer() (*http.Server, error) {
 	}
 
 	handler := http.Handler(router)
+	if app.httpAuth != nil {
+		handler = app.httpAuth.WrapHandler(handler)
+	}
 	if maxBodyBytes := app.cfg.Server.HTTP.MaxAPIBodyBytes; maxBodyBytes > 0 {
 		handler = http.MaxBytesHandler(handler, maxBodyBytes)
 	}
@@ -70,6 +83,8 @@ func httpAPIConfig() huma.Config {
 }
 
 func (app *App) registerHTTPAPI(api huma.API) {
+	app.registerAuthHTTPAPI(api)
+
 	huma.Register(api, huma.Operation{
 		OperationID: "get-health",
 		Method:      http.MethodGet,
@@ -82,7 +97,7 @@ func (app *App) registerHTTPAPI(api huma.API) {
 		out.Body.Timestamp = time.Now().UTC()
 		out.Body.Version = version.AppVersion
 		out.Body.Database = databaseDisplay(app.cfg.Server.Database)
-		if err := app.db.DB.PingContext(ctx); err != nil {
+		if err := app.db.PingContext(ctx); err != nil {
 			out.Body.Status = "degraded"
 		}
 		return out, nil
@@ -103,6 +118,59 @@ func (app *App) registerHTTPAPI(api huma.API) {
 		out.Body.DocsPath = "/api"
 		return out, nil
 	})
+}
 
-	inventoryhttp.Register(api, app.inventory)
+func (app *App) requireAuthenticatedHTTP(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		actor, err := app.authActor(r.Context(), r)
+		if err != nil {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(w, r.WithContext(httpauth.ContextWithAuthActor(r.Context(), actor)))
+	})
+}
+
+func (app *App) authActor(ctx context.Context, r *http.Request) (httpauth.AuthActor, error) {
+	cookie, err := r.Cookie(httpauth.SessionCookie)
+	if err != nil || cookie.Value == "" {
+		return httpauth.AuthActor{}, http.ErrNoCookie
+	}
+	user, _, err := app.currentSessionUser(ctx, cookie.Value)
+	if err != nil {
+		return httpauth.AuthActor{}, err
+	}
+	return httpauth.AuthActor{
+		ID:       user.ID,
+		Username: user.Username,
+		Admin:    app.isRuntimeAdmin(user),
+	}, nil
+}
+
+func (app *App) requireAuthenticatedHuma(api huma.API) func(huma.Context, func(huma.Context)) {
+	return func(ctx huma.Context, next func(huma.Context)) {
+		request, _ := humachi.Unwrap(ctx)
+		actor, err := app.authActor(ctx.Context(), request)
+		if err != nil {
+			_ = huma.WriteErr(api, ctx, http.StatusUnauthorized, "unauthorized")
+			return
+		}
+		next(huma.WithContext(ctx, httpauth.ContextWithAuthActor(ctx.Context(), actor)))
+	}
+}
+
+func (app *App) requireAdminHuma(api huma.API) func(huma.Context, func(huma.Context)) {
+	return func(ctx huma.Context, next func(huma.Context)) {
+		request, _ := humachi.Unwrap(ctx)
+		actor, err := app.authActor(ctx.Context(), request)
+		if err != nil {
+			_ = huma.WriteErr(api, ctx, http.StatusUnauthorized, "unauthorized")
+			return
+		}
+		if !actor.Admin {
+			_ = huma.WriteErr(api, ctx, http.StatusForbidden, "forbidden")
+			return
+		}
+		next(huma.WithContext(ctx, httpauth.ContextWithAuthActor(ctx.Context(), actor)))
+	}
 }

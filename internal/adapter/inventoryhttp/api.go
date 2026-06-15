@@ -81,6 +81,11 @@ type deleteOutput struct {
 }
 
 func Register(api huma.API, service *inventory.Service) {
+	RegisterRead(api, service)
+	RegisterWrite(api, service)
+}
+
+func RegisterRead(api huma.API, service *inventory.Service) {
 	huma.Register(api, huma.Operation{
 		OperationID: "list-hosts",
 		Method:      http.MethodGet,
@@ -99,6 +104,41 @@ func Register(api huma.API, service *inventory.Service) {
 		return &hostListOutput{Body: hosts}, nil
 	})
 
+	huma.Register(api, huma.Operation{
+		OperationID: "list-port-groups",
+		Method:      http.MethodGet,
+		Path:        "/port-groups",
+		Summary:     "List port groups",
+		Tags:        []string{"inventory"},
+	}, func(ctx context.Context, input *portGroupListInput) (*portGroupListOutput, error) {
+		groups, err := service.ListPortGroups(ctx, inventory.PortGroupListParams{
+			HostID: input.HostID,
+			Query:  input.Query,
+			Sort:   input.Sort,
+			Status: input.Status,
+		})
+		if err != nil {
+			return nil, err
+		}
+		return &portGroupListOutput{Body: groups}, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "get-port-group",
+		Method:      http.MethodGet,
+		Path:        "/port-groups/{id}",
+		Summary:     "Get port group",
+		Tags:        []string{"inventory"},
+	}, func(ctx context.Context, input *portGroupInput) (*portGroupOutput, error) {
+		group, err := service.GetPortGroup(ctx, input.ID)
+		if err != nil {
+			return nil, err
+		}
+		return &portGroupOutput{Body: *group}, nil
+	})
+}
+
+func RegisterWrite(api huma.API, service *inventory.Service) {
 	huma.Register(api, huma.Operation{
 		OperationID: "create-host",
 		Method:      http.MethodPost,
@@ -140,39 +180,6 @@ func Register(api huma.API, service *inventory.Service) {
 		out := &deleteOutput{}
 		out.Body.Deleted = true
 		return out, nil
-	})
-
-	huma.Register(api, huma.Operation{
-		OperationID: "list-port-groups",
-		Method:      http.MethodGet,
-		Path:        "/port-groups",
-		Summary:     "List port groups",
-		Tags:        []string{"inventory"},
-	}, func(ctx context.Context, input *portGroupListInput) (*portGroupListOutput, error) {
-		groups, err := service.ListPortGroups(ctx, inventory.PortGroupListParams{
-			HostID: input.HostID,
-			Query:  input.Query,
-			Sort:   input.Sort,
-			Status: input.Status,
-		})
-		if err != nil {
-			return nil, err
-		}
-		return &portGroupListOutput{Body: groups}, nil
-	})
-
-	huma.Register(api, huma.Operation{
-		OperationID: "get-port-group",
-		Method:      http.MethodGet,
-		Path:        "/port-groups/{id}",
-		Summary:     "Get port group",
-		Tags:        []string{"inventory"},
-	}, func(ctx context.Context, input *portGroupInput) (*portGroupOutput, error) {
-		group, err := service.GetPortGroup(ctx, input.ID)
-		if err != nil {
-			return nil, err
-		}
-		return &portGroupOutput{Body: *group}, nil
 	})
 
 	huma.Register(api, huma.Operation{
@@ -248,8 +255,8 @@ func Register(api huma.API, service *inventory.Service) {
 	})
 }
 
-func RegisterExportRoutes(router chi.Router, service *inventory.Service) {
-	router.Get("/exports/port-groups.csv", func(w http.ResponseWriter, r *http.Request) {
+func ExportPortGroupsHandler(service *inventory.Service) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		hostID, _ := strconv.ParseInt(r.URL.Query().Get("hostId"), 10, 64)
 		body, err := service.ExportPortGroupsCSV(r.Context(), inventory.PortGroupListParams{
 			HostID: hostID,
@@ -265,5 +272,9 @@ func RegisterExportRoutes(router chi.Router, service *inventory.Service) {
 		w.Header().Set("Content-Type", "text/csv; charset=utf-8")
 		w.Header().Set("Content-Disposition", `attachment; filename="miniport-port-groups.csv"`)
 		_, _ = w.Write(body)
-	})
+	}
+}
+
+func RegisterExportRoutes(router chi.Router, service *inventory.Service) {
+	router.Get("/exports/port-groups.csv", ExportPortGroupsHandler(service))
 }

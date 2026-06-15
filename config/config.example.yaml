@@ -18,6 +18,18 @@ server:
       database: "${PGDATABASE}" # PostgreSQL 数据库名
       password: "${PGPASSWORD}" # PostgreSQL 密码
 
+  # 认证配置
+  auth:
+
+    # 运行时管理员用户名列表
+    admins:
+      - admin
+
+    # 本地账号认证配置
+    local:
+      login-enabled: true # 是否启用本地账号登录
+      registration-enabled: true # 是否允许用户名密码公开注册
+
   # HTTP 服务配置
   http:
     listen: ":40238" # HTTP 服务监听地址
@@ -27,6 +39,10 @@ server:
     tls:
       cert-file: "" # TLS 证书文件路径
       key-file: "" # TLS 私钥文件路径
+    session-ttl: 168h0m0s # HTTP 登录会话有效期
+
+    # 可信 HTTP 反向代理 CIDR/IP 列表
+    trusted-proxies: []
     read-timeout: 15s # HTTP 读取超时时间
     write-timeout: 30s # HTTP 写入超时时间
     idle-timeout: 2m0s # HTTP 空闲连接超时时间

@@ -62,14 +62,14 @@ export function saveHost(host: HostForm, editingHost?: Host | null) {
     network: host.network ?? "",
     notes: host.notes ?? "",
   };
-  return apiSend<{ body: Host }>(editingHost ? `/api/hosts/${editingHost.id}` : "/api/hosts", {
+  return apiSend<Host>(editingHost ? `/api/hosts/${editingHost.id}` : "/api/hosts", {
     method: editingHost ? "PUT" : "POST",
     body: JSON.stringify(payload),
   });
 }
 
 export function removeHost(host: Host) {
-  return apiSend<{ body: { deleted: boolean } }>(`/api/hosts/${host.id}`, { method: "DELETE" });
+  return apiSend<{ deleted: boolean }>(`/api/hosts/${host.id}`, { method: "DELETE" });
 }
 
 export function savePortGroup(group: GroupForm, editingGroup?: PortGroup | null) {
@@ -88,7 +88,7 @@ export function savePortGroup(group: GroupForm, editingGroup?: PortGroup | null)
     status: group.status ?? "planned",
     tags: group.tags ?? "",
   };
-  return apiSend<{ body: PortGroup }>(
+  return apiSend<PortGroup>(
     editingGroup ? `/api/port-groups/${editingGroup.id}` : "/api/port-groups",
     {
       method: editingGroup ? "PUT" : "POST",
@@ -98,7 +98,7 @@ export function savePortGroup(group: GroupForm, editingGroup?: PortGroup | null)
 }
 
 export function removePortGroup(group: PortGroup) {
-  return apiSend<{ body: { deleted: boolean } }>(`/api/port-groups/${group.id}`, { method: "DELETE" });
+  return apiSend<{ deleted: boolean }>(`/api/port-groups/${group.id}`, { method: "DELETE" });
 }
 
 export function exportPortGroupsURL(query: InventoryQuery) {
@@ -111,7 +111,7 @@ export function exportPortGroupsURL(query: InventoryQuery) {
 }
 
 export function batchUpdatePortGroups(ids: number[], changes: BatchPortGroupUpdate) {
-  return apiSend<{ body: PortGroup[] }>("/api/port-groups/batch-update", {
+  return apiSend<PortGroup[]>("/api/port-groups/batch-update", {
     method: "POST",
     body: JSON.stringify({
       ids,
@@ -121,7 +121,7 @@ export function batchUpdatePortGroups(ids: number[], changes: BatchPortGroupUpda
 }
 
 export function batchDeletePortGroups(ids: number[]) {
-  return apiSend<{ body: { deleted: boolean } }>("/api/port-groups/batch-delete", {
+  return apiSend<{ deleted: boolean }>("/api/port-groups/batch-delete", {
     method: "POST",
     body: JSON.stringify({ ids }),
   });

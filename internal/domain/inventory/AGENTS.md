@@ -29,7 +29,7 @@ This module owns host inventory, port groups, port slots, components, and reposi
 Run:
 
 ```bash
-go test ./internal/modules/inventory
+go test ./internal/domain/inventory
 ```
 
 Add tests when changing port range validation, child replacement, or uniqueness behavior.

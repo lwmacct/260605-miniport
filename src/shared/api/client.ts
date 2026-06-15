@@ -8,7 +8,7 @@ export class APIError extends Error {
   }
 }
 
-async function responseErrorMessage(response: Response, fallback: string): Promise<string> {
+export async function responseErrorMessage(response: Response, fallback: string): Promise<string> {
   try {
     const payload = (await response.json()) as { detail?: unknown; title?: unknown };
     if (typeof payload.detail === "string" && payload.detail) {

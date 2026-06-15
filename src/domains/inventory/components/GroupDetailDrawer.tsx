@@ -5,6 +5,7 @@ import type { PortGroup, PortSlot } from "../types";
 import { splitTags } from "../utils";
 
 type GroupDetailDrawerProps = {
+  canManage: boolean;
   group: PortGroup | null;
   onClose: () => void;
   onDelete: (group: PortGroup) => Promise<void>;
@@ -12,6 +13,7 @@ type GroupDetailDrawerProps = {
 };
 
 export function GroupDetailDrawer({
+  canManage,
   group,
   onClose,
   onDelete,
@@ -24,7 +26,7 @@ export function GroupDetailDrawer({
       size="large"
       onClose={onClose}
       extra={
-        group ? (
+        group && canManage ? (
           <Space>
             <Button icon={<EditOutlined />} onClick={() => onEdit(group)}>
               编辑

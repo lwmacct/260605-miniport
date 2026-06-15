@@ -170,7 +170,7 @@ func (st *store) createPortGroup(ctx context.Context, group *PortGroup) error {
 func (st *store) countPortGroupsByIDs(ctx context.Context, ids []int64) (int, error) {
 	return st.db.NewSelect().
 		Model((*PortGroup)(nil)).
-		Where("id IN (?)", bun.In(ids)).
+		Where("id IN (?)", bun.List(ids)).
 		Count(ctx)
 }
 
@@ -193,7 +193,7 @@ func (st *store) batchUpdatePortGroups(ctx context.Context, input PortGroupBatch
 	query := st.db.NewUpdate().
 		Model((*PortGroup)(nil)).
 		Set("updated_at = ?", updatedAt).
-		Where("id IN (?)", bun.In(input.IDs))
+		Where("id IN (?)", bun.List(input.IDs))
 
 	if input.Status != nil {
 		query = query.Set("status = ?", *input.Status)
@@ -231,16 +231,16 @@ func (st *store) deletePortGroup(ctx context.Context, id int64) error {
 }
 
 func (st *store) deletePortGroups(ctx context.Context, ids []int64) error {
-	if _, err := st.db.NewDelete().Model((*Repository)(nil)).Where("port_group_id IN (?)", bun.In(ids)).Exec(ctx); err != nil {
+	if _, err := st.db.NewDelete().Model((*Repository)(nil)).Where("port_group_id IN (?)", bun.List(ids)).Exec(ctx); err != nil {
 		return err
 	}
-	if _, err := st.db.NewDelete().Model((*Component)(nil)).Where("port_group_id IN (?)", bun.In(ids)).Exec(ctx); err != nil {
+	if _, err := st.db.NewDelete().Model((*Component)(nil)).Where("port_group_id IN (?)", bun.List(ids)).Exec(ctx); err != nil {
 		return err
 	}
-	if _, err := st.db.NewDelete().Model((*PortSlot)(nil)).Where("port_group_id IN (?)", bun.In(ids)).Exec(ctx); err != nil {
+	if _, err := st.db.NewDelete().Model((*PortSlot)(nil)).Where("port_group_id IN (?)", bun.List(ids)).Exec(ctx); err != nil {
 		return err
 	}
-	if _, err := st.db.NewDelete().Model((*PortGroup)(nil)).Where("id IN (?)", bun.In(ids)).Exec(ctx); err != nil {
+	if _, err := st.db.NewDelete().Model((*PortGroup)(nil)).Where("id IN (?)", bun.List(ids)).Exec(ctx); err != nil {
 		return err
 	}
 	return nil
@@ -322,7 +322,7 @@ func (st *store) listPortGroupsByIDs(ctx context.Context, ids []int64) ([]PortGr
 	if err := st.db.NewSelect().
 		Model(&groups).
 		Relation("Host").
-		Where("port_group.id IN (?)", bun.In(ids)).
+		Where("port_group.id IN (?)", bun.List(ids)).
 		Scan(ctx); err != nil {
 		return nil, err
 	}
@@ -342,15 +342,15 @@ func (st *store) buildPortGroupViews(ctx context.Context, groups []PortGroup) ([
 	}
 
 	var slots []PortSlot
-	if err := st.db.NewSelect().Model(&slots).Where("port_group_id IN (?)", bun.In(ids)).Order("port ASC").Scan(ctx); err != nil {
+	if err := st.db.NewSelect().Model(&slots).Where("port_group_id IN (?)", bun.List(ids)).Order("port ASC").Scan(ctx); err != nil {
 		return nil, err
 	}
 	var components []Component
-	if err := st.db.NewSelect().Model(&components).Where("port_group_id IN (?)", bun.In(ids)).Order("name ASC").Scan(ctx); err != nil {
+	if err := st.db.NewSelect().Model(&components).Where("port_group_id IN (?)", bun.List(ids)).Order("name ASC").Scan(ctx); err != nil {
 		return nil, err
 	}
 	var repositories []Repository
-	if err := st.db.NewSelect().Model(&repositories).Where("port_group_id IN (?)", bun.In(ids)).Order("name ASC").Scan(ctx); err != nil {
+	if err := st.db.NewSelect().Model(&repositories).Where("port_group_id IN (?)", bun.List(ids)).Order("name ASC").Scan(ctx); err != nil {
 		return nil, err
 	}
 

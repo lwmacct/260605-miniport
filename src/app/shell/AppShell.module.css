@@ -12,6 +12,12 @@
   padding: 12px;
 }
 
+.centerState {
+  display: grid;
+  min-height: calc(100vh - 45px);
+  place-items: center;
+}
+
 @media (max-width: 640px) {
   .content {
     padding: 10px;

@@ -4,13 +4,14 @@ import type { ColumnsType } from "antd/es/table";
 import type { Host, PortGroup } from "../types";
 
 type HostsSectionProps = {
+  canManage: boolean;
   groups: PortGroup[];
   hosts: Host[];
   onDeleteHost: (host: Host) => void;
   onEditHost: (host: Host) => void;
 };
 
-export function HostsSection({ groups, hosts, onDeleteHost, onEditHost }: HostsSectionProps) {
+export function HostsSection({ canManage, groups, hosts, onDeleteHost, onEditHost }: HostsSectionProps) {
   const columns: ColumnsType<Host> = [
     { title: "IP", dataIndex: "ip", width: 160 },
     { title: "名称", dataIndex: "name" },
@@ -24,16 +25,17 @@ export function HostsSection({ groups, hosts, onDeleteHost, onEditHost }: HostsS
     {
       title: "操作",
       width: 120,
-      render: (_, host) => (
-        <Space>
-          <Tooltip title="编辑">
-            <Button icon={<EditOutlined />} onClick={() => onEditHost(host)} />
-          </Tooltip>
-          <Popconfirm title="删除主机" onConfirm={() => onDeleteHost(host)}>
-            <Button danger icon={<DeleteOutlined />} />
-          </Popconfirm>
-        </Space>
-      ),
+      render: (_, host) =>
+        canManage ? (
+          <Space>
+            <Tooltip title="编辑">
+              <Button icon={<EditOutlined />} onClick={() => onEditHost(host)} />
+            </Tooltip>
+            <Popconfirm title="删除主机" onConfirm={() => onDeleteHost(host)}>
+              <Button danger icon={<DeleteOutlined />} />
+            </Popconfirm>
+          </Space>
+        ) : null,
     },
   ];
 

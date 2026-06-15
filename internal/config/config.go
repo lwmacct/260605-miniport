@@ -12,6 +12,7 @@ type Config struct {
 type Server struct {
 	Debug    bool           `json:"debug" desc:"启用调试日志和诊断信息"`
 	Database ServerDatabase `json:"database" desc:"数据库配置"`
+	Auth     ServerAuth     `json:"auth" desc:"认证配置"`
 	HTTP     ServerHTTP     `json:"http" desc:"HTTP 服务配置"`
 }
 
@@ -33,10 +34,22 @@ type ServerHTTP struct {
 	Listen          string        `json:"listen" desc:"HTTP 服务监听地址"`
 	WebRoot         string        `json:"web-root" desc:"静态 Web 根目录，留空则不托管前端"`
 	TLS             ServerHTTPTLS `json:"tls" desc:"HTTPS TLS 配置"`
+	SessionTTL      time.Duration `json:"session-ttl" desc:"HTTP 登录会话有效期"`
+	TrustedProxies  []string      `json:"trusted-proxies" desc:"可信 HTTP 反向代理 CIDR/IP 列表"`
 	ReadTimeout     time.Duration `json:"read-timeout" desc:"HTTP 读取超时时间"`
 	WriteTimeout    time.Duration `json:"write-timeout" desc:"HTTP 写入超时时间"`
 	IdleTimeout     time.Duration `json:"idle-timeout" desc:"HTTP 空闲连接超时时间"`
 	MaxAPIBodyBytes int64         `json:"max-api-body-bytes" desc:"HTTP API 最大请求体字节数，0 表示不限制"`
+}
+
+type ServerAuth struct {
+	Admins []string        `json:"admins" desc:"运行时管理员用户名列表"`
+	Local  ServerAuthLocal `json:"local" desc:"本地账号认证配置"`
+}
+
+type ServerAuthLocal struct {
+	LoginEnabled        bool `json:"login-enabled" desc:"是否启用本地账号登录"`
+	RegistrationEnabled bool `json:"registration-enabled" desc:"是否允许用户名密码公开注册"`
 }
 
 type ServerHTTPTLS struct {
@@ -69,6 +82,13 @@ func DefaultConfig() Config {
 					Password: "${PGPASSWORD}",
 				},
 			},
+			Auth: ServerAuth{
+				Admins: []string{"admin"},
+				Local: ServerAuthLocal{
+					LoginEnabled:        true,
+					RegistrationEnabled: true,
+				},
+			},
 			HTTP: ServerHTTP{
 				Listen:  ":40238",
 				WebRoot: "${WEB_ROOT:-dist}",
@@ -76,6 +96,8 @@ func DefaultConfig() Config {
 					CertFile: "",
 					KeyFile:  "",
 				},
+				SessionTTL:      7 * 24 * time.Hour,
+				TrustedProxies:  nil,
 				ReadTimeout:     15 * time.Second,
 				WriteTimeout:    30 * time.Second,
 				IdleTimeout:     2 * time.Minute,

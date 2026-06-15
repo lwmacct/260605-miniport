@@ -6,6 +6,7 @@ import type { PortGroup } from "../types";
 import { statusTag } from "../utils";
 
 type ServicesSectionProps = {
+  canManage: boolean;
   groups: PortGroup[];
   onChangeSelection: (ids: number[]) => void;
   onDeleteGroup: (group: PortGroup) => void;
@@ -15,6 +16,7 @@ type ServicesSectionProps = {
 };
 
 export function ServicesSection({
+  canManage,
   groups,
   onChangeSelection,
   onDeleteGroup,
@@ -62,16 +64,17 @@ export function ServicesSection({
     {
       title: "操作",
       width: 120,
-      render: (_, group) => (
-        <Space>
-          <Tooltip title="编辑">
-            <Button icon={<EditOutlined />} onClick={() => onEditGroup(group)} />
-          </Tooltip>
-          <Popconfirm title="删除端口组" onConfirm={() => onDeleteGroup(group)}>
-            <Button danger icon={<DeleteOutlined />} />
-          </Popconfirm>
-        </Space>
-      ),
+      render: (_, group) =>
+        canManage ? (
+          <Space>
+            <Tooltip title="编辑">
+              <Button icon={<EditOutlined />} onClick={() => onEditGroup(group)} />
+            </Tooltip>
+            <Popconfirm title="删除端口组" onConfirm={() => onDeleteGroup(group)}>
+              <Button danger icon={<DeleteOutlined />} />
+            </Popconfirm>
+          </Space>
+        ) : null,
     },
   ];
 
@@ -82,10 +85,14 @@ export function ServicesSection({
         columns={columns}
         dataSource={groups}
         pagination={{ pageSize: 12 }}
-        rowSelection={{
-          selectedRowKeys,
-          onChange: (keys: Key[]) => onChangeSelection(keys.map((key) => Number(key))),
-        }}
+        rowSelection={
+          canManage
+            ? {
+                selectedRowKeys,
+                onChange: (keys: Key[]) => onChangeSelection(keys.map((key) => Number(key))),
+              }
+            : undefined
+        }
         scroll={{ x: 980 }}
       />
     </Card>
