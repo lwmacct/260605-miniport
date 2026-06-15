@@ -132,11 +132,12 @@ func (app *App) requireAuthenticatedHTTP(next http.Handler) http.Handler {
 }
 
 func (app *App) authActor(ctx context.Context, r *http.Request) (httpauth.AuthActor, error) {
-	cookie, err := r.Cookie(httpauth.SessionCookie)
-	if err != nil || cookie.Value == "" {
+	_ = r
+	sessionID, ok := httpauth.SessionIDFromContext(ctx)
+	if !ok {
 		return httpauth.AuthActor{}, http.ErrNoCookie
 	}
-	user, _, err := app.currentSessionUser(ctx, cookie.Value)
+	user, _, err := app.currentSessionUser(ctx, sessionID)
 	if err != nil {
 		return httpauth.AuthActor{}, err
 	}

@@ -1,3 +1,6 @@
 package httpauth
 
-const SessionCookie = "web_session"
+const (
+	SessionCookie     = "miniport_session"
+	SessionCookiePath = "/api"
+)

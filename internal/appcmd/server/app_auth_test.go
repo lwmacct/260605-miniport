@@ -159,6 +159,36 @@ func TestInventoryWriteRequiresAdmin(t *testing.T) {
 	require.Equal(t, http.StatusForbidden, rec.Code, rec.Body.String())
 }
 
+func TestProtectedReadRejectsDuplicateSessionCookie(t *testing.T) {
+	app, handler := setupAuthTestApp(t, []string{"admin"})
+
+	user, err := app.users.Create(context.Background(), identityuser.CreateInput{Username: "admin"})
+	require.NoError(t, err)
+	require.NoError(t, app.passwords.Set(context.Background(), user.Username, user.ID, "strong-ops-password-123"))
+
+	loginReq := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/api/auth/password/login", strings.NewReader(loginBody(t, handler, "admin", "strong-ops-password-123")))
+	loginReq.Header.Set("Content-Type", "application/json")
+	loginReq.RemoteAddr = "127.0.0.1:12345"
+	loginRec := httptest.NewRecorder()
+	handler.ServeHTTP(loginRec, loginReq)
+	require.Equal(t, http.StatusOK, loginRec.Code, loginRec.Body.String())
+	validCookie := loginRec.Result().Cookies()[0]
+
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/hosts", nil)
+	req.RemoteAddr = "127.0.0.1:12345"
+	req.Header.Set("Cookie", validCookie.Name+"=sess_stale; "+validCookie.Name+"="+validCookie.Value)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusUnauthorized, rec.Code, rec.Body.String())
+
+	req = httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/hosts", nil)
+	req.RemoteAddr = "127.0.0.1:12345"
+	req.AddCookie(validCookie)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+}
+
 func TestAuthPasswordLoginRequiresChallenge(t *testing.T) {
 	app, handler := setupAuthTestApp(t, []string{"admin"})
 	user, err := app.users.Create(context.Background(), identityuser.CreateInput{Username: "admin"})

@@ -26,12 +26,25 @@ func (svc *Service) SecureCookies() bool {
 
 func (svc *Service) WrapHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		request, ok := svc.SessionRequest(r)
 		if ok {
-			r = r.WithContext(ContextWithRequest(r.Context(), request))
+			ctx = ContextWithRequest(ctx, request)
 		}
+		if sessionID, ok := SessionIDFromRequest(r); ok {
+			ctx = ContextWithSessionID(ctx, sessionID)
+		}
+		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})
+}
+
+func SessionIDFromRequest(r *http.Request) (string, bool) {
+	cookies := r.CookiesNamed(SessionCookie)
+	if len(cookies) != 1 || cookies[0].Value == "" {
+		return "", false
+	}
+	return cookies[0].Value, true
 }
 
 func (svc *Service) SessionRequest(r *http.Request) (authsession.Request, bool) {

@@ -7,6 +7,7 @@ import (
 )
 
 type requestKey struct{}
+type sessionIDKey struct{}
 type userKey struct{}
 
 func ContextWithRequest(ctx context.Context, request authsession.Request) context.Context {
@@ -16,6 +17,15 @@ func ContextWithRequest(ctx context.Context, request authsession.Request) contex
 func RequestFromContext(ctx context.Context) (authsession.Request, bool) {
 	request, ok := ctx.Value(requestKey{}).(authsession.Request)
 	return request, ok
+}
+
+func ContextWithSessionID(ctx context.Context, sessionID string) context.Context {
+	return context.WithValue(ctx, sessionIDKey{}, sessionID)
+}
+
+func SessionIDFromContext(ctx context.Context) (string, bool) {
+	sessionID, ok := ctx.Value(sessionIDKey{}).(string)
+	return sessionID, ok && sessionID != ""
 }
 
 func ContextWithAuthActor(ctx context.Context, user AuthActor) context.Context {

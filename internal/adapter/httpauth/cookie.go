@@ -10,7 +10,7 @@ func SessionCookieValue(sessionID string, expiresAt time.Time, secure bool) *htt
 	return &http.Cookie{
 		Name:     SessionCookie,
 		Value:    sessionID,
-		Path:     "/",
+		Path:     SessionCookiePath,
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 		Secure:   secure,
@@ -24,7 +24,7 @@ func ClearSessionCookie(secure bool) *http.Cookie {
 	return &http.Cookie{
 		Name:     SessionCookie,
 		Value:    "",
-		Path:     "/",
+		Path:     SessionCookiePath,
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 		Secure:   secure,

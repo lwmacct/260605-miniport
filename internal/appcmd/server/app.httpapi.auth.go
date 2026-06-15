@@ -71,7 +71,6 @@ type authBodyInput[T any] struct {
 }
 
 type authSessionInput struct {
-	Session string `cookie:"web_session"`
 }
 
 type authSessionResponse struct {
@@ -230,8 +229,9 @@ func (app *App) authPasswordLogin(ctx context.Context, input *authBodyInput[auth
 }
 
 func (app *App) authLogout(ctx context.Context, input *authSessionInput) (*authSessionResponse, error) {
-	if input.Session != "" {
-		_ = app.sessions.Delete(ctx, input.Session)
+	_ = input
+	if sessionID, ok := httpauth.SessionIDFromContext(ctx); ok {
+		_ = app.sessions.Delete(ctx, sessionID)
 	}
 	return &authSessionResponse{
 		SetCookie: httpauth.ClearSessionCookie(app.httpAuth.SecureCookies()).String(),
@@ -242,7 +242,12 @@ func (app *App) authLogout(ctx context.Context, input *authSessionInput) (*authS
 }
 
 func (app *App) authMe(ctx context.Context, input *authSessionInput) (*authBody[authSessionDTO], error) {
-	user, sessionUser, err := app.currentSessionUser(ctx, input.Session)
+	_ = input
+	sessionID, ok := httpauth.SessionIDFromContext(ctx)
+	if !ok {
+		return nil, huma.Error401Unauthorized("unauthorized")
+	}
+	user, sessionUser, err := app.currentSessionUser(ctx, sessionID)
 	if err != nil {
 		return nil, huma.Error401Unauthorized("unauthorized")
 	}
@@ -256,7 +261,12 @@ func (app *App) authMe(ctx context.Context, input *authSessionInput) (*authBody[
 }
 
 func (app *App) adminListUsers(ctx context.Context, input *authSessionInput) (*authBody[[]adminUserDTO], error) {
-	current, _, err := app.currentSessionUser(ctx, input.Session)
+	_ = input
+	sessionID, ok := httpauth.SessionIDFromContext(ctx)
+	if !ok {
+		return nil, huma.Error401Unauthorized("unauthorized")
+	}
+	current, _, err := app.currentSessionUser(ctx, sessionID)
 	if err != nil {
 		return nil, huma.Error401Unauthorized("unauthorized")
 	}
