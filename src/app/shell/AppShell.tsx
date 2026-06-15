@@ -1,5 +1,6 @@
 import { MoonOutlined, SunOutlined } from "@ant-design/icons";
 import { Layout, Space, Switch, Tooltip, type MenuProps } from "antd";
+import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { AppHeader } from "./AppHeader";
 import { appPaths, topNavFromPathname, type TopNavKey } from "../router/navigation";
@@ -38,7 +39,25 @@ export function AppShell() {
   const authState = useAuthStateQuery();
   const logoutMutation = useLogoutMutation();
   const activeNavKey = topNavFromPathname(location.pathname);
+  const [optimisticActiveKey, setOptimisticActiveKey] = useState<TopNavKey>();
   const user = authState.data?.session.user;
+  const visibleActiveKey = optimisticActiveKey ?? activeNavKey;
+
+  useEffect(() => {
+    setOptimisticActiveKey(undefined);
+  }, [location.pathname]);
+
+  function handleNavigate(key: string) {
+    const navKey = key as TopNavKey;
+    const target = navTargets[navKey];
+    if (!target) {
+      return;
+    }
+    setOptimisticActiveKey(navKey);
+    if (target !== location.pathname) {
+      navigate(target);
+    }
+  }
 
   return (
     <Layout className={styles.shell}>
@@ -56,10 +75,10 @@ export function AppShell() {
             <UserMenu username={user?.username} onLogout={() => void logoutMutation.mutateAsync()} />
           </Space>
         }
-        activeNavKeys={[activeNavKey]}
+        activeNavKeys={[visibleActiveKey]}
         brandName={APP_NAME}
         navItems={navItems(Boolean(user?.admin))}
-        onNavigate={(key) => navigate(navTargets[key as TopNavKey])}
+        onNavigate={handleNavigate}
         version={DISPLAY_VERSION}
       />
       <Layout.Content className={styles.content}>
