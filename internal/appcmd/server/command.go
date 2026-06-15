@@ -78,6 +78,46 @@ var Command = &cli.Command{
 			Value: defaults.Server.Auth.Local.RegistrationEnabled,
 		},
 		&cli.StringFlag{
+			Name:  "auth.challenge.provider",
+			Usage: usage.MustUsage("auth.challenge.provider"),
+			Value: defaults.Server.Auth.Challenge.Provider,
+		},
+		&cli.IntFlag{
+			Name:  "auth.challenge.image.max-challenges",
+			Usage: usage.MustUsage("auth.challenge.image.max-challenges"),
+			Value: defaults.Server.Auth.Challenge.Image.MaxChallenges,
+		},
+		&cli.StringFlag{
+			Name:  "auth.challenge.hcaptcha.sitekey",
+			Usage: usage.MustUsage("auth.challenge.hcaptcha.sitekey"),
+			Value: defaults.Server.Auth.Challenge.HCaptcha.SiteKey,
+		},
+		&cli.StringFlag{
+			Name:  "auth.challenge.hcaptcha.secret",
+			Usage: usage.MustUsage("auth.challenge.hcaptcha.secret"),
+			Value: defaults.Server.Auth.Challenge.HCaptcha.Secret,
+		},
+		&cli.StringFlag{
+			Name:  "auth.challenge.hcaptcha.verify-url",
+			Usage: usage.MustUsage("auth.challenge.hcaptcha.verify-url"),
+			Value: defaults.Server.Auth.Challenge.HCaptcha.VerifyURL,
+		},
+		&cli.StringFlag{
+			Name:  "auth.challenge.turnstile.sitekey",
+			Usage: usage.MustUsage("auth.challenge.turnstile.sitekey"),
+			Value: defaults.Server.Auth.Challenge.Turnstile.SiteKey,
+		},
+		&cli.StringFlag{
+			Name:  "auth.challenge.turnstile.secret",
+			Usage: usage.MustUsage("auth.challenge.turnstile.secret"),
+			Value: defaults.Server.Auth.Challenge.Turnstile.Secret,
+		},
+		&cli.StringFlag{
+			Name:  "auth.challenge.turnstile.verify-url",
+			Usage: usage.MustUsage("auth.challenge.turnstile.verify-url"),
+			Value: defaults.Server.Auth.Challenge.Turnstile.VerifyURL,
+		},
+		&cli.StringFlag{
 			Name:  "http.listen",
 			Usage: usage.MustUsage("http.listen"),
 			Value: defaults.Server.HTTP.Listen,

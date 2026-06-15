@@ -12,11 +12,19 @@ export interface AuthSession {
   };
 }
 
+export type ChallengeProvider = "image" | "hcaptcha" | "turnstile";
+
+export interface AuthChallengeConfig {
+  provider: ChallengeProvider;
+  sitekey?: string;
+}
+
 export interface AuthPublicConfig {
   local: {
     loginEnabled: boolean;
     registrationEnabled: boolean;
   };
+  challenge: AuthChallengeConfig;
 }
 
 export interface AuthState {
@@ -29,7 +37,20 @@ export const defaultAuthConfig: AuthPublicConfig = {
     loginEnabled: true,
     registrationEnabled: true,
   },
+  challenge: { provider: "image" },
 };
+
+export interface ImageChallenge {
+  provider: "image";
+  challengeId: string;
+  image: string;
+  expiresAt: string;
+}
+
+export type AuthChallengeResponse =
+  | { provider: "image"; challengeId: string; answer: string }
+  | { provider: "hcaptcha"; token: string }
+  | { provider: "turnstile"; token: string };
 
 export async function fetchAuthSession(): Promise<AuthSession> {
   const response = await fetch("/api/auth/me", {
@@ -63,9 +84,26 @@ export async function fetchAuthState(): Promise<AuthState> {
   return { config, session };
 }
 
-export async function login(username: string, password: string): Promise<void> {
+export async function createImageChallenge(): Promise<ImageChallenge> {
+  const response = await fetch("/api/auth/challenges", {
+    credentials: "same-origin",
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    throw new Error(await responseErrorMessage(response, "验证码生成失败"));
+  }
+
+  return (await response.json()) as ImageChallenge;
+}
+
+export async function login(
+  username: string,
+  password: string,
+  challenge: AuthChallengeResponse,
+): Promise<void> {
   const response = await fetch("/api/auth/password/login", {
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ username, password, challenge }),
     credentials: "same-origin",
     headers: { "Content-Type": "application/json" },
     method: "POST",
@@ -76,9 +114,13 @@ export async function login(username: string, password: string): Promise<void> {
   }
 }
 
-export async function register(username: string, password: string): Promise<void> {
+export async function register(
+  username: string,
+  password: string,
+  challenge: AuthChallengeResponse,
+): Promise<void> {
   const response = await fetch("/api/auth/password/register", {
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ username, password, challenge }),
     credentials: "same-origin",
     headers: { "Content-Type": "application/json" },
     method: "POST",

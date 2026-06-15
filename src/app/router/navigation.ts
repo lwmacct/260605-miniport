@@ -4,6 +4,7 @@ export const appPaths = {
   hosts: "/hosts",
   login: "/login",
   overview: "/overview",
+  register: "/register",
   services: "/services",
 } as const;
 

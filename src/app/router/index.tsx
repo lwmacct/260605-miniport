@@ -7,6 +7,7 @@ import { ServicesPage } from "../../pages/services/page";
 import { HostsPage } from "../../pages/hosts/page";
 import { DependenciesPage } from "../../pages/dependencies/page";
 import { LoginPage } from "../../pages/login/page";
+import { RegisterPage } from "../../pages/register/page";
 import { AdminUsersPage } from "../../pages/admin/users.page";
 
 export const router = createHashRouter([
@@ -18,6 +19,7 @@ export const router = createHashRouter([
         element: <GuestOnlyBoundary />,
         children: [
           { path: "login", element: <LoginPage /> },
+          { path: "register", element: <RegisterPage /> },
         ],
       },
       {

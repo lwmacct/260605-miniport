@@ -30,6 +30,26 @@ server:
       login-enabled: true # 是否启用本地账号登录
       registration-enabled: true # 是否允许用户名密码公开注册
 
+    # 认证挑战配置
+    challenge:
+      provider: "image" # 认证挑战提供方：image、hcaptcha、turnstile
+
+      # 图片验证码配置
+      image:
+        max-challenges: 1024 # 内存中图片验证码最大数量，0 表示不限制
+
+      # hCaptcha 挑战配置
+      hcaptcha:
+        sitekey: "" # 认证挑战站点公钥
+        secret: "" # 认证挑战服务端密钥
+        verify-url: "https://api.hcaptcha.com/siteverify" # 认证挑战服务端验证地址
+
+      # Cloudflare Turnstile 挑战配置
+      turnstile:
+        sitekey: "" # 认证挑战站点公钥
+        secret: "" # 认证挑战服务端密钥
+        verify-url: "https://challenges.cloudflare.com/turnstile/v0/siteverify" # 认证挑战服务端验证地址
+
   # HTTP 服务配置
   http:
     listen: ":40238" # HTTP 服务监听地址

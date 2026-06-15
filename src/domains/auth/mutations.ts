@@ -1,12 +1,26 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { defaultAuthConfig, fetchAuthState, login, logout, register } from "./api";
+import {
+  defaultAuthConfig,
+  fetchAuthState,
+  login,
+  logout,
+  register,
+  type AuthChallengeResponse,
+} from "./api";
 import { authKeys } from "./queries";
 
 export function useLoginMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ username, password }: { username: string; password: string }) =>
-      login(username, password),
+    mutationFn: ({
+      challenge,
+      password,
+      username,
+    }: {
+      challenge: AuthChallengeResponse;
+      password: string;
+      username: string;
+    }) => login(username, password, challenge),
     onSuccess: async () => {
       queryClient.setQueryData(authKeys.state, await fetchAuthState());
     },
@@ -16,8 +30,15 @@ export function useLoginMutation() {
 export function useRegisterMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ username, password }: { username: string; password: string }) =>
-      register(username, password),
+    mutationFn: ({
+      challenge,
+      password,
+      username,
+    }: {
+      challenge: AuthChallengeResponse;
+      password: string;
+      username: string;
+    }) => register(username, password, challenge),
     onSuccess: async () => {
       queryClient.setQueryData(authKeys.state, await fetchAuthState());
     },

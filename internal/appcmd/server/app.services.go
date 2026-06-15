@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/lwmacct/260605-miniport/internal/adapter/authchallengeprovider"
 	"github.com/lwmacct/260605-miniport/internal/adapter/httpauth"
 	"github.com/lwmacct/260605-miniport/internal/config"
+	"github.com/lwmacct/260605-miniport/internal/domain/authchallenge"
 	"github.com/lwmacct/260605-miniport/internal/domain/authpassword"
 	"github.com/lwmacct/260605-miniport/internal/domain/authsession"
 	"github.com/lwmacct/260605-miniport/internal/domain/identityuser"
@@ -37,8 +39,36 @@ func (app *App) bootstrap(ctx context.Context) error {
 	app.users = identityuser.NewService(db)
 	app.passwords = authpassword.NewService(db)
 	app.sessions = authsession.NewService(db, app.cfg.Server.HTTP.SessionTTL)
+	app.challenges = app.newChallengeService()
 	app.httpAuth = httpauth.NewService(app.cfg.Server.HTTP.TLS.Enabled(), app.cfg.Server.HTTP.TrustedProxies)
 	return nil
+}
+
+func (app *App) newChallengeService() *authchallenge.Service {
+	cfg := app.cfg.Server.Auth.Challenge
+	switch cfg.Provider {
+	case authchallenge.ProviderHCaptcha:
+		provider, err := authchallengeprovider.NewRemoteTokenProvider(
+			authchallenge.ProviderHCaptcha,
+			cfg.HCaptcha.SiteKey,
+			cfg.HCaptcha.Secret,
+			cfg.HCaptcha.VerifyURL,
+		)
+		if err == nil {
+			return authchallenge.NewService(provider)
+		}
+	case authchallenge.ProviderTurnstile:
+		provider, err := authchallengeprovider.NewRemoteTokenProvider(
+			authchallenge.ProviderTurnstile,
+			cfg.Turnstile.SiteKey,
+			cfg.Turnstile.Secret,
+			cfg.Turnstile.VerifyURL,
+		)
+		if err == nil {
+			return authchallenge.NewService(provider)
+		}
+	}
+	return authchallenge.NewService(authchallengeprovider.NewImageProvider(cfg.Image.MaxChallenges))
 }
 
 func (app *App) closeDatabase() {

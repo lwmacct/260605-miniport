@@ -5,11 +5,13 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/uptrace/bun"
 
 	"github.com/lwmacct/260605-miniport/internal/adapter/httpauth"
+	"github.com/lwmacct/260605-miniport/internal/domain/authchallenge"
 	"github.com/lwmacct/260605-miniport/internal/domain/authpassword"
 	"github.com/lwmacct/260605-miniport/internal/domain/authsession"
 	"github.com/lwmacct/260605-miniport/internal/domain/identityuser"
@@ -20,11 +22,30 @@ type authConfigDTO struct {
 		LoginEnabled        bool `json:"loginEnabled"`
 		RegistrationEnabled bool `json:"registrationEnabled"`
 	} `json:"local"`
+	Challenge struct {
+		Provider string `json:"provider"`
+		SiteKey  string `json:"sitekey,omitempty"`
+	} `json:"challenge"`
+}
+
+type authChallengeCreateDTO struct {
+	Provider    string    `json:"provider"`
+	ChallengeID string    `json:"challengeId,omitempty"`
+	Image       string    `json:"image,omitempty"`
+	ExpiresAt   time.Time `json:"expiresAt,omitempty"`
+}
+
+type authChallengeDTO struct {
+	Provider    string `json:"provider"`
+	ChallengeID string `json:"challengeId,omitempty"`
+	Answer      string `json:"answer,omitempty"`
+	Token       string `json:"token,omitempty"`
 }
 
 type authCredentialsDTO struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username  string           `json:"username"`
+	Password  string           `json:"password"`
+	Challenge authChallengeDTO `json:"challenge"`
 }
 
 type authUserDTO struct {
@@ -76,6 +97,12 @@ func (app *App) registerAuthHTTPAPI(api huma.API) {
 		Tags:        []string{"Auth"},
 	}, app.authConfig)
 	huma.Register(auth, huma.Operation{
+		OperationID: "create-auth-challenge",
+		Method:      http.MethodPost,
+		Path:        "/challenges",
+		Tags:        []string{"Auth"},
+	}, app.authCreateChallenge)
+	huma.Register(auth, huma.Operation{
 		OperationID:   "register-password-user",
 		Method:        http.MethodPost,
 		Path:          "/password/register",
@@ -111,22 +138,48 @@ func (app *App) registerAuthHTTPAPI(api huma.API) {
 }
 
 func (app *App) authConfig(_ context.Context, _ *struct{}) (*authBody[authConfigDTO], error) {
+	challenge := app.challenges.PublicConfig()
 	body := authConfigDTO{}
 	body.Local.LoginEnabled = app.cfg.Server.Auth.Local.LoginEnabled
 	body.Local.RegistrationEnabled = app.cfg.Server.Auth.Local.RegistrationEnabled
+	body.Challenge.Provider = challenge.Provider
+	body.Challenge.SiteKey = challenge.SiteKey
 	return &authBody[authConfigDTO]{Body: body}, nil
+}
+
+func (app *App) authCreateChallenge(ctx context.Context, _ *struct{}) (*authBody[authChallengeCreateDTO], error) {
+	request, ok := httpauth.RequestFromContext(ctx)
+	if !ok {
+		return nil, huma.Error400BadRequest("invalid request source")
+	}
+	challenge, err := app.challenges.Create(ctx, toChallengeRequest(request))
+	if err != nil {
+		if errors.Is(err, authchallenge.ErrLimitExceeded) {
+			return nil, huma.Error429TooManyRequests("too many challenges")
+		}
+		return nil, huma.Error400BadRequest("challenge creation unsupported")
+	}
+	return &authBody[authChallengeCreateDTO]{Body: authChallengeCreateDTO{
+		Provider:    challenge.Provider,
+		ChallengeID: challenge.ChallengeID,
+		Image:       challenge.Image,
+		ExpiresAt:   challenge.ExpiresAt,
+	}}, nil
 }
 
 func (app *App) authPasswordRegister(ctx context.Context, input *authBodyInput[authCredentialsDTO]) (*authSessionResponse, error) {
 	if !app.cfg.Server.Auth.Local.LoginEnabled || !app.cfg.Server.Auth.Local.RegistrationEnabled {
 		return nil, huma.Error403Forbidden("password registration disabled")
 	}
-	if err := app.passwords.CheckStrength(input.Body.Username, input.Body.Password); err != nil {
-		return nil, huma.Error400BadRequest("weak password")
-	}
 	request, ok := httpauth.RequestFromContext(ctx)
 	if !ok {
 		return nil, huma.Error400BadRequest("invalid request source")
+	}
+	if err := app.verifyChallenge(ctx, input.Body.Challenge, request); err != nil {
+		return nil, huma.Error401Unauthorized("invalid challenge")
+	}
+	if err := app.passwords.CheckStrength(input.Body.Username, input.Body.Password); err != nil {
+		return nil, huma.Error400BadRequest("weak password")
 	}
 
 	var user *identityuser.User
@@ -165,6 +218,9 @@ func (app *App) authPasswordLogin(ctx context.Context, input *authBodyInput[auth
 	request, ok := httpauth.RequestFromContext(ctx)
 	if !ok {
 		return nil, huma.Error400BadRequest("invalid request source")
+	}
+	if err := app.verifyChallenge(ctx, input.Body.Challenge, request); err != nil {
+		return nil, huma.Error401Unauthorized("invalid challenge")
 	}
 	user, err := app.passwords.Authenticate(ctx, input.Body.Username, input.Body.Password, app.users)
 	if err != nil {
@@ -229,6 +285,25 @@ func (app *App) adminListUsers(ctx context.Context, input *authSessionInput) (*a
 		})
 	}
 	return &authBody[[]adminUserDTO]{Body: body}, nil
+}
+
+func (app *App) verifyChallenge(ctx context.Context, challenge authChallengeDTO, request authsession.Request) error {
+	return app.challenges.Verify(ctx, authchallenge.ResponseDTO{
+		Provider:    challenge.Provider,
+		ChallengeID: challenge.ChallengeID,
+		Answer:      challenge.Answer,
+		Token:       challenge.Token,
+	}, toChallengeRequest(request))
+}
+
+func toChallengeRequest(request authsession.Request) authchallenge.RequestDTO {
+	return authchallenge.RequestDTO{
+		IP:         request.IP,
+		UserAgent:  request.UserAgent,
+		Method:     request.Method,
+		Path:       request.Path,
+		RemoteAddr: request.RemoteAddr,
+	}
 }
 
 func (app *App) createSessionResponse(ctx context.Context, userID int64, request authsession.Request) (*authSessionResponse, error) {

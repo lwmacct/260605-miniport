@@ -43,13 +43,31 @@ type ServerHTTP struct {
 }
 
 type ServerAuth struct {
-	Admins []string        `json:"admins" desc:"运行时管理员用户名列表"`
-	Local  ServerAuthLocal `json:"local" desc:"本地账号认证配置"`
+	Admins    []string            `json:"admins" desc:"运行时管理员用户名列表"`
+	Local     ServerAuthLocal     `json:"local" desc:"本地账号认证配置"`
+	Challenge ServerAuthChallenge `json:"challenge" desc:"认证挑战配置"`
 }
 
 type ServerAuthLocal struct {
 	LoginEnabled        bool `json:"login-enabled" desc:"是否启用本地账号登录"`
 	RegistrationEnabled bool `json:"registration-enabled" desc:"是否允许用户名密码公开注册"`
+}
+
+type ServerAuthChallenge struct {
+	Provider  string                    `json:"provider" desc:"认证挑战提供方：image、hcaptcha、turnstile"`
+	Image     ServerAuthChallengeImage  `json:"image" desc:"图片验证码配置"`
+	HCaptcha  ServerAuthChallengeRemote `json:"hcaptcha" desc:"hCaptcha 挑战配置"`
+	Turnstile ServerAuthChallengeRemote `json:"turnstile" desc:"Cloudflare Turnstile 挑战配置"`
+}
+
+type ServerAuthChallengeImage struct {
+	MaxChallenges int `json:"max-challenges" desc:"内存中图片验证码最大数量，0 表示不限制"`
+}
+
+type ServerAuthChallengeRemote struct {
+	SiteKey   string `json:"sitekey" desc:"认证挑战站点公钥"`
+	Secret    string `json:"secret" desc:"认证挑战服务端密钥"`
+	VerifyURL string `json:"verify-url" desc:"认证挑战服务端验证地址"`
 }
 
 type ServerHTTPTLS struct {
@@ -87,6 +105,18 @@ func DefaultConfig() Config {
 				Local: ServerAuthLocal{
 					LoginEnabled:        true,
 					RegistrationEnabled: true,
+				},
+				Challenge: ServerAuthChallenge{
+					Provider: "image",
+					Image: ServerAuthChallengeImage{
+						MaxChallenges: 1024,
+					},
+					HCaptcha: ServerAuthChallengeRemote{
+						VerifyURL: "https://api.hcaptcha.com/siteverify",
+					},
+					Turnstile: ServerAuthChallengeRemote{
+						VerifyURL: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+					},
 				},
 			},
 			HTTP: ServerHTTP{
