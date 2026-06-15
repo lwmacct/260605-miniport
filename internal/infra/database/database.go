@@ -30,7 +30,7 @@ func Open(ctx context.Context, cfg config.ServerDatabase) (*bun.DB, error) {
 }
 
 func openSQLite(ctx context.Context, sqlitePath string) (*bun.DB, error) {
-	if err := os.MkdirAll(filepath.Dir(sqlitePath), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(sqlitePath), 0o750); err != nil {
 		return nil, fmt.Errorf("prepare sqlite directory: %w", err)
 	}
 

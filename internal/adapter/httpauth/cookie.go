@@ -6,6 +6,7 @@ import (
 )
 
 func SessionCookieValue(sessionID string, expiresAt time.Time, secure bool) *http.Cookie {
+	// #nosec G124 -- Secure is controlled by the runtime TLS setting so local HTTP development can still log in.
 	return &http.Cookie{
 		Name:     SessionCookie,
 		Value:    sessionID,
@@ -19,6 +20,7 @@ func SessionCookieValue(sessionID string, expiresAt time.Time, secure bool) *htt
 }
 
 func ClearSessionCookie(secure bool) *http.Cookie {
+	// #nosec G124 -- Secure must match the session cookie setting so browsers accept the clearing cookie.
 	return &http.Cookie{
 		Name:     SessionCookie,
 		Value:    "",

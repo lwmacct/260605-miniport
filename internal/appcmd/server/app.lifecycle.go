@@ -18,10 +18,7 @@ func (app *App) Run(ctx context.Context) error {
 	}
 	defer app.closeDatabase()
 
-	srv, err := app.newHTTPServer()
-	if err != nil {
-		return err
-	}
+	srv := app.newHTTPServer() //nolint:contextcheck // Huma auth middleware uses per-request contexts, not the app lifecycle context.
 
 	ln, err := (&net.ListenConfig{}).Listen(ctx, "tcp", srv.Addr)
 	if err != nil {

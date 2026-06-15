@@ -85,11 +85,13 @@ func (svc *Service) CreatePortGroup(ctx context.Context, payload PortGroupPayloa
 		now := time.Now().UTC()
 		group.CreatedAt = now
 		group.UpdatedAt = now
-		if err := tx.createPortGroup(ctx, group); err != nil {
-			return err
+		createErr := tx.createPortGroup(ctx, group)
+		if createErr != nil {
+			return createErr
 		}
-		if err := replacePortGroupChildren(ctx, tx, group.ID, payload, now); err != nil {
-			return err
+		replaceErr := replacePortGroupChildren(ctx, tx, group.ID, payload, now)
+		if replaceErr != nil {
+			return replaceErr
 		}
 
 		view, err := tx.getPortGroupView(ctx, group.ID)
@@ -116,11 +118,13 @@ func (svc *Service) UpdatePortGroup(ctx context.Context, id int64, payload PortG
 
 		group.ID = id
 		group.UpdatedAt = time.Now().UTC()
-		if err := tx.updatePortGroup(ctx, id, group); err != nil {
-			return err
+		updateErr := tx.updatePortGroup(ctx, id, group)
+		if updateErr != nil {
+			return updateErr
 		}
-		if err := replacePortGroupChildren(ctx, tx, id, payload, group.UpdatedAt); err != nil {
-			return err
+		replaceErr := replacePortGroupChildren(ctx, tx, id, payload, group.UpdatedAt)
+		if replaceErr != nil {
+			return replaceErr
 		}
 
 		view, err := tx.getPortGroupView(ctx, id)
@@ -147,25 +151,26 @@ func (svc *Service) UpdatePortGroups(ctx context.Context, input PortGroupBatchUp
 
 	var out []PortGroupView
 	err = svc.store.runInTx(ctx, func(ctx context.Context, tx *store) error {
-		count, err := tx.countPortGroupsByIDs(ctx, normalized.IDs)
-		if err != nil {
-			return err
+		count, countErr := tx.countPortGroupsByIDs(ctx, normalized.IDs)
+		if countErr != nil {
+			return countErr
 		}
 		if count != len(normalized.IDs) {
 			return huma.Error404NotFound("one or more port groups were not found")
 		}
 
-		if err := tx.batchUpdatePortGroups(ctx, normalized, time.Now().UTC()); err != nil {
-			return err
+		updateErr := tx.batchUpdatePortGroups(ctx, normalized, time.Now().UTC())
+		if updateErr != nil {
+			return updateErr
 		}
 
-		groups, err := tx.listPortGroupsByIDs(ctx, normalized.IDs)
-		if err != nil {
-			return err
+		groups, listErr := tx.listPortGroupsByIDs(ctx, normalized.IDs)
+		if listErr != nil {
+			return listErr
 		}
-		views, err := tx.buildPortGroupViews(ctx, groups)
-		if err != nil {
-			return err
+		views, buildErr := tx.buildPortGroupViews(ctx, groups)
+		if buildErr != nil {
+			return buildErr
 		}
 		out = views
 		return nil

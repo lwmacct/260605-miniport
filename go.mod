@@ -8,6 +8,7 @@ require (
 	github.com/lwmacct/251207-go-pkg-cfgm v0.20.260608
 	github.com/lwmacct/251207-go-pkg-version v0.2.260526
 	github.com/lwmacct/251219-go-pkg-logm v0.9.260413
+	github.com/lwmacct/260610-go-pkg-tddcheck v0.12.260612
 	github.com/stretchr/testify v1.11.1
 	github.com/uptrace/bun v1.2.18
 	github.com/uptrace/bun/dialect/pgdialect v1.2.18

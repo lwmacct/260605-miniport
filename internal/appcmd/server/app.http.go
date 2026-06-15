@@ -34,7 +34,7 @@ type metaOutput struct {
 	}
 }
 
-func (app *App) newHTTPServer() (*http.Server, error) {
+func (app *App) newHTTPServer() *http.Server {
 	router := chi.NewRouter()
 	apiRouter := chi.NewRouter()
 	router.Mount("/api", apiRouter)
@@ -73,7 +73,7 @@ func (app *App) newHTTPServer() (*http.Server, error) {
 		ReadTimeout:  app.cfg.Server.HTTP.ReadTimeout,
 		WriteTimeout: app.cfg.Server.HTTP.WriteTimeout,
 		IdleTimeout:  app.cfg.Server.HTTP.IdleTimeout,
-	}, nil
+	}
 }
 
 func httpAPIConfig() huma.Config {

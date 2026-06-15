@@ -24,7 +24,7 @@ func joinSearchClauses(columns []string) string {
 
 func joinSearchArgs(pattern string, count int) []any {
 	args := make([]any, 0, count)
-	for idx := 0; idx < count; idx++ {
+	for range count {
 		args = append(args, pattern)
 	}
 	return args

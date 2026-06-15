@@ -77,7 +77,7 @@ func (svc *Service) User(ctx context.Context, sessionID string, request Request,
 	if err != nil {
 		return nil, err
 	}
-	if err := users.EnsureActive(user); err != nil {
+	if ensureErr := users.EnsureActive(user); ensureErr != nil {
 		return nil, sql.ErrNoRows
 	}
 

@@ -93,16 +93,15 @@ func replacePortGroupChildren(ctx context.Context, st *store, groupID int64, pay
 	if err != nil {
 		return err
 	}
-	if err := st.insertPortSlots(ctx, slots); err != nil {
-		return err
+	insertSlotsErr := st.insertPortSlots(ctx, slots)
+	if insertSlotsErr != nil {
+		return insertSlotsErr
 	}
 
-	components, err := componentsFromPayload(groupID, payload.Components, now)
-	if err != nil {
-		return err
-	}
-	if err := st.insertComponents(ctx, components); err != nil {
-		return err
+	components := componentsFromPayload(groupID, payload.Components, now)
+	insertComponentsErr := st.insertComponents(ctx, components)
+	if insertComponentsErr != nil {
+		return insertComponentsErr
 	}
 
 	repositories, err := repositoriesFromPayload(groupID, payload.Repositories, now)
@@ -151,7 +150,7 @@ func slotsFromPayload(groupID int64, payload PortGroupPayload, now time.Time) ([
 	return slots, nil
 }
 
-func componentsFromPayload(groupID int64, payload []ComponentPayload, now time.Time) ([]Component, error) {
+func componentsFromPayload(groupID int64, payload []ComponentPayload, now time.Time) []Component {
 	items := make([]Component, 0, len(payload))
 	for _, item := range payload {
 		name := strings.TrimSpace(item.Name)
@@ -174,7 +173,7 @@ func componentsFromPayload(groupID int64, payload []ComponentPayload, now time.T
 			UpdatedAt:   now,
 		})
 	}
-	return items, nil
+	return items
 }
 
 func repositoriesFromPayload(groupID int64, payload []RepositoryPayload, now time.Time) ([]Repository, error) {

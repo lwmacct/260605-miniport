@@ -26,12 +26,11 @@ func TestAuthPasswordLoginSessionAndAdminUsers(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, app.passwords.Set(context.Background(), admin.Username, admin.ID, "strong-ops-password-123"))
 
-	srv, err := app.newHTTPServer()
-	require.NoError(t, err)
+	srv := app.newHTTPServer()
 	handler := srv.Handler
 
 	body := `{"username":"admin","password":"strong-ops-password-123"}`
-	req := httptest.NewRequest(http.MethodPost, "/api/auth/password/login", strings.NewReader(body))
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/api/auth/password/login", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	req.RemoteAddr = "127.0.0.1:12345"
 	rec := httptest.NewRecorder()
@@ -39,7 +38,7 @@ func TestAuthPasswordLoginSessionAndAdminUsers(t *testing.T) {
 	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
 	cookie := rec.Result().Cookies()[0]
 
-	req = httptest.NewRequest(http.MethodGet, "/api/auth/me", nil)
+	req = httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/auth/me", nil)
 	req.RemoteAddr = "127.0.0.1:12345"
 	req.AddCookie(cookie)
 	rec = httptest.NewRecorder()
@@ -58,7 +57,7 @@ func TestAuthPasswordLoginSessionAndAdminUsers(t *testing.T) {
 	require.Equal(t, "admin", session.User.Username)
 	require.True(t, session.User.Admin)
 
-	req = httptest.NewRequest(http.MethodGet, "/api/admin/users", nil)
+	req = httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/admin/users", nil)
 	req.RemoteAddr = "127.0.0.1:12345"
 	req.AddCookie(cookie)
 	rec = httptest.NewRecorder()
@@ -78,11 +77,10 @@ func TestInventoryWriteRequiresAdmin(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, app.passwords.Set(context.Background(), user.Username, user.ID, "team-secret-123"))
 
-	srv, err := app.newHTTPServer()
-	require.NoError(t, err)
+	srv := app.newHTTPServer()
 	handler := srv.Handler
 
-	loginReq := httptest.NewRequest(http.MethodPost, "/api/auth/password/login", strings.NewReader(`{"username":"member","password":"team-secret-123"}`))
+	loginReq := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/api/auth/password/login", strings.NewReader(`{"username":"member","password":"team-secret-123"}`))
 	loginReq.Header.Set("Content-Type", "application/json")
 	loginReq.RemoteAddr = "127.0.0.1:12345"
 	loginRec := httptest.NewRecorder()
@@ -90,7 +88,7 @@ func TestInventoryWriteRequiresAdmin(t *testing.T) {
 	require.Equal(t, http.StatusOK, loginRec.Code, loginRec.Body.String())
 	cookie := loginRec.Result().Cookies()[0]
 
-	req := httptest.NewRequest(http.MethodPost, "/api/hosts", strings.NewReader(`{"ip":"172.22.11.12","name":"node-12","network":"","environment":"","notes":""}`))
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/api/hosts", strings.NewReader(`{"ip":"172.22.11.12","name":"node-12","network":"","environment":"","notes":""}`))
 	req.Header.Set("Content-Type", "application/json")
 	req.RemoteAddr = "127.0.0.1:12345"
 	req.AddCookie(cookie)

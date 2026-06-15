@@ -12,7 +12,7 @@ import (
 
 func TestFrontendRootServesIndex(t *testing.T) {
 	router := testFrontendRouter(t)
-	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", nil)
 	recorder := httptest.NewRecorder()
 
 	router.ServeHTTP(recorder, request)
@@ -27,7 +27,7 @@ func TestFrontendRootServesIndex(t *testing.T) {
 
 func TestFrontendServesStaticAsset(t *testing.T) {
 	router := testFrontendRouter(t)
-	request := httptest.NewRequest(http.MethodGet, "/assets/app.js", nil)
+	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/assets/app.js", nil)
 	recorder := httptest.NewRecorder()
 
 	router.ServeHTTP(recorder, request)
@@ -42,7 +42,7 @@ func TestFrontendServesStaticAsset(t *testing.T) {
 
 func TestFrontendRouteFallsBackToIndex(t *testing.T) {
 	router := testFrontendRouter(t)
-	request := httptest.NewRequest(http.MethodGet, "/services", nil)
+	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/services", nil)
 	recorder := httptest.NewRecorder()
 
 	router.ServeHTTP(recorder, request)
@@ -57,7 +57,7 @@ func TestFrontendRouteFallsBackToIndex(t *testing.T) {
 
 func TestFrontendBypassesAPIRoutes(t *testing.T) {
 	router := testFrontendRouter(t)
-	request := httptest.NewRequest(http.MethodGet, "/api/missing", nil)
+	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/missing", nil)
 	recorder := httptest.NewRecorder()
 
 	router.ServeHTTP(recorder, request)
@@ -82,13 +82,13 @@ func writeTestFrontend(t *testing.T) string {
 
 	uiDir := t.TempDir()
 	assetsDir := filepath.Join(uiDir, "assets")
-	if err := os.MkdirAll(assetsDir, 0o755); err != nil {
+	if err := os.MkdirAll(assetsDir, 0o750); err != nil {
 		t.Fatalf("mkdir assets: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(uiDir, "index.html"), []byte("index"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(uiDir, "index.html"), []byte("index"), 0o600); err != nil {
 		t.Fatalf("write index: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(assetsDir, "app.js"), []byte("asset"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(assetsDir, "app.js"), []byte("asset"), 0o600); err != nil {
 		t.Fatalf("write asset: %v", err)
 	}
 	return uiDir
