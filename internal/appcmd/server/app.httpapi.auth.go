@@ -62,6 +62,11 @@ type authSessionDTO struct {
 	User          *authUserDTO `json:"user,omitempty"`
 }
 
+type authStateDTO struct {
+	Config  authConfigDTO  `json:"config"`
+	Session authSessionDTO `json:"session"`
+}
+
 type authBody[T any] struct {
 	Body T `json:"body"`
 }
@@ -95,6 +100,12 @@ func (app *App) registerAuthHTTPAPI(api huma.API) {
 		Path:        "/config",
 		Tags:        []string{"Auth"},
 	}, app.authConfig)
+	huma.Register(auth, huma.Operation{
+		OperationID: "get-auth-state",
+		Method:      http.MethodGet,
+		Path:        "/state",
+		Tags:        []string{"Auth"},
+	}, app.authState)
 	huma.Register(auth, huma.Operation{
 		OperationID: "create-auth-challenge",
 		Method:      http.MethodPost,
@@ -137,13 +148,39 @@ func (app *App) registerAuthHTTPAPI(api huma.API) {
 }
 
 func (app *App) authConfig(_ context.Context, _ *struct{}) (*authBody[authConfigDTO], error) {
+	return &authBody[authConfigDTO]{Body: app.authConfigBody()}, nil
+}
+
+func (app *App) authConfigBody() authConfigDTO {
 	challenge := app.challenges.PublicConfig()
 	body := authConfigDTO{}
 	body.Local.LoginEnabled = app.cfg.Server.Auth.Local.LoginEnabled
 	body.Local.RegistrationEnabled = app.cfg.Server.Auth.Local.RegistrationEnabled
 	body.Challenge.Provider = challenge.Provider
 	body.Challenge.SiteKey = challenge.SiteKey
-	return &authBody[authConfigDTO]{Body: body}, nil
+	return body
+}
+
+func (app *App) authState(ctx context.Context, input *authSessionInput) (*authBody[authStateDTO], error) {
+	_ = input
+	body := authStateDTO{
+		Config:  app.authConfigBody(),
+		Session: authSessionDTO{Authenticated: false},
+	}
+	sessionID, ok := httpauth.SessionIDFromContext(ctx)
+	if !ok {
+		return &authBody[authStateDTO]{Body: body}, nil
+	}
+	user, sessionUser, err := app.currentSessionUser(ctx, sessionID)
+	if err != nil {
+		return &authBody[authStateDTO]{Body: body}, nil
+	}
+	body.Session = authSessionDTO{
+		Authenticated: true,
+		ExpiresAt:     sessionUser.ExpiresAt.UTC().Format(http.TimeFormat),
+		User:          app.toAuthUserDTO(user),
+	}
+	return &authBody[authStateDTO]{Body: body}, nil
 }
 
 func (app *App) authCreateChallenge(ctx context.Context, _ *struct{}) (*authBody[authChallengeCreateDTO], error) {

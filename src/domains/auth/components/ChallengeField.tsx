@@ -1,12 +1,11 @@
 import { ReloadOutlined } from "@ant-design/icons";
 import { Button, Input } from "antd";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  createImageChallenge,
   type AuthChallengeConfig,
   type AuthChallengeResponse,
-  type ImageChallenge,
 } from "../api";
+import { useImageChallengeQuery } from "../queries";
 import styles from "./AuthScreen.module.css";
 
 interface ChallengeFieldProps {
@@ -55,29 +54,25 @@ function ImageChallengeField({
   onChange,
   onError,
 }: ImageChallengeFieldProps) {
-  const [challenge, setChallenge] = useState<ImageChallenge>();
   const [answer, setAnswer] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const queryKey = resetKey + refreshKey;
+  const challengeQuery = useImageChallengeQuery(queryKey, true);
+  const challenge = challengeQuery.data;
+  const loading = challengeQuery.isPending || challengeQuery.isFetching;
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
+  useEffect(() => {
     setAnswer("");
     onChange(undefined);
     onError("");
-    try {
-      const next = await createImageChallenge();
-      setChallenge(next);
-    } catch (error) {
-      setChallenge(undefined);
-      onError(error instanceof Error ? error.message : "验证码生成失败");
-    } finally {
-      setLoading(false);
-    }
-  }, [onChange, onError]);
+  }, [onChange, onError, queryKey]);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh, resetKey]);
+    if (!challengeQuery.isError) {
+      return;
+    }
+    onError(challengeQuery.error instanceof Error ? challengeQuery.error.message : "验证码生成失败");
+  }, [challengeQuery.error, challengeQuery.isError, onError]);
 
   useEffect(() => {
     if (!challenge || answer.trim() === "") {
@@ -107,7 +102,7 @@ function ImageChallengeField({
         className={styles.captchaButton}
         disabled={disabled || loading}
         htmlType="button"
-        onClick={() => void refresh()}
+        onClick={() => setRefreshKey((value) => value + 1)}
       >
         {challenge ? <img alt="验证码" src={challenge.image} /> : <ReloadOutlined />}
       </Button>

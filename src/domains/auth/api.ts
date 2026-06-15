@@ -77,11 +77,15 @@ export async function fetchAuthPublicConfig(): Promise<AuthPublicConfig> {
 }
 
 export async function fetchAuthState(): Promise<AuthState> {
-  const [session, config] = await Promise.all([
-    fetchAuthSession(),
-    fetchAuthPublicConfig(),
-  ]);
-  return { config, session };
+  const response = await fetch("/api/auth/state", {
+    credentials: "same-origin",
+  });
+
+  if (!response.ok) {
+    return { config: defaultAuthConfig, session: { authenticated: false } };
+  }
+
+  return (await response.json()) as AuthState;
 }
 
 export async function createImageChallenge(): Promise<ImageChallenge> {

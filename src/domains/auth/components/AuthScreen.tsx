@@ -47,8 +47,9 @@ export function AuthScreen({ mode }: AuthScreenProps) {
     form.resetFields();
     resetLoginMutation();
     resetRegisterMutation();
-    resetChallenge();
-  }, [form, mode, resetChallenge, resetLoginMutation, resetRegisterMutation]);
+    setChallenge(undefined);
+    setChallengeError("");
+  }, [form, mode, resetLoginMutation, resetRegisterMutation]);
 
   async function submit(values: AuthFormValues) {
     if (!challenge || activeMutation.isPending) {

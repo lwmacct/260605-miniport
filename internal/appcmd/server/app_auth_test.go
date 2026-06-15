@@ -135,6 +135,65 @@ func TestAuthPasswordLoginSessionAndAdminUsers(t *testing.T) {
 	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
 }
 
+func TestAuthStateReturnsPublicConfigForGuest(t *testing.T) {
+	_, handler := setupAuthTestApp(t, []string{"admin"})
+
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/auth/state", nil)
+	req.RemoteAddr = "127.0.0.1:12345"
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+
+	var state struct {
+		Config struct {
+			Challenge struct {
+				Provider string `json:"provider"`
+			} `json:"challenge"`
+		} `json:"config"`
+		Session struct {
+			Authenticated bool `json:"authenticated"`
+		} `json:"session"`
+	}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &state))
+	require.Equal(t, "image", state.Config.Challenge.Provider)
+	require.False(t, state.Session.Authenticated)
+}
+
+func TestAuthStateReturnsCurrentUser(t *testing.T) {
+	app, handler := setupAuthTestApp(t, []string{"admin"})
+	user, err := app.users.Create(context.Background(), identityuser.CreateInput{Username: "admin"})
+	require.NoError(t, err)
+	require.NoError(t, app.passwords.Set(context.Background(), user.Username, user.ID, "strong-ops-password-123"))
+
+	loginReq := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/api/auth/password/login", strings.NewReader(loginBody(t, handler, "admin", "strong-ops-password-123")))
+	loginReq.Header.Set("Content-Type", "application/json")
+	loginReq.RemoteAddr = "127.0.0.1:12345"
+	loginRec := httptest.NewRecorder()
+	handler.ServeHTTP(loginRec, loginReq)
+	require.Equal(t, http.StatusOK, loginRec.Code, loginRec.Body.String())
+
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/auth/state", nil)
+	req.RemoteAddr = "127.0.0.1:12345"
+	req.AddCookie(loginRec.Result().Cookies()[0])
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+
+	var state struct {
+		Session struct {
+			Authenticated bool `json:"authenticated"`
+			User          struct {
+				Username string `json:"username"`
+				Admin    bool   `json:"admin"`
+			} `json:"user"`
+		} `json:"session"`
+	}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &state))
+	require.True(t, state.Session.Authenticated)
+	require.Equal(t, "admin", state.Session.User.Username)
+	require.True(t, state.Session.User.Admin)
+}
+
 func TestInventoryWriteRequiresAdmin(t *testing.T) {
 	app, handler := setupAuthTestApp(t, []string{"root-admin"})
 
