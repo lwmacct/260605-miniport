@@ -1,28 +1,27 @@
-# .gitignore
-
-# 运行环境
+# OS files
 **/.DS_Store
+
+# runtime
 **/.local/
 **/.venv/
 **/.conda/
 **/.task/remote/
 
-# node_modules
+# dependencies
 **/node_modules/
 **/tsconfig.tsbuildinfo
 
-# 构建输出
-bin-*
-bin/
-dist/
-build/
-*.vsix
-[0-9]*-
+# build outputs
+**/bin/
+**/dist/
+**/build/
 
-# 生成文件
-gen/
-
-# 临时文件
+# temporary files
+tmp/**
+log/**
+logs/**
+temp/**
+cache/**
 **/*.bak
 **/*.log
 **/*.tmp
@@ -30,14 +29,7 @@ gen/
 **/*.temp
 **/*.cache
 
-# 临时目录
-tmp/**
-log/**
-logs/**
-temp/**
-cache/**
-
-# secret files
+# secrets
 .env
 .env.*
 !.env.example
@@ -45,3 +37,7 @@ config/config.yaml
 
 # AI tools
 .playwright-mcp
+
+# local Go workspace
+go.work
+go.work.sum
