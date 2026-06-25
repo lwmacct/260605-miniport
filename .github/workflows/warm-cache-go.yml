@@ -52,4 +52,3 @@ jobs:
             ~/.cache/go-build
             ~/go/pkg/mod
           key: ${{ runner.os }}-${{ runner.arch }}-go-${{ hashFiles('go.sum') }}
-

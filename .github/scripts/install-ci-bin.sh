@@ -34,4 +34,3 @@ install_upx() {
 }
 
 install_upx
-

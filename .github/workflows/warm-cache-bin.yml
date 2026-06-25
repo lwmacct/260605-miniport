@@ -35,4 +35,3 @@ jobs:
         with:
           path: .cache/ci-bin
           key: ${{ runner.os }}-${{ runner.arch }}-ci-bin-${{ hashFiles('.github/scripts/install-ci-bin.sh') }}
-

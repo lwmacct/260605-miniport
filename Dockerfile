@@ -4,13 +4,14 @@ FROM alpine:3.22
 
 WORKDIR /app/data
 
-RUN apk add --no-cache bash ca-certificates tini tzdata tar
+RUN apk add --no-cache ca-certificates tini tzdata bash tar
 
 ENV WEB_ROOT=/app/web
+ENV APP_DATA=/app/data
 
 COPY bin/app /usr/local/bin/app
 COPY dist /app/web
 COPY config/config.example.yaml /app/data/config/config.example.yaml
 
 ENTRYPOINT ["tini", "--"]
-CMD ["app","version"]
+CMD ["app", "server"]
