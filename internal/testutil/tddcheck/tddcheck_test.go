@@ -7,8 +7,15 @@ import (
 )
 
 func TestRules(t *testing.T) {
-	tddcheck.ProjectRules{
+	tddcheck.Project{
 		Root:   "internal",
 		Config: tddcheck.DefaultConfig(),
 	}.Assert(t)
+}
+
+func TestWriteProjectDoc(t *testing.T) {
+	tddcheck.Project{
+		Root:   "internal",
+		Config: tddcheck.DefaultConfig(),
+	}.WriteDoc(t, "")
 }
