@@ -63,8 +63,9 @@ func (s *AuthPasswordService) Authenticate(ctx context.Context, username string,
 		}
 		return nil, err
 	}
-	if err := users.EnsureActive(user); err != nil {
-		return nil, err
+	activeErr := users.EnsureActive(user)
+	if activeErr != nil {
+		return nil, activeErr
 	}
 	row, err := s.store.FetchAuthPasswordByUserID(ctx, user.ID)
 	if err != nil {

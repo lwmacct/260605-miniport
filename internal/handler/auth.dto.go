@@ -17,7 +17,7 @@ type AuthChallengeCreateDTO struct {
 	Provider    string    `json:"provider"`
 	ChallengeID string    `json:"challengeId,omitempty"`
 	Image       string    `json:"image,omitempty"`
-	ExpiresAt   time.Time `json:"expiresAt,omitempty"`
+	ExpiresAt   time.Time `json:"expiresAt,omitzero"`
 }
 
 type AuthChallengeDTO struct {

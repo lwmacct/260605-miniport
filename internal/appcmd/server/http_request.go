@@ -93,7 +93,7 @@ func ipInPrefixes(ip netip.Addr, prefixes []netip.Prefix) bool {
 }
 
 func parseXForwardedFor(value string) (netip.Addr, bool) {
-	for _, part := range strings.Split(value, ",") {
+	for part := range strings.SplitSeq(value, ",") {
 		if ip, ok := parseIP(part); ok {
 			return ip, true
 		}

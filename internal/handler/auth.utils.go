@@ -37,6 +37,7 @@ func utilRegisterErrorMessage(err error) string {
 }
 
 func utilSessionCookieValue(value string, expiresAt time.Time, secure bool) string {
+	//nolint:gosec // Secure is configuration-driven so local HTTP development can work.
 	return (&http.Cookie{
 		Name:     sessionCookieName,
 		Value:    value,
@@ -50,6 +51,7 @@ func utilSessionCookieValue(value string, expiresAt time.Time, secure bool) stri
 }
 
 func utilClearSessionCookie(secure bool) string {
+	//nolint:gosec // Secure is configuration-driven so local HTTP development can work.
 	return (&http.Cookie{
 		Name:     sessionCookieName,
 		Value:    "",

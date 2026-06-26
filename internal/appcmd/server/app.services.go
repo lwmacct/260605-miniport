@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/lwmacct/260605-miniport/internal/config"
 	"github.com/lwmacct/260605-miniport/internal/infra/captcha"
 	"github.com/lwmacct/260605-miniport/internal/infra/database"
 	"github.com/lwmacct/260605-miniport/internal/infra/dbschema"
@@ -76,19 +75,4 @@ func (app *App) closeDatabase() {
 	_ = app.container.db.Close()
 	app.container.db = nil
 	app.container.store = nil
-}
-
-func databaseDisplay(cfg config.ServerDatabase) string {
-	if cfg.Type == "pgsql" {
-		host := cfg.PGSQL.Host
-		if host == "" {
-			host = "localhost"
-		}
-		name := cfg.PGSQL.Database
-		if name == "" {
-			name = "postgres"
-		}
-		return "pgsql://" + host + "/" + name
-	}
-	return cfg.SQLite
 }

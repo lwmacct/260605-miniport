@@ -51,7 +51,7 @@ func (h authHandler) state(ctx context.Context, input *AuthSessionInputDTO) (*Bo
 	}
 	session, err := h.session(ctx, input.Session)
 	if err != nil {
-		return &BodyDTO[AuthStateDTO]{Body: body}, nil
+		return &BodyDTO[AuthStateDTO]{Body: body}, nil //nolint:nilerr // Invalid sessions are represented as unauthenticated state.
 	}
 	body.Session = *session
 	return &BodyDTO[AuthStateDTO]{Body: body}, nil
@@ -80,7 +80,8 @@ func (h authHandler) passwordRegister(ctx context.Context, input *BodyInputDTO[A
 	if err != nil {
 		return nil, err
 	}
-	if err := h.verifyChallenge(ctx, input.Body.Challenge, request); err != nil {
+	challengeErr := h.verifyChallenge(ctx, input.Body.Challenge, request)
+	if challengeErr != nil {
 		return nil, huma.Error401Unauthorized("invalid challenge")
 	}
 	user, err := h.services.Passwords.Register(ctx, service.AuthPasswordRegisterInput{Username: input.Body.Username, Password: input.Body.Password})
@@ -101,7 +102,8 @@ func (h authHandler) passwordLogin(ctx context.Context, input *BodyInputDTO[Auth
 	if err != nil {
 		return nil, err
 	}
-	if err := h.verifyChallenge(ctx, input.Body.Challenge, request); err != nil {
+	challengeErr := h.verifyChallenge(ctx, input.Body.Challenge, request)
+	if challengeErr != nil {
 		return nil, huma.Error401Unauthorized("invalid challenge")
 	}
 	user, err := h.services.Passwords.Authenticate(ctx, input.Body.Username, input.Body.Password, h.services.Users)

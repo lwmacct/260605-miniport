@@ -3,9 +3,9 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -39,7 +39,7 @@ func (p *testChallengeProvider) Create(context.Context, service.AuthChallengeInp
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.nextID++
-	id := "cap_test_" + string(rune('0'+p.nextID))
+	id := "cap_test_" + strconv.Itoa(p.nextID)
 	p.answers[id] = "PASS"
 	return &service.AuthChallenge{
 		Provider:    service.AuthChallengeProviderImage,
@@ -88,6 +88,7 @@ func newChallengeBody(t *testing.T, handler http.Handler) string {
 }
 
 func loginBody(t *testing.T, handler http.Handler, username string, password string) string {
+	t.Helper()
 	return `{"username":"` + username + `","password":"` + password + `",` + newChallengeBody(t, handler) + `}`
 }
 
@@ -270,5 +271,5 @@ func TestChallengeProviderConsumesChallengeOnce(t *testing.T) {
 	response := service.AuthChallengeAnswer{Provider: challenge.Provider, ChallengeID: challenge.ChallengeID, Answer: "PASS"}
 	require.NoError(t, challengeService.Verify(context.Background(), response, service.AuthChallengeInput{}))
 	err = challengeService.Verify(context.Background(), response, service.AuthChallengeInput{})
-	require.True(t, errors.Is(err, service.ErrAuthChallengeInvalid))
+	require.ErrorIs(t, err, service.ErrAuthChallengeInvalid)
 }

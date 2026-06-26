@@ -24,20 +24,3 @@ type AuthSessionRecord struct {
 	CreatedAt     time.Time
 	LastSeenAt    time.Time
 }
-
-func utilAuthSessionRecordFromModel(model *AuthSessionModel) *AuthSessionRecord {
-	if model == nil {
-		return nil
-	}
-	return &AuthSessionRecord{
-		IDHash:        model.IDHash,
-		UserID:        model.UserID,
-		LoginIP:       model.LoginIP,
-		LastIP:        model.LastIP,
-		UserAgentHash: model.UserAgentHash,
-		ExpiresAt:     model.ExpiresAt,
-		RevokedAt:     model.RevokedAt,
-		CreatedAt:     model.CreatedAt,
-		LastSeenAt:    model.LastSeenAt,
-	}
-}

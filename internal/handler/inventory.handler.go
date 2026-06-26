@@ -45,7 +45,7 @@ func (h inventoryHandler) listHosts(ctx context.Context, input *HostListInputDTO
 }
 
 func (h inventoryHandler) createHost(ctx context.Context, input *HostBodyInputDTO) (*BodyDTO[HostDTO], error) {
-	if _, err := h.requireAdmin(ctx, input.Session); err != nil {
+	if err := h.requireAdmin(ctx, input.Session); err != nil {
 		return nil, err
 	}
 	host, err := h.services.Inventory.CreateHost(ctx, input.Body)
@@ -56,7 +56,7 @@ func (h inventoryHandler) createHost(ctx context.Context, input *HostBodyInputDT
 }
 
 func (h inventoryHandler) updateHost(ctx context.Context, input *HostUpdateInputDTO) (*BodyDTO[HostDTO], error) {
-	if _, err := h.requireAdmin(ctx, input.Session); err != nil {
+	if err := h.requireAdmin(ctx, input.Session); err != nil {
 		return nil, err
 	}
 	host, err := h.services.Inventory.UpdateHost(ctx, input.ID, input.Body)
@@ -67,7 +67,7 @@ func (h inventoryHandler) updateHost(ctx context.Context, input *HostUpdateInput
 }
 
 func (h inventoryHandler) deleteHost(ctx context.Context, input *HostInputDTO) (*BodyDTO[DeleteDTO], error) {
-	if _, err := h.requireAdmin(ctx, input.Session); err != nil {
+	if err := h.requireAdmin(ctx, input.Session); err != nil {
 		return nil, err
 	}
 	if err := h.services.Inventory.DeleteHost(ctx, input.ID); err != nil {
@@ -99,7 +99,7 @@ func (h inventoryHandler) getPortGroup(ctx context.Context, input *PortGroupInpu
 }
 
 func (h inventoryHandler) createPortGroup(ctx context.Context, input *PortGroupBodyInputDTO) (*BodyDTO[PortGroupDTO], error) {
-	if _, err := h.requireAdmin(ctx, input.Session); err != nil {
+	if err := h.requireAdmin(ctx, input.Session); err != nil {
 		return nil, err
 	}
 	group, err := h.services.Inventory.CreatePortGroup(ctx, input.Body)
@@ -110,7 +110,7 @@ func (h inventoryHandler) createPortGroup(ctx context.Context, input *PortGroupB
 }
 
 func (h inventoryHandler) updatePortGroup(ctx context.Context, input *PortGroupUpdateInputDTO) (*BodyDTO[PortGroupDTO], error) {
-	if _, err := h.requireAdmin(ctx, input.Session); err != nil {
+	if err := h.requireAdmin(ctx, input.Session); err != nil {
 		return nil, err
 	}
 	group, err := h.services.Inventory.UpdatePortGroup(ctx, input.ID, input.Body)
@@ -121,7 +121,7 @@ func (h inventoryHandler) updatePortGroup(ctx context.Context, input *PortGroupU
 }
 
 func (h inventoryHandler) deletePortGroup(ctx context.Context, input *PortGroupInputDTO) (*BodyDTO[DeleteDTO], error) {
-	if _, err := h.requireAdmin(ctx, input.Session); err != nil {
+	if err := h.requireAdmin(ctx, input.Session); err != nil {
 		return nil, err
 	}
 	if err := h.services.Inventory.DeletePortGroup(ctx, input.ID); err != nil {
@@ -131,7 +131,7 @@ func (h inventoryHandler) deletePortGroup(ctx context.Context, input *PortGroupI
 }
 
 func (h inventoryHandler) batchUpdatePortGroups(ctx context.Context, input *PortGroupBatchUpdateInputDTO) (*BodyDTO[[]PortGroupDTO], error) {
-	if _, err := h.requireAdmin(ctx, input.Session); err != nil {
+	if err := h.requireAdmin(ctx, input.Session); err != nil {
 		return nil, err
 	}
 	groups, err := h.services.Inventory.UpdatePortGroups(ctx, input.Body)
@@ -142,7 +142,7 @@ func (h inventoryHandler) batchUpdatePortGroups(ctx context.Context, input *Port
 }
 
 func (h inventoryHandler) batchDeletePortGroups(ctx context.Context, input *PortGroupBatchDeleteInputDTO) (*BodyDTO[DeleteDTO], error) {
-	if _, err := h.requireAdmin(ctx, input.Session); err != nil {
+	if err := h.requireAdmin(ctx, input.Session); err != nil {
 		return nil, err
 	}
 	if err := h.services.Inventory.DeletePortGroups(ctx, input.Body); err != nil {
@@ -166,13 +166,13 @@ func (h inventoryHandler) exportPortGroups(ctx context.Context, input *PortGroup
 	}, nil
 }
 
-func (h inventoryHandler) requireAdmin(ctx context.Context, sessionID string) (*AuthUserDTO, error) {
+func (h inventoryHandler) requireAdmin(ctx context.Context, sessionID string) error {
 	user, err := h.auth.session(ctx, sessionID)
 	if err != nil {
-		return nil, huma.Error401Unauthorized("unauthorized")
+		return huma.Error401Unauthorized("unauthorized")
 	}
 	if user.User == nil || !user.User.Admin {
-		return nil, huma.Error403Forbidden("forbidden")
+		return huma.Error403Forbidden("forbidden")
 	}
-	return user.User, nil
+	return nil
 }

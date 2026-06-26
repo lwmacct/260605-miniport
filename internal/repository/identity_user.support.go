@@ -16,18 +16,3 @@ type IdentityUserRecord struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
-
-func utilIdentityUserRecordFromModel(model *IdentityUserModel) *IdentityUserRecord {
-	if model == nil {
-		return nil
-	}
-	return &IdentityUserRecord{
-		ID:          model.ID,
-		Username:    model.Username,
-		DisplayName: model.DisplayName,
-		Status:      model.Status,
-		DisabledAt:  model.DisabledAt,
-		CreatedAt:   model.CreatedAt,
-		UpdatedAt:   model.UpdatedAt,
-	}
-}

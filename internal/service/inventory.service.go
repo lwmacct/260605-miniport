@@ -92,22 +92,23 @@ func (s *InventoryService) CreatePortGroup(ctx context.Context, payload PortGrou
 	var out *PortGroupView
 	err := s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
 		tx := NewInventoryService(txStore)
-		group, err := utilInventoryPortGroupFromPayload(ctx, tx.store, 0, payload)
-		if err != nil {
-			return err
+		group, groupErr := utilInventoryPortGroupFromPayload(ctx, tx.store, 0, payload)
+		if groupErr != nil {
+			return groupErr
 		}
 		now := utilNowUTC()
 		group.CreatedAt = now
 		group.UpdatedAt = now
-		if _, err := tx.store.CreateInventoryPortGroup(ctx, group); err != nil {
-			return err
+		if _, createErr := tx.store.CreateInventoryPortGroup(ctx, group); createErr != nil {
+			return createErr
 		}
-		if err := tx.replacePortGroupChildren(ctx, group.ID, payload, now); err != nil {
-			return err
+		replaceErr := tx.replacePortGroupChildren(ctx, group.ID, payload, now)
+		if replaceErr != nil {
+			return replaceErr
 		}
-		view, err := tx.GetPortGroup(ctx, group.ID)
-		if err != nil {
-			return err
+		view, viewErr := tx.GetPortGroup(ctx, group.ID)
+		if viewErr != nil {
+			return viewErr
 		}
 		out = view
 		return nil
@@ -122,23 +123,24 @@ func (s *InventoryService) UpdatePortGroup(ctx context.Context, id int64, payloa
 		if _, err := tx.store.FetchInventoryPortGroupByID(ctx, id); err != nil {
 			return err
 		}
-		group, err := utilInventoryPortGroupFromPayload(ctx, tx.store, id, payload)
-		if err != nil {
-			return err
+		group, groupErr := utilInventoryPortGroupFromPayload(ctx, tx.store, id, payload)
+		if groupErr != nil {
+			return groupErr
 		}
 		group.ID = id
 		group.UpdatedAt = utilNowUTC()
-		updated, err := tx.store.UpdateInventoryPortGroup(ctx, id, group)
-		if err != nil {
-			return err
+		updated, updateErr := tx.store.UpdateInventoryPortGroup(ctx, id, group)
+		if updateErr != nil {
+			return updateErr
 		}
 		_ = updated
-		if err := tx.replacePortGroupChildren(ctx, id, payload, group.UpdatedAt); err != nil {
-			return err
+		replaceErr := tx.replacePortGroupChildren(ctx, id, payload, group.UpdatedAt)
+		if replaceErr != nil {
+			return replaceErr
 		}
-		view, err := tx.GetPortGroup(ctx, id)
-		if err != nil {
-			return err
+		view, viewErr := tx.GetPortGroup(ctx, id)
+		if viewErr != nil {
+			return viewErr
 		}
 		out = view
 		return nil
@@ -168,23 +170,23 @@ func (s *InventoryService) UpdatePortGroups(ctx context.Context, input PortGroup
 	var out []PortGroupView
 	err = s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
 		tx := NewInventoryService(txStore)
-		count, err := tx.store.CountInventoryPortGroupsByIDs(ctx, normalized.IDs)
-		if err != nil {
-			return err
+		count, countErr := tx.store.CountInventoryPortGroupsByIDs(ctx, normalized.IDs)
+		if countErr != nil {
+			return countErr
 		}
 		if count != len(normalized.IDs) {
 			return utilInventoryNotFound("one or more port groups were not found")
 		}
-		if _, err := tx.store.UpdateInventoryPortGroupsBatch(ctx, normalized.IDs, normalized.Status, normalized.Owner, normalized.Tags, utilNowUTC()); err != nil {
-			return err
+		if _, updateErr := tx.store.UpdateInventoryPortGroupsBatch(ctx, normalized.IDs, normalized.Status, normalized.Owner, normalized.Tags, utilNowUTC()); updateErr != nil {
+			return updateErr
 		}
-		groups, err := tx.store.ListInventoryPortGroupsByIDs(ctx, normalized.IDs)
-		if err != nil {
-			return err
+		groups, listErr := tx.store.ListInventoryPortGroupsByIDs(ctx, normalized.IDs)
+		if listErr != nil {
+			return listErr
 		}
-		views, err := tx.buildPortGroupViews(ctx, groups)
-		if err != nil {
-			return err
+		views, buildErr := tx.buildPortGroupViews(ctx, groups)
+		if buildErr != nil {
+			return buildErr
 		}
 		out = views
 		return nil

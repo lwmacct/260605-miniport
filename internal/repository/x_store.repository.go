@@ -20,7 +20,7 @@ func NewStore(db bun.IDB) *Store {
 
 func (s *Store) RunInTx(ctx context.Context, fn func(context.Context, *Store) error) error {
 	if runner, ok := s.db.(interface {
-		RunInTx(context.Context, *sql.TxOptions, func(context.Context, bun.Tx) error) error
+		RunInTx(ctx context.Context, opts *sql.TxOptions, fn func(context.Context, bun.Tx) error) error
 	}); ok {
 		return runner.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 			return fn(ctx, NewStore(tx))

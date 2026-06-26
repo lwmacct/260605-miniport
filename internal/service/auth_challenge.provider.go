@@ -5,6 +5,6 @@ import "context"
 type AuthChallengeProvider interface {
 	Name() string
 	PublicConfig() AuthChallengePublicConfig
-	Create(context.Context, AuthChallengeInput) (*AuthChallenge, error)
-	Verify(context.Context, AuthChallengeAnswer, AuthChallengeInput) error
+	Create(ctx context.Context, request AuthChallengeInput) (*AuthChallenge, error)
+	Verify(ctx context.Context, answer AuthChallengeAnswer, request AuthChallengeInput) error
 }

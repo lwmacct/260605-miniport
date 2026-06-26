@@ -67,12 +67,14 @@ func (s *InventoryService) replacePortGroupChildren(ctx context.Context, groupID
 	if err != nil {
 		return err
 	}
-	if err := s.store.AddInventoryPortSlots(ctx, slots); err != nil {
-		return err
+	addSlotErr := s.store.AddInventoryPortSlots(ctx, slots)
+	if addSlotErr != nil {
+		return addSlotErr
 	}
 	components := utilComponentsFromPayload(groupID, payload.Components, now)
-	if err := s.store.AddInventoryComponents(ctx, components); err != nil {
-		return err
+	addComponentErr := s.store.AddInventoryComponents(ctx, components)
+	if addComponentErr != nil {
+		return addComponentErr
 	}
 	repositories, err := utilRepositoriesFromPayload(groupID, payload.Repositories, now)
 	if err != nil {
