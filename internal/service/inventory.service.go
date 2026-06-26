@@ -102,7 +102,7 @@ func (s *InventoryService) CreatePortGroup(ctx context.Context, payload PortGrou
 		if _, createErr := tx.store.CreateInventoryPortGroup(ctx, group); createErr != nil {
 			return createErr
 		}
-		replaceErr := tx.replacePortGroupChildren(ctx, group.ID, payload, now)
+		replaceErr := utilReplacePortGroupChildren(ctx, tx.store, group.ID, payload, now)
 		if replaceErr != nil {
 			return replaceErr
 		}
@@ -134,7 +134,7 @@ func (s *InventoryService) UpdatePortGroup(ctx context.Context, id int64, payloa
 			return updateErr
 		}
 		_ = updated
-		replaceErr := tx.replacePortGroupChildren(ctx, id, payload, group.UpdatedAt)
+		replaceErr := utilReplacePortGroupChildren(ctx, tx.store, id, payload, group.UpdatedAt)
 		if replaceErr != nil {
 			return replaceErr
 		}
