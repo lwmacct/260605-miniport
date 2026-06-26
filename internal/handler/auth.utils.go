@@ -27,9 +27,9 @@ func utilRegisterErrorMessage(err error) string {
 	switch {
 	case errors.Is(err, service.ErrAuthPasswordWeakPassword):
 		return "weak password"
-	case errors.Is(err, service.ErrIdentityUserUsernameTaken):
+	case errors.Is(err, service.ErrUserUsernameTaken):
 		return "username taken"
-	case errors.Is(err, service.ErrIdentityUserInvalidCredentials):
+	case errors.Is(err, service.ErrUserInvalidCredentials):
 		return "invalid credentials"
 	default:
 		return "register failed"
@@ -64,7 +64,7 @@ func utilClearSessionCookie(secure bool) string {
 	}).String()
 }
 
-func utilIsRuntimeAdmin(user *service.IdentityUser, admins []string) bool {
+func utilIsRuntimeAdmin(user *service.User, admins []string) bool {
 	if user == nil {
 		return false
 	}

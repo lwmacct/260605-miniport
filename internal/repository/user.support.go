@@ -3,11 +3,11 @@ package repository
 import "time"
 
 const (
-	IdentityUserModelStatusActive   = "active"
-	IdentityUserModelStatusDisabled = "disabled"
+	UserModelStatusActive   = "active"
+	UserModelStatusDisabled = "disabled"
 )
 
-type IdentityUserRecord struct {
+type UserRecord struct {
 	ID          int64
 	Username    string
 	DisplayName string

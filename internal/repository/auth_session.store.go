@@ -14,14 +14,14 @@ func (s *Store) CreateAuthSession(ctx context.Context, row *AuthSessionModel) (*
 
 func (s *Store) CreateAuthSessionFromInput(ctx context.Context, input AuthSessionCreateInput) (*AuthSessionModel, error) {
 	return s.CreateAuthSession(ctx, &AuthSessionModel{
-		IDHash:         input.IDHash,
-		IdentityUserID: input.IdentityUserID,
-		LoginIP:        input.LoginIP,
-		LastIP:         input.LastIP,
-		UserAgentHash:  input.UserAgentHash,
-		ExpiresAt:      input.ExpiresAt,
-		CreatedAt:      input.CreatedAt,
-		LastSeenAt:     input.LastSeenAt,
+		IDHash:        input.IDHash,
+		UserID:        input.UserID,
+		LoginIP:       input.LoginIP,
+		LastIP:        input.LastIP,
+		UserAgentHash: input.UserAgentHash,
+		ExpiresAt:     input.ExpiresAt,
+		CreatedAt:     input.CreatedAt,
+		LastSeenAt:    input.LastSeenAt,
 	})
 }
 

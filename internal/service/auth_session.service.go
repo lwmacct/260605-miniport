@@ -22,7 +22,7 @@ func NewAuthSessionService(store *repository.Store, ttl time.Duration) *AuthSess
 	return &AuthSessionService{store: store, ttl: ttl}
 }
 
-func (s *AuthSessionService) Create(ctx context.Context, identityUserID int64, request AuthSessionInput) (string, time.Time, error) {
+func (s *AuthSessionService) Create(ctx context.Context, userID int64, request AuthSessionInput) (string, time.Time, error) {
 	sessionID, err := utilNewSessionID()
 	if err != nil {
 		return "", time.Time{}, err
@@ -30,14 +30,14 @@ func (s *AuthSessionService) Create(ctx context.Context, identityUserID int64, r
 	now := time.Now().UTC()
 	expiresAt := now.Add(s.ttl)
 	_, err = s.store.CreateAuthSessionFromInput(ctx, repository.AuthSessionCreateInput{
-		IDHash:         utilTokenHash(sessionID),
-		IdentityUserID: identityUserID,
-		LoginIP:        request.IP,
-		LastIP:         request.IP,
-		UserAgentHash:  utilTokenHash(request.UserAgent),
-		ExpiresAt:      expiresAt,
-		CreatedAt:      now,
-		LastSeenAt:     now,
+		IDHash:        utilTokenHash(sessionID),
+		UserID:        userID,
+		LoginIP:       request.IP,
+		LastIP:        request.IP,
+		UserAgentHash: utilTokenHash(request.UserAgent),
+		ExpiresAt:     expiresAt,
+		CreatedAt:     now,
+		LastSeenAt:    now,
 	})
 	if err != nil {
 		return "", time.Time{}, err
@@ -52,7 +52,7 @@ func (s *AuthSessionService) Delete(ctx context.Context, sessionID string) error
 	return s.store.DeleteAuthSessionByHash(ctx, utilTokenHash(sessionID))
 }
 
-func (s *AuthSessionService) User(ctx context.Context, sessionID string, request AuthSessionInput, users *IdentityUserService) (*AuthSessionUser, error) {
+func (s *AuthSessionService) User(ctx context.Context, sessionID string, request AuthSessionInput, users *UserService) (*AuthSessionUser, error) {
 	row, err := s.store.FetchAuthSessionByHash(ctx, utilTokenHash(sessionID))
 	if err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func (s *AuthSessionService) User(ctx context.Context, sessionID string, request
 		_ = s.Delete(ctx, sessionID)
 		return nil, repository.ErrNotFound
 	}
-	user, err := users.ByID(ctx, row.IdentityUserID)
+	user, err := users.ByID(ctx, row.UserID)
 	if err != nil {
 		return nil, err
 	}

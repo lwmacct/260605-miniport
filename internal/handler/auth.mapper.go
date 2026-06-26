@@ -2,7 +2,7 @@ package handler
 
 import "github.com/lwmacct/260605-miniport/internal/service"
 
-func ToAuthUserDTO(user *service.IdentityUser, admin bool) *AuthUserDTO {
+func ToAuthUserDTO(user *service.User, admin bool) *AuthUserDTO {
 	if user == nil {
 		return nil
 	}
@@ -46,7 +46,7 @@ func ToAuthChallengeCreateDTO(challenge *service.AuthChallenge) AuthChallengeCre
 	}
 }
 
-func ToAuthSessionDTO(sessionUser *service.AuthSessionUser, user *service.IdentityUser, admin bool) AuthSessionDTO {
+func ToAuthSessionDTO(sessionUser *service.AuthSessionUser, user *service.User, admin bool) AuthSessionDTO {
 	return AuthSessionDTO{
 		Authenticated: true,
 		ExpiresAt:     utilHTTPTime(sessionUser.ExpiresAt),

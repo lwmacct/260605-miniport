@@ -11,7 +11,7 @@ type AdminUser struct {
 	DisabledAt  *time.Time
 }
 
-func utilAdminUser(user IdentityUser, admin bool) AdminUser {
+func utilAdminUser(user User, admin bool) AdminUser {
 	return AdminUser{
 		ID:          user.ID,
 		Username:    user.Username,

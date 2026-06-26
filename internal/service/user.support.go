@@ -10,11 +10,11 @@ import (
 )
 
 const (
-	IdentityUserStatusActive   = repository.IdentityUserModelStatusActive
-	IdentityUserStatusDisabled = repository.IdentityUserModelStatusDisabled
+	UserStatusActive   = repository.UserModelStatusActive
+	UserStatusDisabled = repository.UserModelStatusDisabled
 )
 
-type IdentityUser struct {
+type User struct {
 	ID          int64
 	Username    string
 	DisplayName string
@@ -24,22 +24,22 @@ type IdentityUser struct {
 	UpdatedAt   time.Time
 }
 
-type CreateIdentityUserInput struct {
+type CreateUserInput struct {
 	Username    string
 	DisplayName string
 }
 
 var (
-	ErrIdentityUserUsernameTaken      = errors.New("username taken")
-	ErrIdentityUserInvalidCredentials = errors.New("invalid credentials")
-	ErrIdentityUserDisabled           = errors.New("user disabled")
+	ErrUserUsernameTaken      = errors.New("username taken")
+	ErrUserInvalidCredentials = errors.New("invalid credentials")
+	ErrUserDisabled           = errors.New("user disabled")
 )
 
-func utilIdentityUser(row *repository.IdentityUserModel) *IdentityUser {
+func utilUser(row *repository.UserModel) *User {
 	if row == nil {
 		return nil
 	}
-	return &IdentityUser{
+	return &User{
 		ID:          row.ID,
 		Username:    row.Username,
 		DisplayName: row.DisplayName,

@@ -22,7 +22,7 @@ func (s *AuthPasswordService) CheckStrength(username string, password string) er
 	return validatePassword(username, password)
 }
 
-func (s *AuthPasswordService) Set(ctx context.Context, username string, identityUserID int64, password string) error {
+func (s *AuthPasswordService) Set(ctx context.Context, username string, userID int64, password string) error {
 	if err := validatePassword(username, password); err != nil {
 		return err
 	}
@@ -30,16 +30,16 @@ func (s *AuthPasswordService) Set(ctx context.Context, username string, identity
 	if err != nil {
 		return err
 	}
-	_, err = s.store.CreateAuthPassword(ctx, identityUserID, string(hash))
+	_, err = s.store.CreateAuthPassword(ctx, userID, string(hash))
 	return err
 }
 
-func (s *AuthPasswordService) Register(ctx context.Context, input AuthPasswordRegisterInput) (*IdentityUser, error) {
-	var user *IdentityUser
+func (s *AuthPasswordService) Register(ctx context.Context, input AuthPasswordRegisterInput) (*User, error) {
+	var user *User
 	err := s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
-		users := NewIdentityUserService(txStore)
+		users := NewUserService(txStore)
 		passwords := NewAuthPasswordService(txStore)
-		created, err := users.Create(ctx, CreateIdentityUserInput{Username: input.Username})
+		created, err := users.Create(ctx, CreateUserInput{Username: input.Username})
 		if err != nil {
 			return err
 		}
@@ -52,7 +52,7 @@ func (s *AuthPasswordService) Register(ctx context.Context, input AuthPasswordRe
 	return user, err
 }
 
-func (s *AuthPasswordService) Authenticate(ctx context.Context, username string, password string, users *IdentityUserService) (*IdentityUser, error) {
+func (s *AuthPasswordService) Authenticate(ctx context.Context, username string, password string, users *UserService) (*User, error) {
 	if utilNormalizeUsername(username) == "" || password == "" {
 		return nil, ErrAuthPasswordInvalidCredentials
 	}
@@ -67,7 +67,7 @@ func (s *AuthPasswordService) Authenticate(ctx context.Context, username string,
 	if activeErr != nil {
 		return nil, activeErr
 	}
-	row, err := s.store.FetchAuthPasswordByIdentityUserID(ctx, user.ID)
+	row, err := s.store.FetchAuthPasswordByUserID(ctx, user.ID)
 	if err != nil {
 		if IsNotFound(err) {
 			return nil, ErrAuthPasswordInvalidCredentials

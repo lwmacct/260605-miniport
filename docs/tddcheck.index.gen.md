@@ -43,23 +43,23 @@
 
 ## Services
 
-| Service                | Scope            | File                                         | Constructor               | Dependencies        | Methods                                                                                                                                                                                                      |
-| ---------------------- | ---------------- | -------------------------------------------- | ------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `AdminUserService`     | `admin_user`     | `internal/service/admin_user.service.go`     | `NewAdminUserService`     | IdentityUserService | List                                                                                                                                                                                                         |
-| `AuthChallengeService` | `auth_challenge` | `internal/service/auth_challenge.service.go` | `NewAuthChallengeService` |                     | Create, PublicConfig, Verify                                                                                                                                                                                 |
-| `AuthPasswordService`  | `auth_password`  | `internal/service/auth_password.service.go`  | `NewAuthPasswordService`  |                     | Authenticate, CheckStrength, Register, Set                                                                                                                                                                   |
-| `AuthSessionService`   | `auth_session`   | `internal/service/auth_session.service.go`   | `NewAuthSessionService`   |                     | Create, Delete, User                                                                                                                                                                                         |
-| `IdentityUserService`  | `identity_user`  | `internal/service/identity_user.service.go`  | `NewIdentityUserService`  |                     | ByID, ByUsername, Create, EnsureActive, List                                                                                                                                                                 |
-| `InventoryService`     | `inventory`      | `internal/service/inventory.service.go`      | `NewInventoryService`     |                     | CreateHost, CreatePortGroup, DeleteHost, DeletePortGroup, DeletePortGroups, ExportPortGroupsCSV, GetPortGroup, ListHosts, ListPortGroups, UpdateHost, UpdatePortGroup, UpdatePortGroups, buildPortGroupViews |
+| Service                | Scope            | File                                         | Constructor               | Dependencies | Methods                                                                                                                                                                                                      |
+| ---------------------- | ---------------- | -------------------------------------------- | ------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `AdminUserService`     | `admin_user`     | `internal/service/admin_user.service.go`     | `NewAdminUserService`     | UserService  | List                                                                                                                                                                                                         |
+| `AuthChallengeService` | `auth_challenge` | `internal/service/auth_challenge.service.go` | `NewAuthChallengeService` |              | Create, PublicConfig, Verify                                                                                                                                                                                 |
+| `AuthPasswordService`  | `auth_password`  | `internal/service/auth_password.service.go`  | `NewAuthPasswordService`  |              | Authenticate, CheckStrength, Register, Set                                                                                                                                                                   |
+| `AuthSessionService`   | `auth_session`   | `internal/service/auth_session.service.go`   | `NewAuthSessionService`   |              | Create, Delete, User                                                                                                                                                                                         |
+| `InventoryService`     | `inventory`      | `internal/service/inventory.service.go`      | `NewInventoryService`     |              | CreateHost, CreatePortGroup, DeleteHost, DeletePortGroup, DeletePortGroups, ExportPortGroupsCSV, GetPortGroup, ListHosts, ListPortGroups, UpdateHost, UpdatePortGroup, UpdatePortGroups, buildPortGroupViews |
+| `UserService`          | `user`           | `internal/service/user.service.go`           | `NewUserService`          |              | ByID, ByUsername, Create, EnsureActive, List                                                                                                                                                                 |
 
 ## Stores
 
 | Scope           | File                                         | Methods                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | --------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `auth_password` | `internal/repository/auth_password.store.go` | CreateAuthPassword, FetchAuthPasswordByIdentityUserID                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `auth_password` | `internal/repository/auth_password.store.go` | CreateAuthPassword, FetchAuthPasswordByUserID                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `auth_session`  | `internal/repository/auth_session.store.go`  | CreateAuthSession, CreateAuthSessionFromInput, DeleteAuthSessionByHash, FetchAuthSessionByHash, UpdateAuthSessionTouch                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| `identity_user` | `internal/repository/identity_user.store.go` | CreateIdentityUser, FetchIdentityUserByID, FetchIdentityUserByUsername, ListIdentityUsers                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `inventory`     | `internal/repository/inventory.store.go`     | AddInventoryComponents, AddInventoryPortSlots, AddInventoryRepositoryRefs, CountInventoryOverlappingPortGroups, CountInventoryPortGroupsByHostID, CountInventoryPortGroupsByIDs, CreateInventoryHost, CreateInventoryPortGroup, DeleteInventoryHost, DeleteInventoryPortGroups, FetchInventoryHostByID, FetchInventoryPortGroupByID, FetchInventoryPortGroupChildrenByPortGroupIDs, FetchInventoryPortGroupWithHostByID, ListInventoryHosts, ListInventoryPortGroups, ListInventoryPortGroupsByIDs, ReplaceInventoryPortGroupChildren, UpdateInventoryHost, UpdateInventoryPortGroup, UpdateInventoryPortGroupsBatch |
+| `user`          | `internal/repository/user.store.go`          | CreateUser, FetchUserByID, FetchUserByUsername, ListUsers                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 
 ## Tables
 
@@ -67,12 +67,12 @@
 | --------------------------- | ----------------------------- | -------------------------- | -------------------------------------------------------- | ---------------- | ------ | ------------ |
 | `auth_passwords`            | `AuthPasswordModel`           | `auth_password`            | `internal/repository/auth_password.schema.go`            | `ap`             | 4      | 1            |
 | `auth_sessions`             | `AuthSessionModel`            | `auth_session`             | `internal/repository/auth_session.schema.go`             | `as`             | 9      | 1            |
-| `identity_users`            | `IdentityUserModel`           | `identity_user`            | `internal/repository/identity_user.schema.go`            | `iu`             | 7      | 0            |
 | `inventory_components`      | `InventoryComponentModel`     | `inventory_component`      | `internal/repository/inventory_component.schema.go`      | `component`      | 9      | 1            |
 | `inventory_hosts`           | `InventoryHostModel`          | `inventory_host`           | `internal/repository/inventory_host.schema.go`           | `host`           | 8      | 0            |
 | `inventory_port_groups`     | `InventoryPortGroupModel`     | `inventory_port_group`     | `internal/repository/inventory_port_group.schema.go`     | `port_group`     | 14     | 1            |
 | `inventory_port_slots`      | `InventoryPortSlotModel`      | `inventory_port_slot`      | `internal/repository/inventory_port_slot.schema.go`      | `port_slot`      | 10     | 1            |
 | `inventory_repository_refs` | `InventoryRepositoryRefModel` | `inventory_repository_ref` | `internal/repository/inventory_repository_ref.schema.go` | `repository_ref` | 8      | 1            |
+| `users`                     | `UserModel`                   | `user`                     | `internal/repository/user.schema.go`                     | `iu`             | 7      | 0            |
 
 ### `auth_passwords`
 
@@ -81,16 +81,16 @@
 - File: `internal/repository/auth_password.schema.go`
 - Alias: `ap`
 
-| Field            | Column             | Go Type     | Attributes |
-| ---------------- | ------------------ | ----------- | ---------- |
-| `IdentityUserID` | `identity_user_id` | `int64`     | [pk]       |
-| `PasswordHash`   | `password_hash`    | `string`    | [notnull]  |
-| `CreatedAt`      | `created_at`       | `time.Time` | [notnull]  |
-| `UpdatedAt`      | `updated_at`       | `time.Time` | [notnull]  |
+| Field          | Column          | Go Type     | Attributes |
+| -------------- | --------------- | ----------- | ---------- |
+| `UserID`       | `user_id`       | `int64`     | [pk]       |
+| `PasswordHash` | `password_hash` | `string`    | [notnull]  |
+| `CreatedAt`    | `created_at`    | `time.Time` | [notnull]  |
+| `UpdatedAt`    | `updated_at`    | `time.Time` | [notnull]  |
 
 Foreign keys:
 
-- `(identity_user_id) REFERENCES identity_users (id) ON DELETE CASCADE`
+- `(user_id) REFERENCES users (id) ON DELETE CASCADE`
 
 ### `auth_sessions`
 
@@ -99,38 +99,21 @@ Foreign keys:
 - File: `internal/repository/auth_session.schema.go`
 - Alias: `as`
 
-| Field            | Column             | Go Type      | Attributes |
-| ---------------- | ------------------ | ------------ | ---------- |
-| `IDHash`         | `id_hash`          | `string`     | [pk]       |
-| `IdentityUserID` | `identity_user_id` | `int64`      | [notnull]  |
-| `LoginIP`        | `login_ip`         | `string`     |            |
-| `LastIP`         | `last_ip`          | `string`     |            |
-| `UserAgentHash`  | `user_agent_hash`  | `string`     |            |
-| `ExpiresAt`      | `expires_at`       | `time.Time`  | [notnull]  |
-| `RevokedAt`      | `revoked_at`       | `*time.Time` | [nullable] |
-| `CreatedAt`      | `created_at`       | `time.Time`  | [notnull]  |
-| `LastSeenAt`     | `last_seen_at`     | `time.Time`  | [notnull]  |
+| Field           | Column            | Go Type      | Attributes |
+| --------------- | ----------------- | ------------ | ---------- |
+| `IDHash`        | `id_hash`         | `string`     | [pk]       |
+| `UserID`        | `user_id`         | `int64`      | [notnull]  |
+| `LoginIP`       | `login_ip`        | `string`     |            |
+| `LastIP`        | `last_ip`         | `string`     |            |
+| `UserAgentHash` | `user_agent_hash` | `string`     |            |
+| `ExpiresAt`     | `expires_at`      | `time.Time`  | [notnull]  |
+| `RevokedAt`     | `revoked_at`      | `*time.Time` | [nullable] |
+| `CreatedAt`     | `created_at`      | `time.Time`  | [notnull]  |
+| `LastSeenAt`    | `last_seen_at`    | `time.Time`  | [notnull]  |
 
 Foreign keys:
 
-- `(identity_user_id) REFERENCES identity_users (id) ON DELETE CASCADE`
-
-### `identity_users`
-
-- Model: `IdentityUserModel`
-- Scope: `identity_user`
-- File: `internal/repository/identity_user.schema.go`
-- Alias: `iu`
-
-| Field         | Column         | Go Type      | Attributes          |
-| ------------- | -------------- | ------------ | ------------------- |
-| `ID`          | `id`           | `int64`      | [pk, autoincrement] |
-| `Username`    | `username`     | `string`     | [notnull, unique]   |
-| `DisplayName` | `display_name` | `string`     | [notnull]           |
-| `Status`      | `status`       | `string`     | [notnull]           |
-| `DisabledAt`  | `disabled_at`  | `*time.Time` | [nullable]          |
-| `CreatedAt`   | `created_at`   | `time.Time`  | [notnull]           |
-| `UpdatedAt`   | `updated_at`   | `time.Time`  | [notnull]           |
+- `(user_id) REFERENCES users (id) ON DELETE CASCADE`
 
 ### `inventory_components`
 
@@ -246,6 +229,23 @@ Foreign keys:
 Foreign keys:
 
 - `(port_group_id) REFERENCES inventory_port_groups (id) ON DELETE CASCADE`
+
+### `users`
+
+- Model: `UserModel`
+- Scope: `user`
+- File: `internal/repository/user.schema.go`
+- Alias: `iu`
+
+| Field         | Column         | Go Type      | Attributes          |
+| ------------- | -------------- | ------------ | ------------------- |
+| `ID`          | `id`           | `int64`      | [pk, autoincrement] |
+| `Username`    | `username`     | `string`     | [notnull, unique]   |
+| `DisplayName` | `display_name` | `string`     | [notnull]           |
+| `Status`      | `status`       | `string`     | [notnull]           |
+| `DisabledAt`  | `disabled_at`  | `*time.Time` | [nullable]          |
+| `CreatedAt`   | `created_at`   | `time.Time`  | [notnull]           |
+| `UpdatedAt`   | `updated_at`   | `time.Time`  | [notnull]           |
 
 
 ## Projections

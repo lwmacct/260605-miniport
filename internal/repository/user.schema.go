@@ -6,8 +6,8 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type IdentityUserModel struct {
-	bun.BaseModel `bun:"table:identity_users,alias:iu"`
+type UserModel struct {
+	bun.BaseModel `bun:"table:users,alias:iu"`
 
 	ID          int64      `bun:"id,pk,autoincrement"`
 	Username    string     `bun:"username,notnull,unique"`
@@ -18,6 +18,6 @@ type IdentityUserModel struct {
 	UpdatedAt   time.Time  `bun:"updated_at,notnull"`
 }
 
-func IdentityUserSchema() []any {
-	return []any{(*IdentityUserModel)(nil)}
+func UserSchema() []any {
+	return []any{(*UserModel)(nil)}
 }

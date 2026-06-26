@@ -17,7 +17,7 @@ func (app *App) bootstrap(ctx context.Context) error {
 		return fmt.Errorf("open database: %w", err)
 	}
 	models := append([]any{}, repository.InventorySchema()...)
-	models = append(models, repository.IdentityUserSchema()...)
+	models = append(models, repository.UserSchema()...)
 	models = append(models, repository.AuthPasswordSchema()...)
 	models = append(models, repository.AuthSessionSchema()...)
 	if err := dbschema.Apply(ctx, db, models, repository.InventoryIndexesSchema()); err != nil {
@@ -28,7 +28,7 @@ func (app *App) bootstrap(ctx context.Context) error {
 	app.container.db = db
 	app.container.store = repository.NewStore(db)
 	app.container.inventory = service.NewInventoryService(app.container.store)
-	app.container.users = service.NewIdentityUserService(app.container.store)
+	app.container.users = service.NewUserService(app.container.store)
 	app.container.passwords = service.NewAuthPasswordService(app.container.store)
 	app.container.sessions = service.NewAuthSessionService(app.container.store, app.cfg.Server.HTTP.SessionTTL)
 	app.container.challenges = app.newChallengeService()

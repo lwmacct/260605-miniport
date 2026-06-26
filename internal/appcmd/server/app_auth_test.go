@@ -95,7 +95,7 @@ func loginBody(t *testing.T, handler http.Handler, username string, password str
 func TestAuthPasswordLoginSessionAndAdminUsers(t *testing.T) {
 	app, handler := setupAuthTestApp(t, []string{"admin"})
 
-	admin, err := app.container.users.Create(context.Background(), service.CreateIdentityUserInput{Username: "admin"})
+	admin, err := app.container.users.Create(context.Background(), service.CreateUserInput{Username: "admin"})
 	require.NoError(t, err)
 	require.NoError(t, app.container.passwords.Set(context.Background(), admin.Username, admin.ID, "strong-ops-password-123"))
 
@@ -161,7 +161,7 @@ func TestAuthStateReturnsPublicConfigForGuest(t *testing.T) {
 
 func TestAuthStateReturnsCurrentUser(t *testing.T) {
 	app, handler := setupAuthTestApp(t, []string{"admin"})
-	user, err := app.container.users.Create(context.Background(), service.CreateIdentityUserInput{Username: "admin"})
+	user, err := app.container.users.Create(context.Background(), service.CreateUserInput{Username: "admin"})
 	require.NoError(t, err)
 	require.NoError(t, app.container.passwords.Set(context.Background(), user.Username, user.ID, "strong-ops-password-123"))
 
@@ -197,7 +197,7 @@ func TestAuthStateReturnsCurrentUser(t *testing.T) {
 func TestInventoryWriteRequiresAdmin(t *testing.T) {
 	app, handler := setupAuthTestApp(t, []string{"root-admin"})
 
-	user, err := app.container.users.Create(context.Background(), service.CreateIdentityUserInput{Username: "member"})
+	user, err := app.container.users.Create(context.Background(), service.CreateUserInput{Username: "member"})
 	require.NoError(t, err)
 	require.NoError(t, app.container.passwords.Set(context.Background(), user.Username, user.ID, "team-secret-123"))
 
@@ -221,7 +221,7 @@ func TestInventoryWriteRequiresAdmin(t *testing.T) {
 func TestProtectedReadRejectsDuplicateSessionCookie(t *testing.T) {
 	app, handler := setupAuthTestApp(t, []string{"admin"})
 
-	user, err := app.container.users.Create(context.Background(), service.CreateIdentityUserInput{Username: "admin"})
+	user, err := app.container.users.Create(context.Background(), service.CreateUserInput{Username: "admin"})
 	require.NoError(t, err)
 	require.NoError(t, app.container.passwords.Set(context.Background(), user.Username, user.ID, "strong-ops-password-123"))
 
@@ -250,7 +250,7 @@ func TestProtectedReadRejectsDuplicateSessionCookie(t *testing.T) {
 
 func TestAuthPasswordLoginRequiresChallenge(t *testing.T) {
 	app, handler := setupAuthTestApp(t, []string{"admin"})
-	user, err := app.container.users.Create(context.Background(), service.CreateIdentityUserInput{Username: "admin"})
+	user, err := app.container.users.Create(context.Background(), service.CreateUserInput{Username: "admin"})
 	require.NoError(t, err)
 	require.NoError(t, app.container.passwords.Set(context.Background(), user.Username, user.ID, "strong-ops-password-123"))
 

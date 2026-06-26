@@ -3,11 +3,11 @@ package service
 import "context"
 
 type AdminUserService struct {
-	users          *IdentityUserService
+	users          *UserService
 	runtimeAdminFn func(string) bool
 }
 
-func NewAdminUserService(users *IdentityUserService, runtimeAdminFn func(string) bool) *AdminUserService {
+func NewAdminUserService(users *UserService, runtimeAdminFn func(string) bool) *AdminUserService {
 	if users == nil {
 		panic("NewAdminUserService: users is nil")
 	}

@@ -86,7 +86,7 @@ func (h authHandler) passwordRegister(ctx context.Context, input *BodyInputDTO[A
 	}
 	user, err := h.services.Passwords.Register(ctx, service.AuthPasswordRegisterInput{Username: input.Body.Username, Password: input.Body.Password})
 	if err != nil {
-		if errors.Is(err, service.ErrIdentityUserUsernameTaken) || errors.Is(err, service.ErrAuthPasswordWeakPassword) || errors.Is(err, service.ErrIdentityUserInvalidCredentials) {
+		if errors.Is(err, service.ErrUserUsernameTaken) || errors.Is(err, service.ErrAuthPasswordWeakPassword) || errors.Is(err, service.ErrUserInvalidCredentials) {
 			return nil, huma.Error400BadRequest(utilRegisterErrorMessage(err))
 		}
 		return nil, huma.Error500InternalServerError("register failed")

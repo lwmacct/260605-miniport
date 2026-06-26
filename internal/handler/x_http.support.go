@@ -15,7 +15,7 @@ type Config struct {
 }
 
 type Services struct {
-	Users      *service.IdentityUserService
+	Users      *service.UserService
 	Passwords  *service.AuthPasswordService
 	Sessions   *service.AuthSessionService
 	Challenges *service.AuthChallengeService
