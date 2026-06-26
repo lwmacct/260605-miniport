@@ -9,10 +9,6 @@ import (
 func TestRules(t *testing.T) {
 	tddcheck.ProjectRules{
 		Root:   "internal",
-		Config: projectRulesConfig(),
+		Config: tddcheck.DefaultConfig(),
 	}.Assert(t)
-}
-
-func projectRulesConfig() tddcheck.Config {
-	return tddcheck.DefaultConfig()
 }
