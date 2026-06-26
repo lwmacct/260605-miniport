@@ -1,0 +1,38 @@
+.toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) 140px 140px auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.search {
+  width: 100%;
+}
+
+.select {
+  width: 140px;
+}
+
+@media (max-width: 720px) {
+  .toolbar {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .search {
+    grid-column: 1 / -1;
+  }
+
+  .select {
+    width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .search {
+    grid-column: auto;
+  }
+}
