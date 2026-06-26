@@ -2,8 +2,8 @@ import { createContext, useContext } from "react";
 import type { ThemeMode } from "./theme";
 
 interface ThemeModeContextValue {
-  themeMode: ThemeMode;
-  toggleTheme(checked: boolean): void;
+	themeMode: ThemeMode;
+	toggleTheme(): void;
 }
 
 export const ThemeModeContext = createContext<ThemeModeContextValue | null>(null);

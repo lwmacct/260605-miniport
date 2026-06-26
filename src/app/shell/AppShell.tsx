@@ -1,14 +1,11 @@
-import { MoonOutlined, SunOutlined } from "@ant-design/icons";
-import { Layout, Space, Switch, Tooltip, type MenuProps } from "antd";
+import { Layout, Space, type MenuProps } from "antd";
 import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { AppHeader } from "./AppHeader";
 import { appPaths, topNavFromPathname, type TopNavKey } from "../router/navigation";
-import { APP_NAME, DISPLAY_VERSION } from "../../shared/config/appConfig";
-import { useThemeModeContext } from "../../shared/theme/ThemeModeContext";
-import { useAuthStateQuery } from "../../domains/auth/queries";
-import { useLogoutMutation } from "../../domains/auth/mutations";
-import { UserMenu } from "../../domains/auth/components/UserMenu";
+import { APP_NAME, DISPLAY_VERSION } from "@/shared/config/appConfig";
+import { useThemeModeContext } from "@/shared/theme/ThemeModeContext";
+import { useAuthStateQuery, useLogoutMutation, UserMenu } from "@/modules/auth";
 import styles from "./AppShell.module.css";
 
 function navItems(admin: boolean): MenuProps["items"] {
@@ -39,6 +36,7 @@ export function AppShell() {
   const authState = useAuthStateQuery();
   const logoutMutation = useLogoutMutation();
   const activeNavKey = topNavFromPathname(location.pathname);
+  const isFlushContent = activeNavKey === "admin";
   const [optimisticActiveKey, setOptimisticActiveKey] = useState<TopNavKey>();
   const user = authState.data?.session.user;
   const visibleActiveKey = optimisticActiveKey ?? activeNavKey;
@@ -64,15 +62,13 @@ export function AppShell() {
       <AppHeader
         actions={
           <Space>
-            <Tooltip title={themeMode === "dark" ? "切换到明亮模式" : "切换到暗色模式"}>
-              <Switch
-                checked={themeMode === "dark"}
-                checkedChildren={<MoonOutlined />}
-                unCheckedChildren={<SunOutlined />}
-                onChange={toggleTheme}
-              />
-            </Tooltip>
-            <UserMenu username={user?.username} onLogout={() => void logoutMutation.mutateAsync()} />
+            <UserMenu
+              themeMode={themeMode}
+              username={user?.username}
+              onLogout={() => void logoutMutation.mutateAsync()}
+              onOpenAccount={() => navigate(appPaths.admin)}
+              onToggleTheme={toggleTheme}
+            />
           </Space>
         }
         activeNavKeys={[visibleActiveKey]}
@@ -81,7 +77,7 @@ export function AppShell() {
         onNavigate={handleNavigate}
         version={DISPLAY_VERSION}
       />
-      <Layout.Content className={styles.content}>
+      <Layout.Content className={isFlushContent ? `${styles.content} ${styles.contentFlush}` : styles.content}>
         <Outlet />
       </Layout.Content>
     </Layout>

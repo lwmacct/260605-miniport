@@ -1,8 +1,8 @@
 import { RouterProvider } from "react-router-dom";
+import { ThemeModeProvider } from "@/shared/theme/ThemeModeProvider";
+import { useThemeModeContext } from "@/shared/theme/ThemeModeContext";
 import { AppProviders } from "./AppProviders";
 import { router } from "../router";
-import { ThemeModeProvider } from "../../shared/theme/ThemeModeProvider";
-import { useThemeModeContext } from "../../shared/theme/ThemeModeContext";
 
 function RoutedApplication() {
   const { themeMode } = useThemeModeContext();

@@ -52,7 +52,7 @@ export function AppHeader({
           placement="bottom"
           trigger={["click"]}
         >
-          <Button className={styles.compactNav} icon={<DownOutlined />}>
+        <Button className={styles.mobileNav} icon={<DownOutlined />}>
             {activeLabel}
           </Button>
         </Dropdown>

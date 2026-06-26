@@ -1,6 +1,6 @@
 import { Alert, Result, Spin } from "antd";
 import { Navigate, Outlet } from "react-router-dom";
-import { useAuthStateQuery } from "../../domains/auth/queries";
+import { useAuthStateQuery } from "@/modules/auth";
 import { appPaths } from "./navigation";
 import styles from "../shell/AppShell.module.css";
 

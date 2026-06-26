@@ -8,9 +8,9 @@ export function useThemeMode() {
     applyTheme(themeMode);
   }, [themeMode]);
 
-  function toggleTheme(checked: boolean) {
-    setThemeMode(checked ? "dark" : "light");
-  }
+	function toggleTheme() {
+		setThemeMode((current) => (current === "dark" ? "light" : "dark"));
+	}
 
   return { themeMode, toggleTheme };
 }

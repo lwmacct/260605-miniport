@@ -29,7 +29,7 @@
   flex: 0 0 auto;
   place-items: center;
   border-radius: 50%;
-  color: #ffffff;
+	color: var(--app-text-strong);
   background: var(--app-accent);
   font-size: 13px;
   font-weight: 700;
@@ -95,8 +95,8 @@
   border-bottom-color: var(--app-accent) !important;
 }
 
-.compactNav {
-  display: none;
+.mobileNav {
+	display: none;
 }
 
 .actionsSlot {
@@ -136,18 +136,18 @@
     overflow: visible;
   }
 
-  .compactNav {
+  .mobileNav {
     display: inline-flex;
     max-width: 100%;
   }
 
-  .compactNav :global(.ant-btn-icon) {
+  .mobileNav :global(.ant-btn-icon) {
     order: 2;
     margin-inline-start: 4px;
     margin-inline-end: 0;
   }
 
-  .compactNav span:not(:global(.ant-btn-icon)) {
+  .mobileNav span:not(:global(.ant-btn-icon)) {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
