@@ -14,8 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/lwmacct/260605-miniport/internal/config"
-	"github.com/lwmacct/260605-miniport/internal/domain/authchallenge"
-	"github.com/lwmacct/260605-miniport/internal/domain/identityuser"
+	"github.com/lwmacct/260605-miniport/internal/service"
 )
 
 type testChallengeProvider struct {
@@ -29,34 +28,34 @@ func newTestChallengeProvider() *testChallengeProvider {
 }
 
 func (p *testChallengeProvider) Name() string {
-	return authchallenge.ProviderImage
+	return service.AuthChallengeProviderImage
 }
 
-func (p *testChallengeProvider) PublicConfig() authchallenge.PublicConfigDTO {
-	return authchallenge.PublicConfigDTO{Provider: authchallenge.ProviderImage}
+func (p *testChallengeProvider) PublicConfig() service.AuthChallengePublicConfig {
+	return service.AuthChallengePublicConfig{Provider: service.AuthChallengeProviderImage}
 }
 
-func (p *testChallengeProvider) Create(context.Context, authchallenge.RequestDTO) (*authchallenge.ChallengeDTO, error) {
+func (p *testChallengeProvider) Create(context.Context, service.AuthChallengeInput) (*service.AuthChallenge, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.nextID++
 	id := "cap_test_" + string(rune('0'+p.nextID))
 	p.answers[id] = "PASS"
-	return &authchallenge.ChallengeDTO{
-		Provider:    authchallenge.ProviderImage,
+	return &service.AuthChallenge{
+		Provider:    service.AuthChallengeProviderImage,
 		ChallengeID: id,
 		Image:       "data:image/png;base64,test",
 		ExpiresAt:   time.Now().Add(time.Minute),
 	}, nil
 }
 
-func (p *testChallengeProvider) Verify(_ context.Context, response authchallenge.ResponseDTO, _ authchallenge.RequestDTO) error {
+func (p *testChallengeProvider) Verify(_ context.Context, response service.AuthChallengeAnswer, _ service.AuthChallengeInput) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	answer, ok := p.answers[response.ChallengeID]
 	delete(p.answers, response.ChallengeID)
-	if !ok || response.Provider != authchallenge.ProviderImage || response.Answer != answer {
-		return authchallenge.ErrInvalidChallenge
+	if !ok || response.Provider != service.AuthChallengeProviderImage || response.Answer != answer {
+		return service.ErrAuthChallengeInvalid
 	}
 	return nil
 }
@@ -68,7 +67,7 @@ func setupAuthTestApp(t *testing.T, admins []string) (*App, http.Handler) {
 	cfg.Server.Auth.Admins = admins
 	app := NewApp(&cfg)
 	require.NoError(t, app.bootstrap(context.Background()))
-	app.challenges = authchallenge.NewService(newTestChallengeProvider())
+	app.container.challenges = service.NewAuthChallengeService(newTestChallengeProvider())
 	t.Cleanup(app.closeDatabase)
 	return app, app.newHTTPServer().Handler
 }
@@ -95,9 +94,9 @@ func loginBody(t *testing.T, handler http.Handler, username string, password str
 func TestAuthPasswordLoginSessionAndAdminUsers(t *testing.T) {
 	app, handler := setupAuthTestApp(t, []string{"admin"})
 
-	admin, err := app.users.Create(context.Background(), identityuser.CreateInput{Username: "admin"})
+	admin, err := app.container.users.Create(context.Background(), service.CreateIdentityUserInput{Username: "admin"})
 	require.NoError(t, err)
-	require.NoError(t, app.passwords.Set(context.Background(), admin.Username, admin.ID, "strong-ops-password-123"))
+	require.NoError(t, app.container.passwords.Set(context.Background(), admin.Username, admin.ID, "strong-ops-password-123"))
 
 	body := loginBody(t, handler, "admin", "strong-ops-password-123")
 	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/api/auth/password/login", strings.NewReader(body))
@@ -161,9 +160,9 @@ func TestAuthStateReturnsPublicConfigForGuest(t *testing.T) {
 
 func TestAuthStateReturnsCurrentUser(t *testing.T) {
 	app, handler := setupAuthTestApp(t, []string{"admin"})
-	user, err := app.users.Create(context.Background(), identityuser.CreateInput{Username: "admin"})
+	user, err := app.container.users.Create(context.Background(), service.CreateIdentityUserInput{Username: "admin"})
 	require.NoError(t, err)
-	require.NoError(t, app.passwords.Set(context.Background(), user.Username, user.ID, "strong-ops-password-123"))
+	require.NoError(t, app.container.passwords.Set(context.Background(), user.Username, user.ID, "strong-ops-password-123"))
 
 	loginReq := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/api/auth/password/login", strings.NewReader(loginBody(t, handler, "admin", "strong-ops-password-123")))
 	loginReq.Header.Set("Content-Type", "application/json")
@@ -197,9 +196,9 @@ func TestAuthStateReturnsCurrentUser(t *testing.T) {
 func TestInventoryWriteRequiresAdmin(t *testing.T) {
 	app, handler := setupAuthTestApp(t, []string{"root-admin"})
 
-	user, err := app.users.Create(context.Background(), identityuser.CreateInput{Username: "member"})
+	user, err := app.container.users.Create(context.Background(), service.CreateIdentityUserInput{Username: "member"})
 	require.NoError(t, err)
-	require.NoError(t, app.passwords.Set(context.Background(), user.Username, user.ID, "team-secret-123"))
+	require.NoError(t, app.container.passwords.Set(context.Background(), user.Username, user.ID, "team-secret-123"))
 
 	loginReq := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/api/auth/password/login", strings.NewReader(loginBody(t, handler, "member", "team-secret-123")))
 	loginReq.Header.Set("Content-Type", "application/json")
@@ -221,9 +220,9 @@ func TestInventoryWriteRequiresAdmin(t *testing.T) {
 func TestProtectedReadRejectsDuplicateSessionCookie(t *testing.T) {
 	app, handler := setupAuthTestApp(t, []string{"admin"})
 
-	user, err := app.users.Create(context.Background(), identityuser.CreateInput{Username: "admin"})
+	user, err := app.container.users.Create(context.Background(), service.CreateIdentityUserInput{Username: "admin"})
 	require.NoError(t, err)
-	require.NoError(t, app.passwords.Set(context.Background(), user.Username, user.ID, "strong-ops-password-123"))
+	require.NoError(t, app.container.passwords.Set(context.Background(), user.Username, user.ID, "strong-ops-password-123"))
 
 	loginReq := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/api/auth/password/login", strings.NewReader(loginBody(t, handler, "admin", "strong-ops-password-123")))
 	loginReq.Header.Set("Content-Type", "application/json")
@@ -250,9 +249,9 @@ func TestProtectedReadRejectsDuplicateSessionCookie(t *testing.T) {
 
 func TestAuthPasswordLoginRequiresChallenge(t *testing.T) {
 	app, handler := setupAuthTestApp(t, []string{"admin"})
-	user, err := app.users.Create(context.Background(), identityuser.CreateInput{Username: "admin"})
+	user, err := app.container.users.Create(context.Background(), service.CreateIdentityUserInput{Username: "admin"})
 	require.NoError(t, err)
-	require.NoError(t, app.passwords.Set(context.Background(), user.Username, user.ID, "strong-ops-password-123"))
+	require.NoError(t, app.container.passwords.Set(context.Background(), user.Username, user.ID, "strong-ops-password-123"))
 
 	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/api/auth/password/login", strings.NewReader(`{"username":"admin","password":"strong-ops-password-123","challenge":{"provider":"image","challengeId":"missing","answer":"PASS"}}`))
 	req.Header.Set("Content-Type", "application/json")
@@ -264,12 +263,12 @@ func TestAuthPasswordLoginRequiresChallenge(t *testing.T) {
 
 func TestChallengeProviderConsumesChallengeOnce(t *testing.T) {
 	provider := newTestChallengeProvider()
-	service := authchallenge.NewService(provider)
-	challenge, err := service.Create(context.Background(), authchallenge.RequestDTO{})
+	challengeService := service.NewAuthChallengeService(provider)
+	challenge, err := challengeService.Create(context.Background(), service.AuthChallengeInput{})
 	require.NoError(t, err)
 
-	response := authchallenge.ResponseDTO{Provider: challenge.Provider, ChallengeID: challenge.ChallengeID, Answer: "PASS"}
-	require.NoError(t, service.Verify(context.Background(), response, authchallenge.RequestDTO{}))
-	err = service.Verify(context.Background(), response, authchallenge.RequestDTO{})
-	require.True(t, errors.Is(err, authchallenge.ErrInvalidChallenge))
+	response := service.AuthChallengeAnswer{Provider: challenge.Provider, ChallengeID: challenge.ChallengeID, Answer: "PASS"}
+	require.NoError(t, challengeService.Verify(context.Background(), response, service.AuthChallengeInput{}))
+	err = challengeService.Verify(context.Background(), response, service.AuthChallengeInput{})
+	require.True(t, errors.Is(err, service.ErrAuthChallengeInvalid))
 }

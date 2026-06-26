@@ -1,26 +1,28 @@
 package server
 
 import (
-	"github.com/lwmacct/260605-miniport/internal/adapter/httpauth"
-	"github.com/lwmacct/260605-miniport/internal/domain/authchallenge"
 	"github.com/uptrace/bun"
 
 	"github.com/lwmacct/260605-miniport/internal/config"
-	"github.com/lwmacct/260605-miniport/internal/domain/authpassword"
-	"github.com/lwmacct/260605-miniport/internal/domain/authsession"
-	"github.com/lwmacct/260605-miniport/internal/domain/identityuser"
-	"github.com/lwmacct/260605-miniport/internal/domain/inventory"
+	"github.com/lwmacct/260605-miniport/internal/repository"
+	"github.com/lwmacct/260605-miniport/internal/service"
 )
 
 type App struct {
-	cfg        *config.Config
+	cfg       *config.Config
+	container appContainer
+}
+
+type appContainer struct {
 	db         *bun.DB
-	inventory  *inventory.Service
-	users      *identityuser.Service
-	passwords  *authpassword.Service
-	sessions   *authsession.Service
-	challenges *authchallenge.Service
-	httpAuth   *httpauth.Service
+	store      *repository.Store
+	inventory  *service.InventoryService
+	users      *service.IdentityUserService
+	passwords  *service.AuthPasswordService
+	sessions   *service.AuthSessionService
+	challenges *service.AuthChallengeService
+	adminUsers *service.AdminUserService
+	requests   requestContextMiddleware
 }
 
 func NewApp(cfg *config.Config) *App {

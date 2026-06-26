@@ -4,16 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/lwmacct/260605-miniport/internal/adapter/authchallengeprovider"
-	"github.com/lwmacct/260605-miniport/internal/adapter/httpauth"
 	"github.com/lwmacct/260605-miniport/internal/config"
-	"github.com/lwmacct/260605-miniport/internal/domain/authchallenge"
-	"github.com/lwmacct/260605-miniport/internal/domain/authpassword"
-	"github.com/lwmacct/260605-miniport/internal/domain/authsession"
-	"github.com/lwmacct/260605-miniport/internal/domain/identityuser"
-	"github.com/lwmacct/260605-miniport/internal/domain/inventory"
+	"github.com/lwmacct/260605-miniport/internal/infra/captcha"
 	"github.com/lwmacct/260605-miniport/internal/infra/database"
 	"github.com/lwmacct/260605-miniport/internal/infra/dbschema"
+	"github.com/lwmacct/260605-miniport/internal/repository"
+	"github.com/lwmacct/260605-miniport/internal/service"
 )
 
 func (app *App) bootstrap(ctx context.Context) error {
@@ -25,58 +21,61 @@ func (app *App) bootstrap(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("open database: %w", err)
 	}
-	models := append([]any{}, inventory.Schema()...)
-	models = append(models, identityuser.Schema()...)
-	models = append(models, authpassword.Schema()...)
-	models = append(models, authsession.Schema()...)
-	if err := dbschema.Apply(ctx, db, models, inventory.IndexStatements()); err != nil {
+	models := append([]any{}, repository.InventorySchema()...)
+	models = append(models, repository.IdentityUserSchema()...)
+	models = append(models, repository.AuthPasswordSchema()...)
+	models = append(models, repository.AuthSessionSchema()...)
+	if err := dbschema.Apply(ctx, db, models, repository.InventoryIndexesSchema()); err != nil {
 		_ = db.Close()
 		return fmt.Errorf("apply database schema: %w", err)
 	}
 
-	app.db = db
-	app.inventory = inventory.NewService(db)
-	app.users = identityuser.NewService(db)
-	app.passwords = authpassword.NewService(db)
-	app.sessions = authsession.NewService(db, app.cfg.Server.HTTP.SessionTTL)
-	app.challenges = app.newChallengeService()
-	app.httpAuth = httpauth.NewService(app.cfg.Server.HTTP.TLS.Enabled(), app.cfg.Server.HTTP.TrustedProxies)
+	app.container.db = db
+	app.container.store = repository.NewStore(db)
+	app.container.inventory = service.NewInventoryService(app.container.store)
+	app.container.users = service.NewIdentityUserService(app.container.store)
+	app.container.passwords = service.NewAuthPasswordService(app.container.store)
+	app.container.sessions = service.NewAuthSessionService(app.container.store, app.cfg.Server.HTTP.SessionTTL)
+	app.container.challenges = app.newChallengeService()
+	app.container.adminUsers = service.NewAdminUserService(app.container.users, app.isRuntimeAdminUsername)
+	app.container.requests = newRequestContextMiddleware(app.cfg.Server.HTTP.TrustedProxies)
 	return nil
 }
 
-func (app *App) newChallengeService() *authchallenge.Service {
+func (app *App) newChallengeService() *service.AuthChallengeService {
 	cfg := app.cfg.Server.Auth.Challenge
 	switch cfg.Provider {
-	case authchallenge.ProviderHCaptcha:
-		provider, err := authchallengeprovider.NewRemoteTokenProvider(
-			authchallenge.ProviderHCaptcha,
+	case service.AuthChallengeProviderHCaptcha:
+		provider, err := captcha.NewRemoteTokenProvider(
+			service.AuthChallengeProviderHCaptcha,
 			cfg.HCaptcha.SiteKey,
 			cfg.HCaptcha.Secret,
 			cfg.HCaptcha.VerifyURL,
 		)
 		if err == nil {
-			return authchallenge.NewService(provider)
+			return service.NewAuthChallengeService(provider)
 		}
-	case authchallenge.ProviderTurnstile:
-		provider, err := authchallengeprovider.NewRemoteTokenProvider(
-			authchallenge.ProviderTurnstile,
+	case service.AuthChallengeProviderTurnstile:
+		provider, err := captcha.NewRemoteTokenProvider(
+			service.AuthChallengeProviderTurnstile,
 			cfg.Turnstile.SiteKey,
 			cfg.Turnstile.Secret,
 			cfg.Turnstile.VerifyURL,
 		)
 		if err == nil {
-			return authchallenge.NewService(provider)
+			return service.NewAuthChallengeService(provider)
 		}
 	}
-	return authchallenge.NewService(authchallengeprovider.NewImageProvider(cfg.Image.MaxChallenges))
+	return service.NewAuthChallengeService(captcha.NewImageProvider(cfg.Image.MaxChallenges))
 }
 
 func (app *App) closeDatabase() {
-	if app.db == nil {
+	if app.container.db == nil {
 		return
 	}
-	_ = app.db.Close()
-	app.db = nil
+	_ = app.container.db.Close()
+	app.container.db = nil
+	app.container.store = nil
 }
 
 func databaseDisplay(cfg config.ServerDatabase) string {
