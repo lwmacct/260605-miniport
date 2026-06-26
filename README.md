@@ -2,11 +2,12 @@
 
 Miniport 是一个端口服务资产管理应用，用来管理 IP 主机、固定 10 个端口一组的服务分配、服务容器、依赖组件和源码仓库。
 
-项目已重构为清洁分层结构：
+项目已重构为当前服务分层结构：
 
 - `internal/appcmd/server`: 服务入口和运行时组装
-- `internal/domain/inventory`: 领域模型、校验和业务服务
-- `internal/adapter/inventoryhttp`: HTTP API 协议适配
+- `internal/handler`: HTTP API 协议适配、DTO 和响应转换
+- `internal/service`: 业务规则和应用服务
+- `internal/repository`: 数据访问、record 和 schema
 - `internal/infra/*`: 数据库、schema、前端静态资源托管
 - `src/app|src/pages|src/domains|src/shared`: 前端应用壳、页面、领域和共享层
 

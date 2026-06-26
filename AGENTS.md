@@ -7,9 +7,11 @@
 ## 结构
 
 - Go 服务模块: `github.com/lwmacct/260605-miniport`。
-- 服务入口在 `main.go`; 后端启动、命令和基础设施代码放 `internal/app/`。
-- 领域代码放 `internal/domain/<domain>`。
-- `internal/domain/<domain>/` 内文件名使用通用职责语义, 例如 `model.go`, `dto.go`, `handler.go`, `service.go`, `repository.go`, `schema.go`, `validation.go`, `errors.go`, `utils.go`。
+- 服务入口在 `main.go`; 后端启动、命令和运行时组装代码放 `internal/appcmd/`。
+- HTTP 协议适配、DTO 和响应转换放 `internal/handler/`。
+- 业务规则和应用服务放 `internal/service/`。
+- 数据访问、record 和 schema 放 `internal/repository/`。
+- 基础设施能力放 `internal/infra/`。
 - 仅明确要对外复用的共享包放 `pkg/`。
 - 前端是 React/Vite, 代码在 `src/`, 静态资源在 `public/`, 不提交构建产物。
 - 测试文件放在被测代码旁边, 命名为 `*_test.go`。
@@ -21,11 +23,6 @@
 
 ## Language Rules
 
-- Go 源码拆分命名规则:
-  - 拆分优先依据职责边界和代码内聚性, 不以行数作为硬限制。
-  - 仅为降低行数而做机械拆分时, 参考 300 行作为避免文件碎片化的下限。
-  - 结构体方法按 `type.topic.go` 命名, 例如 `type.action.go`。
-  - 纯包级函数逻辑统一放到 `utils.go`。
 - Shell 命名规则:
   - 函数名使用双下划线前缀, 例如 `__func_name`。
   - 普通局部变量使用单下划线前缀, 例如 `_var_name`。
