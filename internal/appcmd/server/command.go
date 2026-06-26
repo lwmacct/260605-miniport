@@ -127,10 +127,10 @@ var Command = &cli.Command{
 			Usage: usage.MustUsage("http.web-root"),
 			Value: defaults.Server.HTTP.WebRoot,
 		},
-		&cli.DurationFlag{
-			Name:  "http.session-ttl",
-			Usage: usage.MustUsage("http.session-ttl"),
-			Value: defaults.Server.HTTP.SessionTTL,
+		&cli.BoolFlag{
+			Name:  "http.tls.enabled",
+			Usage: usage.MustUsage("http.tls.enabled"),
+			Value: defaults.Server.HTTP.TLS.Enabled,
 		},
 		&cli.StringFlag{
 			Name:  "http.tls.cert-file",
@@ -141,6 +141,21 @@ var Command = &cli.Command{
 			Name:  "http.tls.key-file",
 			Usage: usage.MustUsage("http.tls.key-file"),
 			Value: defaults.Server.HTTP.TLS.KeyFile,
+		},
+		&cli.BoolFlag{
+			Name:  "http.tls.auto-reload",
+			Usage: usage.MustUsage("http.tls.auto-reload"),
+			Value: defaults.Server.HTTP.TLS.AutoReload,
+		},
+		&cli.DurationFlag{
+			Name:  "http.tls.reload-interval",
+			Usage: usage.MustUsage("http.tls.reload-interval"),
+			Value: defaults.Server.HTTP.TLS.ReloadInterval,
+		},
+		&cli.DurationFlag{
+			Name:  "http.session-ttl",
+			Usage: usage.MustUsage("http.session-ttl"),
+			Value: defaults.Server.HTTP.SessionTTL,
 		},
 		&cli.DurationFlag{
 			Name:  "http.read-timeout",

@@ -36,6 +36,8 @@ github.com/lwmacct/251207-go-pkg-version v0.2.260526 h1:XSo9wDWqppewU/qSDSWFoLs1
 github.com/lwmacct/251207-go-pkg-version v0.2.260526/go.mod h1:rJYQzaw0YJ3ZLKl+8AXwHl+a8YA9ClXrv9Ce7lje9jk=
 github.com/lwmacct/251219-go-pkg-logm v0.9.260413 h1:NcW1XeXH/7N2RhUoeR6FP1cEPkgbMf7uaOurTD8vZUM=
 github.com/lwmacct/251219-go-pkg-logm v0.9.260413/go.mod h1:BnMqg/hjah4hx8mrac+6js5bnMLyf6PzHJ05yJQF4qY=
+github.com/lwmacct/260614-go-pkg-tlsreload v0.5.260615 h1:cOJrZOVGO13E9bxvApF3U16HzybCoGysxto33zB90GY=
+github.com/lwmacct/260614-go-pkg-tlsreload v0.5.260615/go.mod h1:KSbnFv/SrmhuaGQrP4KKF3T0+as8/E6pMwCgFjA/S5k=
 github.com/lwmacct/260622-go-pkg-tddcheck v0.16.260626 h1:NEmGJIoE2hUc0bcU8j81uqfEHpUmjaaikpUGVRPWgjs=
 github.com/lwmacct/260622-go-pkg-tddcheck v0.16.260626/go.mod h1:vcBuL7xMgFha98wyMcmTck3z6IADiP7pspe4PRUq0Cg=
 github.com/mattn/go-isatty v0.0.22 h1:j8l17JJ9i6VGPUFUYoTUKPSgKe/83EYU2zBC7YNKMw4=

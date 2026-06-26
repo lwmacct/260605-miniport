@@ -1,6 +1,7 @@
 package server
 
 import (
+	"crypto/tls"
 	"net/http"
 	"strings"
 
@@ -27,13 +28,17 @@ func (app *App) newHTTPServer() *http.Server {
 		httpHandler = http.MaxBytesHandler(httpHandler, maxBodyBytes)
 	}
 
-	return &http.Server{
+	srv := &http.Server{
 		Addr:         app.cfg.Server.HTTP.Listen,
 		Handler:      httpHandler,
 		ReadTimeout:  app.cfg.Server.HTTP.ReadTimeout,
 		WriteTimeout: app.cfg.Server.HTTP.WriteTimeout,
 		IdleTimeout:  app.cfg.Server.HTTP.IdleTimeout,
 	}
+	if app.tlsManager != nil {
+		srv.TLSConfig = app.tlsManager.TLSConfig(tls.VersionTLS12)
+	}
+	return srv
 }
 
 func (app *App) newHTTPAPIHandler() http.Handler {
@@ -45,7 +50,7 @@ func (app *App) handlerConfig() handler.Config {
 	return handler.Config{
 		LocalLoginEnabled:        app.cfg.Server.Auth.Local.LoginEnabled,
 		LocalRegistrationEnabled: app.cfg.Server.Auth.Local.RegistrationEnabled,
-		SecureCookies:            app.cfg.Server.HTTP.TLS.Enabled(),
+		SecureCookies:            app.cfg.Server.HTTP.TLS.Enabled,
 		RuntimeAdmins:            app.cfg.Server.Auth.Admins,
 		Request:                  handler.RequestFromContext,
 	}

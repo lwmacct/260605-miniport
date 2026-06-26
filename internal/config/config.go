@@ -1,9 +1,6 @@
 package config
 
-import (
-	"errors"
-	"time"
-)
+import "time"
 
 type Config struct {
 	Server Server `json:"server" desc:"服务端配置"`
@@ -71,19 +68,11 @@ type ServerAuthChallengeRemote struct {
 }
 
 type ServerHTTPTLS struct {
-	CertFile string `json:"cert-file" desc:"TLS 证书文件路径"`
-	KeyFile  string `json:"key-file" desc:"TLS 私钥文件路径"`
-}
-
-func (cfg ServerHTTPTLS) Enabled() bool {
-	return cfg.CertFile != "" || cfg.KeyFile != ""
-}
-
-func (cfg ServerHTTPTLS) Validate() error {
-	if (cfg.CertFile == "") != (cfg.KeyFile == "") {
-		return errors.New("http tls.cert-file and tls.key-file must be configured together")
-	}
-	return nil
+	Enabled        bool          `json:"enabled" desc:"是否启用 HTTPS TLS"`
+	CertFile       string        `json:"cert-file" desc:"TLS 证书文件路径"`
+	KeyFile        string        `json:"key-file" desc:"TLS 私钥文件路径"`
+	AutoReload     bool          `json:"auto-reload" desc:"是否自动重载 TLS 证书文件"`
+	ReloadInterval time.Duration `json:"reload-interval" desc:"TLS 证书文件自动重载检查间隔"`
 }
 
 func DefaultConfig() Config {
@@ -123,8 +112,11 @@ func DefaultConfig() Config {
 				Listen:  ":40238",
 				WebRoot: "${WEB_ROOT:-dist}",
 				TLS: ServerHTTPTLS{
-					CertFile: "",
-					KeyFile:  "",
+					Enabled:        false,
+					CertFile:       "${APP_DATA:-.local/data}/ssl/fullchain.pem",
+					KeyFile:        "${APP_DATA:-.local/data}/ssl/privkey.pem",
+					AutoReload:     true,
+					ReloadInterval: 3 * time.Second,
 				},
 				SessionTTL:      7 * 24 * time.Hour,
 				TrustedProxies:  nil,

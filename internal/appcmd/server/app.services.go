@@ -12,10 +12,6 @@ import (
 )
 
 func (app *App) bootstrap(ctx context.Context) error {
-	if err := app.cfg.Server.HTTP.TLS.Validate(); err != nil {
-		return err
-	}
-
 	db, err := database.Open(ctx, app.cfg.Server.Database)
 	if err != nil {
 		return fmt.Errorf("open database: %w", err)

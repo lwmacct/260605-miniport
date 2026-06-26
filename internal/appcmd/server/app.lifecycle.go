@@ -13,10 +13,18 @@ import (
 )
 
 func (app *App) Run(ctx context.Context) error {
+	if err := app.validateHTTPTLS(); err != nil {
+		return err
+	}
 	if err := app.bootstrap(ctx); err != nil {
 		return err
 	}
 	defer app.closeDatabase()
+
+	if err := app.bootstrapTLSManager(ctx); err != nil {
+		return err
+	}
+	defer app.closeTLSManager()
 
 	srv := app.newHTTPServer()
 
@@ -29,10 +37,10 @@ func (app *App) Run(ctx context.Context) error {
 	errCh := make(chan error, 1)
 	go func() {
 		cfg := app.cfg.Server.HTTP
-		slog.Info("web service starting", "listen", srv.Addr, "https", cfg.TLS.Enabled(), "web_root", cfg.WebRoot)
+		slog.Info("web service starting", "listen", srv.Addr, "https", cfg.TLS.Enabled, "web_root", cfg.WebRoot)
 		var serveErr error
-		if cfg.TLS.Enabled() {
-			serveErr = srv.ServeTLS(ln, cfg.TLS.CertFile, cfg.TLS.KeyFile)
+		if cfg.TLS.Enabled {
+			serveErr = srv.ServeTLS(ln, "", "")
 		} else {
 			serveErr = srv.Serve(ln)
 		}

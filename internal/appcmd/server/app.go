@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/lwmacct/260614-go-pkg-tlsreload/pkg/tlsreload"
 	"github.com/uptrace/bun"
 
 	"github.com/lwmacct/260605-miniport/internal/config"
@@ -9,8 +10,9 @@ import (
 )
 
 type App struct {
-	cfg       *config.Config
-	container appContainer
+	cfg        *config.Config
+	container  appContainer
+	tlsManager *tlsreload.Manager
 }
 
 type appContainer struct {
