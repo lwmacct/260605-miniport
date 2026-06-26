@@ -7,7 +7,7 @@ import (
 )
 
 type IdentityUserModel struct {
-	bun.BaseModel `bun:"table:users,alias:u"`
+	bun.BaseModel `bun:"table:identity_users,alias:iu"`
 
 	ID          int64      `bun:"id,pk,autoincrement"`
 	Username    string     `bun:"username,notnull,unique"`

@@ -8,30 +8,30 @@
 
 ## APIs
 
-| Method   | Full Path                   | Mount | Operation Path              | Operation                  | Tags      | Handler                 | Register            | File                                     |
-| -------- | --------------------------- | ----- | --------------------------- | -------------------------- | --------- | ----------------------- | ------------------- | ---------------------------------------- |
-| `GET`    | `/admin/users`              | `-`   | `/admin/users`              | `list-admin-users`         | Admin     | `listUsers`             | `RegisterAdminUser` | `internal/handler/admin_user.handler.go` |
-| `POST`   | `/auth/challenges`          | `-`   | `/auth/challenges`          | `create-auth-challenge`    | Auth      | `createChallenge`       | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
-| `GET`    | `/auth/config`              | `-`   | `/auth/config`              | `get-auth-config`          | Auth      | `configOutput`          | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
-| `POST`   | `/auth/logout`              | `-`   | `/auth/logout`              | `logout`                   | Auth      | `logout`                | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
-| `GET`    | `/auth/me`                  | `-`   | `/auth/me`                  | `get-current-user`         | Auth      | `me`                    | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
-| `POST`   | `/auth/password/login`      | `-`   | `/auth/password/login`      | `login-password`           | Auth      | `passwordLogin`         | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
-| `POST`   | `/auth/password/register`   | `-`   | `/auth/password/register`   | `register-password-user`   | Auth      | `passwordRegister`      | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
-| `GET`    | `/auth/state`               | `-`   | `/auth/state`               | `get-auth-state`           | Auth      | `state`                 | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
-| `GET`    | `/exports/port-groups.csv`  | `-`   | `/exports/port-groups.csv`  | `export-port-groups`       | inventory | `exportPortGroups`      | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
-| `GET`    | `/health`                   | `-`   | `/health`                   | `get-health`               |           | `health`                | `Endpoint.Register` | `internal/handler/x_http.endpoint.go`    |
-| `GET`    | `/hosts`                    | `-`   | `/hosts`                    | `list-hosts`               | inventory | `listHosts`             | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
-| `POST`   | `/hosts`                    | `-`   | `/hosts`                    | `create-host`              | inventory | `createHost`            | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
-| `DELETE` | `/hosts/{id}`               | `-`   | `/hosts/{id}`               | `delete-host`              | inventory | `deleteHost`            | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
-| `PUT`    | `/hosts/{id}`               | `-`   | `/hosts/{id}`               | `update-host`              | inventory | `updateHost`            | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
-| `GET`    | `/meta`                     | `-`   | `/meta`                     | `get-meta`                 |           | `meta`                  | `Endpoint.Register` | `internal/handler/x_http.endpoint.go`    |
-| `GET`    | `/port-groups`              | `-`   | `/port-groups`              | `list-port-groups`         | inventory | `listPortGroups`        | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
-| `POST`   | `/port-groups`              | `-`   | `/port-groups`              | `create-port-group`        | inventory | `createPortGroup`       | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
-| `POST`   | `/port-groups/batch-delete` | `-`   | `/port-groups/batch-delete` | `batch-delete-port-groups` | inventory | `batchDeletePortGroups` | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
-| `POST`   | `/port-groups/batch-update` | `-`   | `/port-groups/batch-update` | `batch-update-port-groups` | inventory | `batchUpdatePortGroups` | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
-| `DELETE` | `/port-groups/{id}`         | `-`   | `/port-groups/{id}`         | `delete-port-group`        | inventory | `deletePortGroup`       | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
-| `GET`    | `/port-groups/{id}`         | `-`   | `/port-groups/{id}`         | `get-port-group`           | inventory | `getPortGroup`          | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
-| `PUT`    | `/port-groups/{id}`         | `-`   | `/port-groups/{id}`         | `update-port-group`        | inventory | `updatePortGroup`       | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
+| Method   | Full Path                             | Mount | Operation Path                        | Operation                            | Tags      | Handler                 | Register            | File                                     |
+| -------- | ------------------------------------- | ----- | ------------------------------------- | ------------------------------------ | --------- | ----------------------- | ------------------- | ---------------------------------------- |
+| `GET`    | `/admin/users`                        | `-`   | `/admin/users`                        | `list-admin-users`                   | Admin     | `listUsers`             | `RegisterAdminUser` | `internal/handler/admin_user.handler.go` |
+| `POST`   | `/auth/challenges`                    | `-`   | `/auth/challenges`                    | `create-auth-challenge`              | Auth      | `createChallenge`       | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
+| `GET`    | `/auth/config`                        | `-`   | `/auth/config`                        | `get-auth-config`                    | Auth      | `configOutput`          | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
+| `POST`   | `/auth/logout`                        | `-`   | `/auth/logout`                        | `logout`                             | Auth      | `logout`                | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
+| `GET`    | `/auth/me`                            | `-`   | `/auth/me`                            | `get-current-user`                   | Auth      | `me`                    | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
+| `POST`   | `/auth/password/login`                | `-`   | `/auth/password/login`                | `login-password`                     | Auth      | `passwordLogin`         | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
+| `POST`   | `/auth/password/register`             | `-`   | `/auth/password/register`             | `register-password-user`             | Auth      | `passwordRegister`      | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
+| `GET`    | `/auth/state`                         | `-`   | `/auth/state`                         | `get-auth-state`                     | Auth      | `state`                 | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
+| `GET`    | `/health`                             | `-`   | `/health`                             | `get-health`                         |           | `health`                | `Endpoint.Register` | `internal/handler/x_http.endpoint.go`    |
+| `GET`    | `/inventory/exports/port-groups.csv`  | `-`   | `/inventory/exports/port-groups.csv`  | `export-inventory-port-groups`       | inventory | `exportPortGroups`      | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
+| `GET`    | `/inventory/hosts`                    | `-`   | `/inventory/hosts`                    | `list-inventory-hosts`               | inventory | `listHosts`             | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
+| `POST`   | `/inventory/hosts`                    | `-`   | `/inventory/hosts`                    | `create-inventory-host`              | inventory | `createHost`            | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
+| `DELETE` | `/inventory/hosts/{id}`               | `-`   | `/inventory/hosts/{id}`               | `delete-inventory-host`              | inventory | `deleteHost`            | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
+| `PUT`    | `/inventory/hosts/{id}`               | `-`   | `/inventory/hosts/{id}`               | `update-inventory-host`              | inventory | `updateHost`            | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
+| `GET`    | `/inventory/port-groups`              | `-`   | `/inventory/port-groups`              | `list-inventory-port-groups`         | inventory | `listPortGroups`        | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
+| `POST`   | `/inventory/port-groups`              | `-`   | `/inventory/port-groups`              | `create-inventory-port-group`        | inventory | `createPortGroup`       | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
+| `POST`   | `/inventory/port-groups/batch-delete` | `-`   | `/inventory/port-groups/batch-delete` | `batch-delete-inventory-port-groups` | inventory | `batchDeletePortGroups` | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
+| `POST`   | `/inventory/port-groups/batch-update` | `-`   | `/inventory/port-groups/batch-update` | `batch-update-inventory-port-groups` | inventory | `batchUpdatePortGroups` | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
+| `DELETE` | `/inventory/port-groups/{id}`         | `-`   | `/inventory/port-groups/{id}`         | `delete-inventory-port-group`        | inventory | `deletePortGroup`       | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
+| `GET`    | `/inventory/port-groups/{id}`         | `-`   | `/inventory/port-groups/{id}`         | `get-inventory-port-group`           | inventory | `getPortGroup`          | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
+| `PUT`    | `/inventory/port-groups/{id}`         | `-`   | `/inventory/port-groups/{id}`         | `update-inventory-port-group`        | inventory | `updatePortGroup`       | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
+| `GET`    | `/meta`                               | `-`   | `/meta`                               | `get-meta`                           |           | `meta`                  | `Endpoint.Register` | `internal/handler/x_http.endpoint.go`    |
 
 ## Handlers
 
@@ -56,23 +56,23 @@
 
 | Scope           | File                                         | Methods                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | --------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `auth_password` | `internal/repository/auth_password.store.go` | CreateAuthPassword, FetchAuthPasswordByUserID                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `auth_password` | `internal/repository/auth_password.store.go` | CreateAuthPassword, FetchAuthPasswordByIdentityUserID                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `auth_session`  | `internal/repository/auth_session.store.go`  | CreateAuthSession, CreateAuthSessionFromInput, DeleteAuthSessionByHash, FetchAuthSessionByHash, UpdateAuthSessionTouch                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `identity_user` | `internal/repository/identity_user.store.go` | CreateIdentityUser, FetchIdentityUserByID, FetchIdentityUserByUsername, ListIdentityUsers                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `inventory`     | `internal/repository/inventory.store.go`     | AddInventoryComponents, AddInventoryPortSlots, AddInventoryRepositoryRefs, CountInventoryOverlappingPortGroups, CountInventoryPortGroupsByHostID, CountInventoryPortGroupsByIDs, CreateInventoryHost, CreateInventoryPortGroup, DeleteInventoryHost, DeleteInventoryPortGroups, FetchInventoryHostByID, FetchInventoryPortGroupByID, FetchInventoryPortGroupChildrenByPortGroupIDs, FetchInventoryPortGroupWithHostByID, ListInventoryHosts, ListInventoryPortGroups, ListInventoryPortGroupsByIDs, ReplaceInventoryPortGroupChildren, UpdateInventoryHost, UpdateInventoryPortGroup, UpdateInventoryPortGroupsBatch |
 
 ## Tables
 
-| Table            | Model                         | Scope                      | File                                          | Alias | Fields | Foreign Keys |
-| ---------------- | ----------------------------- | -------------------------- | --------------------------------------------- | ----- | ------ | ------------ |
-| `auth_passwords` | `AuthPasswordModel`           | `auth_password`            | `internal/repository/auth_password.schema.go` | `ap`  | 4      | 0            |
-| `auth_sessions`  | `AuthSessionModel`            | `auth_session`             | `internal/repository/auth_session.schema.go`  | `as`  | 9      | 0            |
-| `components`     | `InventoryComponentModel`     | `inventory_component`      | `internal/repository/inventory.schema.go`     | `-`   | 9      | 0            |
-| `hosts`          | `InventoryHostModel`          | `inventory_host`           | `internal/repository/inventory.schema.go`     | `-`   | 8      | 0            |
-| `port_groups`    | `InventoryPortGroupModel`     | `inventory_port_group`     | `internal/repository/inventory.schema.go`     | `-`   | 14     | 0            |
-| `port_slots`     | `InventoryPortSlotModel`      | `inventory_port_slot`      | `internal/repository/inventory.schema.go`     | `-`   | 10     | 0            |
-| `repositories`   | `InventoryRepositoryRefModel` | `inventory_repository_ref` | `internal/repository/inventory.schema.go`     | `-`   | 8      | 0            |
-| `users`          | `IdentityUserModel`           | `identity_user`            | `internal/repository/identity_user.schema.go` | `u`   | 7      | 0            |
+| Table                       | Model                         | Scope                      | File                                                     | Alias            | Fields | Foreign Keys |
+| --------------------------- | ----------------------------- | -------------------------- | -------------------------------------------------------- | ---------------- | ------ | ------------ |
+| `auth_passwords`            | `AuthPasswordModel`           | `auth_password`            | `internal/repository/auth_password.schema.go`            | `ap`             | 4      | 1            |
+| `auth_sessions`             | `AuthSessionModel`            | `auth_session`             | `internal/repository/auth_session.schema.go`             | `as`             | 9      | 1            |
+| `identity_users`            | `IdentityUserModel`           | `identity_user`            | `internal/repository/identity_user.schema.go`            | `iu`             | 7      | 0            |
+| `inventory_components`      | `InventoryComponentModel`     | `inventory_component`      | `internal/repository/inventory_component.schema.go`      | `component`      | 9      | 1            |
+| `inventory_hosts`           | `InventoryHostModel`          | `inventory_host`           | `internal/repository/inventory_host.schema.go`           | `host`           | 8      | 0            |
+| `inventory_port_groups`     | `InventoryPortGroupModel`     | `inventory_port_group`     | `internal/repository/inventory_port_group.schema.go`     | `port_group`     | 14     | 1            |
+| `inventory_port_slots`      | `InventoryPortSlotModel`      | `inventory_port_slot`      | `internal/repository/inventory_port_slot.schema.go`      | `port_slot`      | 10     | 1            |
+| `inventory_repository_refs` | `InventoryRepositoryRefModel` | `inventory_repository_ref` | `internal/repository/inventory_repository_ref.schema.go` | `repository_ref` | 8      | 1            |
 
 ### `auth_passwords`
 
@@ -81,12 +81,16 @@
 - File: `internal/repository/auth_password.schema.go`
 - Alias: `ap`
 
-| Field          | Column          | Go Type     | Attributes |
-| -------------- | --------------- | ----------- | ---------- |
-| `UserID`       | `user_id`       | `int64`     | [pk]       |
-| `PasswordHash` | `password_hash` | `string`    | [notnull]  |
-| `CreatedAt`    | `created_at`    | `time.Time` | [notnull]  |
-| `UpdatedAt`    | `updated_at`    | `time.Time` | [notnull]  |
+| Field            | Column             | Go Type     | Attributes |
+| ---------------- | ------------------ | ----------- | ---------- |
+| `IdentityUserID` | `identity_user_id` | `int64`     | [pk]       |
+| `PasswordHash`   | `password_hash`    | `string`    | [notnull]  |
+| `CreatedAt`      | `created_at`       | `time.Time` | [notnull]  |
+| `UpdatedAt`      | `updated_at`       | `time.Time` | [notnull]  |
+
+Foreign keys:
+
+- `(identity_user_id) REFERENCES identity_users (id) ON DELETE CASCADE`
 
 ### `auth_sessions`
 
@@ -95,23 +99,45 @@
 - File: `internal/repository/auth_session.schema.go`
 - Alias: `as`
 
-| Field           | Column            | Go Type      | Attributes |
-| --------------- | ----------------- | ------------ | ---------- |
-| `IDHash`        | `id_hash`         | `string`     | [pk]       |
-| `UserID`        | `user_id`         | `int64`      | [notnull]  |
-| `LoginIP`       | `login_ip`        | `string`     |            |
-| `LastIP`        | `last_ip`         | `string`     |            |
-| `UserAgentHash` | `user_agent_hash` | `string`     |            |
-| `ExpiresAt`     | `expires_at`      | `time.Time`  | [notnull]  |
-| `RevokedAt`     | `revoked_at`      | `*time.Time` | [nullable] |
-| `CreatedAt`     | `created_at`      | `time.Time`  | [notnull]  |
-| `LastSeenAt`    | `last_seen_at`    | `time.Time`  | [notnull]  |
+| Field            | Column             | Go Type      | Attributes |
+| ---------------- | ------------------ | ------------ | ---------- |
+| `IDHash`         | `id_hash`          | `string`     | [pk]       |
+| `IdentityUserID` | `identity_user_id` | `int64`      | [notnull]  |
+| `LoginIP`        | `login_ip`         | `string`     |            |
+| `LastIP`         | `last_ip`          | `string`     |            |
+| `UserAgentHash`  | `user_agent_hash`  | `string`     |            |
+| `ExpiresAt`      | `expires_at`       | `time.Time`  | [notnull]  |
+| `RevokedAt`      | `revoked_at`       | `*time.Time` | [nullable] |
+| `CreatedAt`      | `created_at`       | `time.Time`  | [notnull]  |
+| `LastSeenAt`     | `last_seen_at`     | `time.Time`  | [notnull]  |
 
-### `components`
+Foreign keys:
+
+- `(identity_user_id) REFERENCES identity_users (id) ON DELETE CASCADE`
+
+### `identity_users`
+
+- Model: `IdentityUserModel`
+- Scope: `identity_user`
+- File: `internal/repository/identity_user.schema.go`
+- Alias: `iu`
+
+| Field         | Column         | Go Type      | Attributes          |
+| ------------- | -------------- | ------------ | ------------------- |
+| `ID`          | `id`           | `int64`      | [pk, autoincrement] |
+| `Username`    | `username`     | `string`     | [notnull, unique]   |
+| `DisplayName` | `display_name` | `string`     | [notnull]           |
+| `Status`      | `status`       | `string`     | [notnull]           |
+| `DisabledAt`  | `disabled_at`  | `*time.Time` | [nullable]          |
+| `CreatedAt`   | `created_at`   | `time.Time`  | [notnull]           |
+| `UpdatedAt`   | `updated_at`   | `time.Time`  | [notnull]           |
+
+### `inventory_components`
 
 - Model: `InventoryComponentModel`
 - Scope: `inventory_component`
-- File: `internal/repository/inventory.schema.go`
+- File: `internal/repository/inventory_component.schema.go`
+- Alias: `component`
 
 | Field         | Column          | Go Type     | Attributes          |
 | ------------- | --------------- | ----------- | ------------------- |
@@ -125,11 +151,16 @@
 | `CreatedAt`   | `created_at`    | `time.Time` | [notnull]           |
 | `UpdatedAt`   | `updated_at`    | `time.Time` | [notnull]           |
 
-### `hosts`
+Foreign keys:
+
+- `(port_group_id) REFERENCES inventory_port_groups (id) ON DELETE CASCADE`
+
+### `inventory_hosts`
 
 - Model: `InventoryHostModel`
 - Scope: `inventory_host`
-- File: `internal/repository/inventory.schema.go`
+- File: `internal/repository/inventory_host.schema.go`
+- Alias: `host`
 
 | Field         | Column        | Go Type     | Attributes          |
 | ------------- | ------------- | ----------- | ------------------- |
@@ -142,11 +173,12 @@
 | `CreatedAt`   | `created_at`  | `time.Time` | [notnull]           |
 | `UpdatedAt`   | `updated_at`  | `time.Time` | [notnull]           |
 
-### `port_groups`
+### `inventory_port_groups`
 
 - Model: `InventoryPortGroupModel`
 - Scope: `inventory_port_group`
-- File: `internal/repository/inventory.schema.go`
+- File: `internal/repository/inventory_port_group.schema.go`
+- Alias: `port_group`
 
 | Field                | Column                 | Go Type               | Attributes          |
 | -------------------- | ---------------------- | --------------------- | ------------------- |
@@ -165,11 +197,16 @@
 | `CreatedAt`          | `created_at`           | `time.Time`           | [notnull]           |
 | `UpdatedAt`          | `updated_at`           | `time.Time`           | [notnull]           |
 
-### `port_slots`
+Foreign keys:
+
+- `(host_id) REFERENCES inventory_hosts (id)`
+
+### `inventory_port_slots`
 
 - Model: `InventoryPortSlotModel`
 - Scope: `inventory_port_slot`
-- File: `internal/repository/inventory.schema.go`
+- File: `internal/repository/inventory_port_slot.schema.go`
+- Alias: `port_slot`
 
 | Field         | Column          | Go Type     | Attributes          |
 | ------------- | --------------- | ----------- | ------------------- |
@@ -184,11 +221,16 @@
 | `CreatedAt`   | `created_at`    | `time.Time` | [notnull]           |
 | `UpdatedAt`   | `updated_at`    | `time.Time` | [notnull]           |
 
-### `repositories`
+Foreign keys:
+
+- `(port_group_id) REFERENCES inventory_port_groups (id) ON DELETE CASCADE`
+
+### `inventory_repository_refs`
 
 - Model: `InventoryRepositoryRefModel`
 - Scope: `inventory_repository_ref`
-- File: `internal/repository/inventory.schema.go`
+- File: `internal/repository/inventory_repository_ref.schema.go`
+- Alias: `repository_ref`
 
 | Field         | Column          | Go Type     | Attributes          |
 | ------------- | --------------- | ----------- | ------------------- |
@@ -201,22 +243,9 @@
 | `CreatedAt`   | `created_at`    | `time.Time` | [notnull]           |
 | `UpdatedAt`   | `updated_at`    | `time.Time` | [notnull]           |
 
-### `users`
+Foreign keys:
 
-- Model: `IdentityUserModel`
-- Scope: `identity_user`
-- File: `internal/repository/identity_user.schema.go`
-- Alias: `u`
-
-| Field         | Column         | Go Type      | Attributes          |
-| ------------- | -------------- | ------------ | ------------------- |
-| `ID`          | `id`           | `int64`      | [pk, autoincrement] |
-| `Username`    | `username`     | `string`     | [notnull, unique]   |
-| `DisplayName` | `display_name` | `string`     | [notnull]           |
-| `Status`      | `status`       | `string`     | [notnull]           |
-| `DisabledAt`  | `disabled_at`  | `*time.Time` | [nullable]          |
-| `CreatedAt`   | `created_at`   | `time.Time`  | [notnull]           |
-| `UpdatedAt`   | `updated_at`   | `time.Time`  | [notnull]           |
+- `(port_group_id) REFERENCES inventory_port_groups (id) ON DELETE CASCADE`
 
 
 ## Projections

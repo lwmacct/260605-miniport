@@ -22,7 +22,7 @@ func (s *AuthPasswordService) CheckStrength(username string, password string) er
 	return validatePassword(username, password)
 }
 
-func (s *AuthPasswordService) Set(ctx context.Context, username string, userID int64, password string) error {
+func (s *AuthPasswordService) Set(ctx context.Context, username string, identityUserID int64, password string) error {
 	if err := validatePassword(username, password); err != nil {
 		return err
 	}
@@ -30,7 +30,7 @@ func (s *AuthPasswordService) Set(ctx context.Context, username string, userID i
 	if err != nil {
 		return err
 	}
-	_, err = s.store.CreateAuthPassword(ctx, userID, string(hash))
+	_, err = s.store.CreateAuthPassword(ctx, identityUserID, string(hash))
 	return err
 }
 
@@ -67,7 +67,7 @@ func (s *AuthPasswordService) Authenticate(ctx context.Context, username string,
 	if activeErr != nil {
 		return nil, activeErr
 	}
-	row, err := s.store.FetchAuthPasswordByUserID(ctx, user.ID)
+	row, err := s.store.FetchAuthPasswordByIdentityUserID(ctx, user.ID)
 	if err != nil {
 		if IsNotFound(err) {
 			return nil, ErrAuthPasswordInvalidCredentials

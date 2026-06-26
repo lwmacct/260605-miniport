@@ -23,12 +23,12 @@ function buildQueryString(params: Record<string, string | number | undefined>) {
 }
 
 export async function loadInventory(query: InventoryQuery): Promise<InventorySnapshot> {
-  const hostsPath = "/api/hosts" + buildQueryString({
+  const hostsPath = "/api/inventory/hosts" + buildQueryString({
     environment: query.environment,
     q: query.hostQuery,
     sort: query.hostSort,
   });
-  const groupsPath = "/api/port-groups" + buildQueryString({
+  const groupsPath = "/api/inventory/port-groups" + buildQueryString({
     hostId: query.hostId,
     q: query.portGroupQuery,
     sort: query.portGroupSort,
@@ -62,14 +62,14 @@ export function saveHost(host: HostForm, editingHost?: Host | null) {
     network: host.network ?? "",
     notes: host.notes ?? "",
   };
-  return apiSend<Host>(editingHost ? `/api/hosts/${editingHost.id}` : "/api/hosts", {
+  return apiSend<Host>(editingHost ? `/api/inventory/hosts/${editingHost.id}` : "/api/inventory/hosts", {
     method: editingHost ? "PUT" : "POST",
     body: JSON.stringify(payload),
   });
 }
 
 export function removeHost(host: Host) {
-  return apiSend<{ deleted: boolean }>(`/api/hosts/${host.id}`, { method: "DELETE" });
+  return apiSend<{ deleted: boolean }>(`/api/inventory/hosts/${host.id}`, { method: "DELETE" });
 }
 
 export function savePortGroup(group: GroupForm, editingGroup?: PortGroup | null) {
@@ -89,7 +89,7 @@ export function savePortGroup(group: GroupForm, editingGroup?: PortGroup | null)
     tags: group.tags ?? "",
   };
   return apiSend<PortGroup>(
-    editingGroup ? `/api/port-groups/${editingGroup.id}` : "/api/port-groups",
+    editingGroup ? `/api/inventory/port-groups/${editingGroup.id}` : "/api/inventory/port-groups",
     {
       method: editingGroup ? "PUT" : "POST",
       body: JSON.stringify(payload),
@@ -98,11 +98,11 @@ export function savePortGroup(group: GroupForm, editingGroup?: PortGroup | null)
 }
 
 export function removePortGroup(group: PortGroup) {
-  return apiSend<{ deleted: boolean }>(`/api/port-groups/${group.id}`, { method: "DELETE" });
+  return apiSend<{ deleted: boolean }>(`/api/inventory/port-groups/${group.id}`, { method: "DELETE" });
 }
 
 export function exportPortGroupsURL(query: InventoryQuery) {
-  return "/api/exports/port-groups.csv" + buildQueryString({
+  return "/api/inventory/exports/port-groups.csv" + buildQueryString({
     hostId: query.hostId,
     q: query.portGroupQuery,
     sort: query.portGroupSort,
@@ -111,7 +111,7 @@ export function exportPortGroupsURL(query: InventoryQuery) {
 }
 
 export function batchUpdatePortGroups(ids: number[], changes: BatchPortGroupUpdate) {
-  return apiSend<PortGroup[]>("/api/port-groups/batch-update", {
+  return apiSend<PortGroup[]>("/api/inventory/port-groups/batch-update", {
     method: "POST",
     body: JSON.stringify({
       ids,
@@ -121,7 +121,7 @@ export function batchUpdatePortGroups(ids: number[], changes: BatchPortGroupUpda
 }
 
 export function batchDeletePortGroups(ids: number[]) {
-  return apiSend<{ deleted: boolean }>("/api/port-groups/batch-delete", {
+  return apiSend<{ deleted: boolean }>("/api/inventory/port-groups/batch-delete", {
     method: "POST",
     body: JSON.stringify({ ids }),
   });

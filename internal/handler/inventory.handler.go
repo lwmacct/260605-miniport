@@ -19,18 +19,18 @@ func RegisterInventory(api huma.API, config Config, services Services) {
 		auth:     authHandler{config: config, services: services},
 		services: services,
 	}
-	huma.Register(api, huma.Operation{OperationID: "list-hosts", Method: http.MethodGet, Path: "/hosts", Summary: "List hosts", Tags: []string{"inventory"}}, handler.listHosts)
-	huma.Register(api, huma.Operation{OperationID: "create-host", Method: http.MethodPost, Path: "/hosts", Summary: "Create host", Tags: []string{"inventory"}}, handler.createHost)
-	huma.Register(api, huma.Operation{OperationID: "update-host", Method: http.MethodPut, Path: "/hosts/{id}", Summary: "Update host", Tags: []string{"inventory"}}, handler.updateHost)
-	huma.Register(api, huma.Operation{OperationID: "delete-host", Method: http.MethodDelete, Path: "/hosts/{id}", Summary: "Delete host", Tags: []string{"inventory"}}, handler.deleteHost)
-	huma.Register(api, huma.Operation{OperationID: "list-port-groups", Method: http.MethodGet, Path: "/port-groups", Summary: "List port groups", Tags: []string{"inventory"}}, handler.listPortGroups)
-	huma.Register(api, huma.Operation{OperationID: "get-port-group", Method: http.MethodGet, Path: "/port-groups/{id}", Summary: "Get port group", Tags: []string{"inventory"}}, handler.getPortGroup)
-	huma.Register(api, huma.Operation{OperationID: "create-port-group", Method: http.MethodPost, Path: "/port-groups", Summary: "Create port group", Tags: []string{"inventory"}}, handler.createPortGroup)
-	huma.Register(api, huma.Operation{OperationID: "update-port-group", Method: http.MethodPut, Path: "/port-groups/{id}", Summary: "Update port group", Tags: []string{"inventory"}}, handler.updatePortGroup)
-	huma.Register(api, huma.Operation{OperationID: "delete-port-group", Method: http.MethodDelete, Path: "/port-groups/{id}", Summary: "Delete port group", Tags: []string{"inventory"}}, handler.deletePortGroup)
-	huma.Register(api, huma.Operation{OperationID: "batch-update-port-groups", Method: http.MethodPost, Path: "/port-groups/batch-update", Summary: "Batch update port groups", Tags: []string{"inventory"}}, handler.batchUpdatePortGroups)
-	huma.Register(api, huma.Operation{OperationID: "batch-delete-port-groups", Method: http.MethodPost, Path: "/port-groups/batch-delete", Summary: "Batch delete port groups", Tags: []string{"inventory"}}, handler.batchDeletePortGroups)
-	huma.Register(api, huma.Operation{OperationID: "export-port-groups", Method: http.MethodGet, Path: "/exports/port-groups.csv", Summary: "Export port groups", Tags: []string{"inventory"}}, handler.exportPortGroups)
+	huma.Register(api, huma.Operation{OperationID: "list-inventory-hosts", Method: http.MethodGet, Path: "/inventory/hosts", Summary: "List inventory hosts", Tags: []string{"inventory"}}, handler.listHosts)
+	huma.Register(api, huma.Operation{OperationID: "create-inventory-host", Method: http.MethodPost, Path: "/inventory/hosts", Summary: "Create inventory host", Tags: []string{"inventory"}}, handler.createHost)
+	huma.Register(api, huma.Operation{OperationID: "update-inventory-host", Method: http.MethodPut, Path: "/inventory/hosts/{id}", Summary: "Update inventory host", Tags: []string{"inventory"}}, handler.updateHost)
+	huma.Register(api, huma.Operation{OperationID: "delete-inventory-host", Method: http.MethodDelete, Path: "/inventory/hosts/{id}", Summary: "Delete inventory host", Tags: []string{"inventory"}}, handler.deleteHost)
+	huma.Register(api, huma.Operation{OperationID: "list-inventory-port-groups", Method: http.MethodGet, Path: "/inventory/port-groups", Summary: "List inventory port groups", Tags: []string{"inventory"}}, handler.listPortGroups)
+	huma.Register(api, huma.Operation{OperationID: "get-inventory-port-group", Method: http.MethodGet, Path: "/inventory/port-groups/{id}", Summary: "Get inventory port group", Tags: []string{"inventory"}}, handler.getPortGroup)
+	huma.Register(api, huma.Operation{OperationID: "create-inventory-port-group", Method: http.MethodPost, Path: "/inventory/port-groups", Summary: "Create inventory port group", Tags: []string{"inventory"}}, handler.createPortGroup)
+	huma.Register(api, huma.Operation{OperationID: "update-inventory-port-group", Method: http.MethodPut, Path: "/inventory/port-groups/{id}", Summary: "Update inventory port group", Tags: []string{"inventory"}}, handler.updatePortGroup)
+	huma.Register(api, huma.Operation{OperationID: "delete-inventory-port-group", Method: http.MethodDelete, Path: "/inventory/port-groups/{id}", Summary: "Delete inventory port group", Tags: []string{"inventory"}}, handler.deletePortGroup)
+	huma.Register(api, huma.Operation{OperationID: "batch-update-inventory-port-groups", Method: http.MethodPost, Path: "/inventory/port-groups/batch-update", Summary: "Batch update inventory port groups", Tags: []string{"inventory"}}, handler.batchUpdatePortGroups)
+	huma.Register(api, huma.Operation{OperationID: "batch-delete-inventory-port-groups", Method: http.MethodPost, Path: "/inventory/port-groups/batch-delete", Summary: "Batch delete inventory port groups", Tags: []string{"inventory"}}, handler.batchDeletePortGroups)
+	huma.Register(api, huma.Operation{OperationID: "export-inventory-port-groups", Method: http.MethodGet, Path: "/inventory/exports/port-groups.csv", Summary: "Export inventory port groups", Tags: []string{"inventory"}}, handler.exportPortGroups)
 }
 
 func (h inventoryHandler) listHosts(ctx context.Context, input *HostListInputDTO) (*BodyDTO[[]HostDTO], error) {
