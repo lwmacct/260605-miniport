@@ -8,30 +8,30 @@
 
 ## APIs
 
-| Method   | Path                        | Operation                  | Tags      | Handler                 | Register            | File                                     |
-| -------- | --------------------------- | -------------------------- | --------- | ----------------------- | ------------------- | ---------------------------------------- |
-| `GET`    | `/admin/users`              | `list-admin-users`         | Admin     | `listUsers`             | `RegisterAdminUser` | `internal/handler/admin_user.handler.go` |
-| `POST`   | `/auth/challenges`          | `create-auth-challenge`    | Auth      | `createChallenge`       | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
-| `GET`    | `/auth/config`              | `get-auth-config`          | Auth      | `configOutput`          | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
-| `POST`   | `/auth/logout`              | `logout`                   | Auth      | `logout`                | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
-| `GET`    | `/auth/me`                  | `get-current-user`         | Auth      | `me`                    | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
-| `POST`   | `/auth/password/login`      | `login-password`           | Auth      | `passwordLogin`         | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
-| `POST`   | `/auth/password/register`   | `register-password-user`   | Auth      | `passwordRegister`      | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
-| `GET`    | `/auth/state`               | `get-auth-state`           | Auth      | `state`                 | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
-| `GET`    | `/exports/port-groups.csv`  | `export-port-groups`       | inventory | `exportPortGroups`      | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
-| `GET`    | `/health`                   | `get-health`               |           | `health`                | `Endpoint.Register` | `internal/handler/x_http.endpoint.go`    |
-| `GET`    | `/hosts`                    | `list-hosts`               | inventory | `listHosts`             | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
-| `POST`   | `/hosts`                    | `create-host`              | inventory | `createHost`            | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
-| `DELETE` | `/hosts/{id}`               | `delete-host`              | inventory | `deleteHost`            | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
-| `PUT`    | `/hosts/{id}`               | `update-host`              | inventory | `updateHost`            | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
-| `GET`    | `/meta`                     | `get-meta`                 |           | `meta`                  | `Endpoint.Register` | `internal/handler/x_http.endpoint.go`    |
-| `GET`    | `/port-groups`              | `list-port-groups`         | inventory | `listPortGroups`        | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
-| `POST`   | `/port-groups`              | `create-port-group`        | inventory | `createPortGroup`       | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
-| `POST`   | `/port-groups/batch-delete` | `batch-delete-port-groups` | inventory | `batchDeletePortGroups` | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
-| `POST`   | `/port-groups/batch-update` | `batch-update-port-groups` | inventory | `batchUpdatePortGroups` | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
-| `DELETE` | `/port-groups/{id}`         | `delete-port-group`        | inventory | `deletePortGroup`       | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
-| `GET`    | `/port-groups/{id}`         | `get-port-group`           | inventory | `getPortGroup`          | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
-| `PUT`    | `/port-groups/{id}`         | `update-port-group`        | inventory | `updatePortGroup`       | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
+| Method   | Full Path                   | Mount | Operation Path              | Operation                  | Tags      | Handler                 | Register            | File                                     |
+| -------- | --------------------------- | ----- | --------------------------- | -------------------------- | --------- | ----------------------- | ------------------- | ---------------------------------------- |
+| `GET`    | `/admin/users`              | `-`   | `/admin/users`              | `list-admin-users`         | Admin     | `listUsers`             | `RegisterAdminUser` | `internal/handler/admin_user.handler.go` |
+| `POST`   | `/auth/challenges`          | `-`   | `/auth/challenges`          | `create-auth-challenge`    | Auth      | `createChallenge`       | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
+| `GET`    | `/auth/config`              | `-`   | `/auth/config`              | `get-auth-config`          | Auth      | `configOutput`          | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
+| `POST`   | `/auth/logout`              | `-`   | `/auth/logout`              | `logout`                   | Auth      | `logout`                | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
+| `GET`    | `/auth/me`                  | `-`   | `/auth/me`                  | `get-current-user`         | Auth      | `me`                    | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
+| `POST`   | `/auth/password/login`      | `-`   | `/auth/password/login`      | `login-password`           | Auth      | `passwordLogin`         | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
+| `POST`   | `/auth/password/register`   | `-`   | `/auth/password/register`   | `register-password-user`   | Auth      | `passwordRegister`      | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
+| `GET`    | `/auth/state`               | `-`   | `/auth/state`               | `get-auth-state`           | Auth      | `state`                 | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
+| `GET`    | `/exports/port-groups.csv`  | `-`   | `/exports/port-groups.csv`  | `export-port-groups`       | inventory | `exportPortGroups`      | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
+| `GET`    | `/health`                   | `-`   | `/health`                   | `get-health`               |           | `health`                | `Endpoint.Register` | `internal/handler/x_http.endpoint.go`    |
+| `GET`    | `/hosts`                    | `-`   | `/hosts`                    | `list-hosts`               | inventory | `listHosts`             | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
+| `POST`   | `/hosts`                    | `-`   | `/hosts`                    | `create-host`              | inventory | `createHost`            | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
+| `DELETE` | `/hosts/{id}`               | `-`   | `/hosts/{id}`               | `delete-host`              | inventory | `deleteHost`            | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
+| `PUT`    | `/hosts/{id}`               | `-`   | `/hosts/{id}`               | `update-host`              | inventory | `updateHost`            | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
+| `GET`    | `/meta`                     | `-`   | `/meta`                     | `get-meta`                 |           | `meta`                  | `Endpoint.Register` | `internal/handler/x_http.endpoint.go`    |
+| `GET`    | `/port-groups`              | `-`   | `/port-groups`              | `list-port-groups`         | inventory | `listPortGroups`        | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
+| `POST`   | `/port-groups`              | `-`   | `/port-groups`              | `create-port-group`        | inventory | `createPortGroup`       | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
+| `POST`   | `/port-groups/batch-delete` | `-`   | `/port-groups/batch-delete` | `batch-delete-port-groups` | inventory | `batchDeletePortGroups` | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
+| `POST`   | `/port-groups/batch-update` | `-`   | `/port-groups/batch-update` | `batch-update-port-groups` | inventory | `batchUpdatePortGroups` | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
+| `DELETE` | `/port-groups/{id}`         | `-`   | `/port-groups/{id}`         | `delete-port-group`        | inventory | `deletePortGroup`       | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
+| `GET`    | `/port-groups/{id}`         | `-`   | `/port-groups/{id}`         | `get-port-group`           | inventory | `getPortGroup`          | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
+| `PUT`    | `/port-groups/{id}`         | `-`   | `/port-groups/{id}`         | `update-port-group`        | inventory | `updatePortGroup`       | `RegisterInventory` | `internal/handler/inventory.handler.go`  |
 
 ## Handlers
 
@@ -217,3 +217,8 @@
 | `DisabledAt`  | `disabled_at`  | `*time.Time` | [nullable]          |
 | `CreatedAt`   | `created_at`   | `time.Time`  | [notnull]           |
 | `UpdatedAt`   | `updated_at`   | `time.Time`  | [notnull]           |
+
+
+## Projections
+
+No projections found.
