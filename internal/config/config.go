@@ -71,7 +71,7 @@ type ServerHTTPTLS struct {
 	Enabled        bool          `json:"enabled" desc:"是否启用 HTTPS TLS"`
 	CertFile       string        `json:"cert-file" desc:"TLS 证书文件路径"`
 	KeyFile        string        `json:"key-file" desc:"TLS 私钥文件路径"`
-	ReloadInterval time.Duration `json:"reload-interval" desc:"TLS 证书文件自动重载检查间隔，0 表示不自动重载"`
+	ReloadInterval time.Duration `json:"reload-interval" desc:"TLS 证书文件事件监听之外的兜底轮询间隔，0 表示禁用兜底轮询"`
 }
 
 func DefaultConfig() Config {
