@@ -60,8 +60,7 @@ server:
       enabled: false # 是否启用 HTTPS TLS
       cert-file: "${APP_DATA:-.local/data}/ssl/fullchain.pem" # TLS 证书文件路径
       key-file: "${APP_DATA:-.local/data}/ssl/privkey.pem" # TLS 私钥文件路径
-      auto-reload: true # 是否自动重载 TLS 证书文件
-      reload-interval: 3s # TLS 证书文件自动重载检查间隔
+      reload-interval: 3s # TLS 证书文件自动重载检查间隔，0 表示不自动重载
     session-ttl: 168h0m0s # HTTP 登录会话有效期
 
     # 可信 HTTP 反向代理 CIDR/IP 列表

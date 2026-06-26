@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"log/slog"
 	"time"
 
@@ -14,11 +15,11 @@ func (app *App) bootstrapTLSManager(ctx context.Context) error {
 	}
 
 	httpTLS := app.cfg.Server.HTTP.TLS
-	manager, err := tlsreload.NewFileManager(ctx, tlsreload.FileManagerOptions{
+	reloader, err := tlsreload.New(ctx, tlsreload.Config{
 		CertFile:       httpTLS.CertFile,
 		KeyFile:        httpTLS.KeyFile,
-		AutoReload:     httpTLS.AutoReload,
 		ReloadInterval: httpTLS.ReloadInterval,
+		MinVersion:     tls.VersionTLS12,
 		RetryInterval:  2 * time.Second,
 		Logger:         slog.Default(),
 	})
@@ -26,14 +27,14 @@ func (app *App) bootstrapTLSManager(ctx context.Context) error {
 		return err
 	}
 
-	app.tlsManager = manager
+	app.tlsReloader = reloader
 	return nil
 }
 
 func (app *App) closeTLSManager() {
-	if app.tlsManager == nil {
+	if app.tlsReloader == nil {
 		return
 	}
-	app.tlsManager.Close()
-	app.tlsManager = nil
+	app.tlsReloader.Close()
+	app.tlsReloader = nil
 }

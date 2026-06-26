@@ -10,9 +10,9 @@ import (
 )
 
 type App struct {
-	cfg        *config.Config
-	container  appContainer
-	tlsManager *tlsreload.Manager
+	cfg         *config.Config
+	container   appContainer
+	tlsReloader *tlsreload.Reloader
 }
 
 type appContainer struct {

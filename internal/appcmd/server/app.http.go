@@ -1,7 +1,6 @@
 package server
 
 import (
-	"crypto/tls"
 	"net/http"
 	"strings"
 
@@ -35,8 +34,8 @@ func (app *App) newHTTPServer() *http.Server {
 		WriteTimeout: app.cfg.Server.HTTP.WriteTimeout,
 		IdleTimeout:  app.cfg.Server.HTTP.IdleTimeout,
 	}
-	if app.tlsManager != nil {
-		srv.TLSConfig = app.tlsManager.TLSConfig(tls.VersionTLS12)
+	if app.tlsReloader != nil {
+		srv.TLSConfig = app.tlsReloader.TLSConfig()
 	}
 	return srv
 }

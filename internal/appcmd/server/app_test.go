@@ -40,7 +40,6 @@ func TestValidateHTTPTLS(t *testing.T) {
 							Enabled:        true,
 							CertFile:       "cert.pem",
 							KeyFile:        "key.pem",
-							AutoReload:     true,
 							ReloadInterval: time.Second,
 						},
 					},
@@ -62,15 +61,15 @@ func TestValidateHTTPTLS(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "files mode invalid reload interval rejected",
+			name: "files mode negative reload interval rejected",
 			cfg: config.Config{
 				Server: config.Server{
 					HTTP: config.ServerHTTP{
 						TLS: config.ServerHTTPTLS{
-							Enabled:    true,
-							CertFile:   "cert.pem",
-							KeyFile:    "key.pem",
-							AutoReload: true,
+							Enabled:        true,
+							CertFile:       "cert.pem",
+							KeyFile:        "key.pem",
+							ReloadInterval: -time.Second,
 						},
 					},
 				},
@@ -78,15 +77,15 @@ func TestValidateHTTPTLS(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "disabled auto reload allows zero interval",
+			name: "zero reload interval is valid",
 			cfg: config.Config{
 				Server: config.Server{
 					HTTP: config.ServerHTTP{
 						TLS: config.ServerHTTPTLS{
-							Enabled:    true,
-							CertFile:   "cert.pem",
-							KeyFile:    "key.pem",
-							AutoReload: false,
+							Enabled:        true,
+							CertFile:       "cert.pem",
+							KeyFile:        "key.pem",
+							ReloadInterval: 0,
 						},
 					},
 				},

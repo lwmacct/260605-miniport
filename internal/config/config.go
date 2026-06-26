@@ -71,8 +71,7 @@ type ServerHTTPTLS struct {
 	Enabled        bool          `json:"enabled" desc:"是否启用 HTTPS TLS"`
 	CertFile       string        `json:"cert-file" desc:"TLS 证书文件路径"`
 	KeyFile        string        `json:"key-file" desc:"TLS 私钥文件路径"`
-	AutoReload     bool          `json:"auto-reload" desc:"是否自动重载 TLS 证书文件"`
-	ReloadInterval time.Duration `json:"reload-interval" desc:"TLS 证书文件自动重载检查间隔"`
+	ReloadInterval time.Duration `json:"reload-interval" desc:"TLS 证书文件自动重载检查间隔，0 表示不自动重载"`
 }
 
 func DefaultConfig() Config {
@@ -115,7 +114,6 @@ func DefaultConfig() Config {
 					Enabled:        false,
 					CertFile:       "${APP_DATA:-.local/data}/ssl/fullchain.pem",
 					KeyFile:        "${APP_DATA:-.local/data}/ssl/privkey.pem",
-					AutoReload:     true,
 					ReloadInterval: 3 * time.Second,
 				},
 				SessionTTL:      7 * 24 * time.Hour,
