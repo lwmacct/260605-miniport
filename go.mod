@@ -9,7 +9,7 @@ require (
 	github.com/lwmacct/251207-go-pkg-cfgm v0.22.260625
 	github.com/lwmacct/251207-go-pkg-version v0.2.260526
 	github.com/lwmacct/251219-go-pkg-logm v0.9.260413
-	github.com/lwmacct/260614-go-pkg-tlsreload v0.5.260615
+	github.com/lwmacct/260614-go-pkg-tlsreload v0.6.260626
 	github.com/lwmacct/260622-go-pkg-tddcheck v0.16.260626
 	github.com/stretchr/testify v1.11.1
 	github.com/uptrace/bun v1.2.18
