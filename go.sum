@@ -6,6 +6,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=
 github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto=
+github.com/fsnotify/fsnotify v1.10.1 h1:b0/UzAf9yR5rhf3RPm9gf3ehBPpf0oZKIjtpKrx59Ho=
+github.com/fsnotify/fsnotify v1.10.1/go.mod h1:TLheqan6HD6GBK6PrDWyDPBaEV8LspOxvPSjC+bVfgo=
 github.com/fxamacker/cbor/v2 v2.9.1 h1:2rWm8B193Ll4VdjsJY28jxs70IdDsHRWgQYAI80+rMQ=
 github.com/fxamacker/cbor/v2 v2.9.1/go.mod h1:vM4b+DJCtHn+zz7h3FFp/hDAI9WNWCsZj23V5ytsSxQ=
 github.com/go-chi/chi/v5 v5.3.0 h1:halUjDxhshgXHMrao5bB8eNBXo/rnzwr8m5m36glehM=
@@ -36,8 +38,8 @@ github.com/lwmacct/251207-go-pkg-version v0.2.260526 h1:XSo9wDWqppewU/qSDSWFoLs1
 github.com/lwmacct/251207-go-pkg-version v0.2.260526/go.mod h1:rJYQzaw0YJ3ZLKl+8AXwHl+a8YA9ClXrv9Ce7lje9jk=
 github.com/lwmacct/251219-go-pkg-logm v0.9.260413 h1:NcW1XeXH/7N2RhUoeR6FP1cEPkgbMf7uaOurTD8vZUM=
 github.com/lwmacct/251219-go-pkg-logm v0.9.260413/go.mod h1:BnMqg/hjah4hx8mrac+6js5bnMLyf6PzHJ05yJQF4qY=
-github.com/lwmacct/260614-go-pkg-tlsreload v0.5.260615 h1:cOJrZOVGO13E9bxvApF3U16HzybCoGysxto33zB90GY=
-github.com/lwmacct/260614-go-pkg-tlsreload v0.5.260615/go.mod h1:KSbnFv/SrmhuaGQrP4KKF3T0+as8/E6pMwCgFjA/S5k=
+github.com/lwmacct/260614-go-pkg-tlsreload v0.6.260626 h1:6AjAh/ulg4ewwd1W9kd3ZszCKadQV3RgCSGwrKVVjZI=
+github.com/lwmacct/260614-go-pkg-tlsreload v0.6.260626/go.mod h1:sqBKb+6/jUK5MjvU0RQN3x9YYttVOdZz4mnQUKuOsBg=
 github.com/lwmacct/260622-go-pkg-tddcheck v0.16.260626 h1:NEmGJIoE2hUc0bcU8j81uqfEHpUmjaaikpUGVRPWgjs=
 github.com/lwmacct/260622-go-pkg-tddcheck v0.16.260626/go.mod h1:vcBuL7xMgFha98wyMcmTck3z6IADiP7pspe4PRUq0Cg=
 github.com/mattn/go-isatty v0.0.22 h1:j8l17JJ9i6VGPUFUYoTUKPSgKe/83EYU2zBC7YNKMw4=
