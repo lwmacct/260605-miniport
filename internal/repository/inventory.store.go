@@ -110,7 +110,7 @@ func (s *Store) CountInventoryPortGroupsByHostID(ctx context.Context, hostID int
 
 func (s *Store) ListInventoryPortGroups(ctx context.Context, params InventoryPortGroupListFilter) ([]InventoryPortGroupRecord, error) {
 	var groups []InventoryPortGroupModel
-	query := s.db.NewSelect().Model(&groups).Relation("InventoryHostModel")
+	query := s.db.NewSelect().Model(&groups).Relation("Host")
 	if params.HostID > 0 {
 		query = query.Where("port_group.host_id = ?", params.HostID)
 	}
@@ -155,7 +155,7 @@ func (s *Store) ListInventoryPortGroups(ctx context.Context, params InventoryPor
 
 func (s *Store) FetchInventoryPortGroupWithHostByID(ctx context.Context, id int64) (*InventoryPortGroupRecord, error) {
 	group := new(InventoryPortGroupModel)
-	err := s.db.NewSelect().Model(group).Relation("InventoryHostModel").Where("port_group.id = ?", id).Scan(ctx)
+	err := s.db.NewSelect().Model(group).Relation("Host").Where("port_group.id = ?", id).Scan(ctx)
 	if err != nil {
 		return nil, WrapNotFound(err)
 	}
@@ -320,7 +320,7 @@ func (s *Store) ListInventoryPortGroupsByIDs(ctx context.Context, ids []int64) (
 	var groups []InventoryPortGroupModel
 	if err := s.db.NewSelect().
 		Model(&groups).
-		Relation("InventoryHostModel").
+		Relation("Host").
 		Where("port_group.id IN (?)", bun.List(ids)).
 		Scan(ctx); err != nil {
 		return nil, err

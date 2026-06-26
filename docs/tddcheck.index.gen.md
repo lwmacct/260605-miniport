@@ -163,22 +163,22 @@ Foreign keys:
 - File: `internal/repository/inventory_port_group.schema.go`
 - Alias: `port_group`
 
-| Field                | Column                 | Go Type               | Attributes          |
-| -------------------- | ---------------------- | --------------------- | ------------------- |
-| `ID`                 | `id`                   | `int64`               | [pk, autoincrement] |
-| `HostID`             | `host_id`              | `int64`               | [notnull]           |
-| `InventoryHostModel` | `inventory_host_model` | `*InventoryHostModel` |                     |
-| `PortStart`          | `port_start`           | `int`                 | [notnull]           |
-| `PortEnd`            | `port_end`             | `int`                 | [notnull]           |
-| `ServiceName`        | `service_name`         | `string`              | [notnull]           |
-| `ContainerName`      | `container_name`       | `string`              |                     |
-| `DindHost`           | `dind_host`            | `string`              |                     |
-| `Status`             | `status`               | `string`              | [notnull]           |
-| `Owner`              | `owner`                | `string`              |                     |
-| `Tags`               | `tags`                 | `string`              |                     |
-| `Notes`              | `notes`                | `string`              |                     |
-| `CreatedAt`          | `created_at`           | `time.Time`           | [notnull]           |
-| `UpdatedAt`          | `updated_at`           | `time.Time`           | [notnull]           |
+| Field           | Column           | Go Type               | Attributes          |
+| --------------- | ---------------- | --------------------- | ------------------- |
+| `ID`            | `id`             | `int64`               | [pk, autoincrement] |
+| `HostID`        | `host_id`        | `int64`               | [notnull]           |
+| `Host`          | `host`           | `*InventoryHostModel` |                     |
+| `PortStart`     | `port_start`     | `int`                 | [notnull]           |
+| `PortEnd`       | `port_end`       | `int`                 | [notnull]           |
+| `ServiceName`   | `service_name`   | `string`              | [notnull]           |
+| `ContainerName` | `container_name` | `string`              |                     |
+| `DindHost`      | `dind_host`      | `string`              |                     |
+| `Status`        | `status`         | `string`              | [notnull]           |
+| `Owner`         | `owner`          | `string`              |                     |
+| `Tags`          | `tags`           | `string`              |                     |
+| `Notes`         | `notes`          | `string`              |                     |
+| `CreatedAt`     | `created_at`     | `time.Time`           | [notnull]           |
+| `UpdatedAt`     | `updated_at`     | `time.Time`           | [notnull]           |
 
 Foreign keys:
 

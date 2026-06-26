@@ -123,7 +123,7 @@ func utilInventoryPortGroupRecordFromModel(model *InventoryPortGroupModel) *Inve
 		CreatedAt:     model.CreatedAt,
 		UpdatedAt:     model.UpdatedAt,
 	}
-	out.Host = utilInventoryHostRecordFromModel(model.InventoryHostModel)
+	out.Host = utilInventoryHostRecordFromModel(model.Host)
 	return out
 }
 
