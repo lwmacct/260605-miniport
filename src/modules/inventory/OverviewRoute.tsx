@@ -3,7 +3,7 @@ import { InventoryWorkspace } from "./ui/InventoryWorkspace";
 export function OverviewRoute() {
 	return (
 		<InventoryWorkspace
-			description="按 IP 和 10 端口组维护服务、容器、依赖和仓库。"
+			description="按用户全局管理 10000-59999 内的 10 端口组分配。"
 			title="端口总览"
 			view="overview"
 		/>

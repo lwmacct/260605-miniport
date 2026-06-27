@@ -26,7 +26,7 @@ export function DependenciesSection({ groups, stats }: DependenciesSectionProps)
   return (
     <Row gutter={[14, 14]}>
       <Col xs={24} xl={12}>
-        <Card title={`组件 ${stats.components}`}>
+        <Card title={`依赖 ${stats.components}`}>
           <Table
             rowKey="key"
             size="small"
@@ -36,7 +36,7 @@ export function DependenciesSection({ groups, stats }: DependenciesSectionProps)
               { title: "名称", dataIndex: "name" },
               { title: "类型", dataIndex: "type", width: 110 },
               { title: "版本", dataIndex: "version", width: 100 },
-              { title: "服务", render: (_, row) => row.group.serviceName },
+              { title: "分配", render: (_, row) => row.group.name },
             ]}
           />
         </Card>
@@ -51,7 +51,7 @@ export function DependenciesSection({ groups, stats }: DependenciesSectionProps)
             columns={[
               { title: "名称", dataIndex: "name" },
               { title: "类型", dataIndex: "kind", width: 100 },
-              { title: "服务", render: (_, row) => row.group.serviceName },
+              { title: "分配", render: (_, row) => row.group.name },
               {
                 title: "地址",
                 dataIndex: "url",

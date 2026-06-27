@@ -13,8 +13,8 @@ import { useAuthStateQuery, useLogoutMutation } from "@/modules/auth";
 function navItems(admin: boolean): MenuProps["items"] {
   const items: MenuProps["items"] = [
     { key: "overview", label: "端口总览" },
-    { key: "services", label: "服务列表" },
-    { key: "hosts", label: "主机管理" },
+    { key: "services", label: "端口分配" },
+    { key: "hosts", label: "项目服务" },
     { key: "dependencies", label: "依赖与仓库" },
   ];
   if (admin) {

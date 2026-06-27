@@ -16,8 +16,8 @@ func (app *App) bootstrap(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("open database: %w", err)
 	}
-	models := append([]any{}, repository.InventorySchema()...)
-	models = append(models, repository.UserSchema()...)
+	models := append([]any{}, repository.UserSchema()...)
+	models = append(models, repository.InventorySchema()...)
 	models = append(models, repository.AuthPasswordSchema()...)
 	models = append(models, repository.AuthSessionSchema()...)
 	if err := dbschema.Apply(ctx, db, models, repository.InventoryIndexesSchema()); err != nil {

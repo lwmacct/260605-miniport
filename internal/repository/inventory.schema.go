@@ -1,9 +1,9 @@
 package repository
 
 func InventorySchema() []any {
-	models := append([]any{}, InventoryHostSchema()...)
-	models = append(models, InventoryPortGroupSchema()...)
+	models := append([]any{}, InventoryPortGroupSchema()...)
 	models = append(models, InventoryPortSlotSchema()...)
+	models = append(models, InventoryProjectSchema()...)
 	models = append(models, InventoryComponentSchema()...)
 	models = append(models, InventoryRepositoryRefSchema()...)
 	return models
@@ -12,6 +12,7 @@ func InventorySchema() []any {
 func InventoryIndexesSchema() []string {
 	statements := append([]string{}, InventoryPortGroupIndexesSchema()...)
 	statements = append(statements, InventoryPortSlotIndexesSchema()...)
+	statements = append(statements, InventoryProjectIndexesSchema()...)
 	statements = append(statements, InventoryComponentIndexesSchema()...)
 	statements = append(statements, InventoryRepositoryRefIndexesSchema()...)
 	return statements

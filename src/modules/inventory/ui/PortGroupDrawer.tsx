@@ -4,16 +4,15 @@ import {
   ReloadOutlined,
   SaveOutlined,
 } from "@ant-design/icons";
-import { Button, Col, Divider, Drawer, Form, Input, InputNumber, Row, Select, Space, Tabs } from "antd";
+import { Alert, Button, Col, Divider, Drawer, Form, Input, InputNumber, Row, Select, Space, Tabs } from "antd";
 import type { FormInstance } from "antd";
 import { componentTypeOptions, repositoryKindOptions, slotStatusOptions, statusOptions } from "../model/inventoryConstants";
-import type { GroupForm, Host, PortGroup } from "../model/inventoryTypes";
+import type { GroupForm, PortGroup } from "../model/inventoryTypes";
 import { makeSlots } from "../model/inventoryUtils";
 
 type PortGroupDrawerProps = {
   editingGroup: PortGroup | null;
   form: FormInstance<GroupForm>;
-  hosts: Host[];
   onClose: () => void;
   onSave: (values: GroupForm) => void;
   open: boolean;
@@ -23,7 +22,6 @@ type PortGroupDrawerProps = {
 export function PortGroupDrawer({
   editingGroup,
   form,
-  hosts,
   onClose,
   onSave,
   open,
@@ -31,7 +29,7 @@ export function PortGroupDrawer({
 }: PortGroupDrawerProps) {
   return (
     <Drawer
-      title={editingGroup ? "编辑端口组" : "新建端口组"}
+      title={editingGroup ? "编辑端口分配" : "新建端口分配"}
       open={open}
       size="large"
       onClose={onClose}
@@ -49,9 +47,14 @@ export function PortGroupDrawer({
               label: "基础信息",
               children: (
                 <Row gutter={14}>
+                  {!editingGroup ? (
+                    <Col span={24}>
+                      <Alert showIcon type="info" message="不填写起始端口时，系统会自动分配下一个可用的 10 端口组。" />
+                    </Col>
+                  ) : null}
                   <Col xs={24} md={12}>
-                    <Form.Item name="hostId" label="IP 主机" rules={[{ required: true, message: "请选择主机" }]}>
-                      <Select options={hosts.map((host) => ({ value: host.id, label: `${host.ip} ${host.name || ""}` }))} />
+                    <Form.Item name="name" label="分配名称" rules={[{ required: true, message: "请填写分配名称" }]}>
+                      <Input placeholder="miniport-dev / order-service" />
                     </Form.Item>
                   </Col>
                   <Col xs={24} md={12}>
@@ -60,28 +63,18 @@ export function PortGroupDrawer({
                     </Form.Item>
                   </Col>
                   <Col xs={24} md={12}>
-                    <Form.Item name="portStart" label="起始端口" rules={[{ required: true, message: "请填写起始端口" }]}>
-                      <InputNumber min={1} max={65535} style={{ width: "100%" }} />
+                    <Form.Item name="dindIp" label="DIND 内网 IP">
+                      <Input placeholder="172.20.0.12" />
                     </Form.Item>
                   </Col>
                   <Col xs={24} md={12}>
-                    <Form.Item name="portEnd" label="结束端口" rules={[{ required: true, message: "请填写结束端口" }]}>
-                      <InputNumber min={1} max={65535} style={{ width: "100%" }} />
+                    <Form.Item name="dindContainer" label="DIND 容器">
+                      <Input placeholder="miniport-dind-01" />
                     </Form.Item>
                   </Col>
                   <Col xs={24} md={12}>
-                    <Form.Item name="serviceName" label="服务名" rules={[{ required: true, message: "请填写服务名" }]}>
-                      <Input placeholder="order-service" />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} md={12}>
-                    <Form.Item name="containerName" label="服务容器名">
-                      <Input placeholder="order-service-dind" />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} md={12}>
-                    <Form.Item name="dindHost" label="DIND 宿主">
-                      <Input placeholder="dind-01" />
+                    <Form.Item name="portStart" label="起始端口">
+                      <InputNumber min={10000} max={59990} step={10} style={{ width: "100%" }} placeholder="自动分配" />
                     </Form.Item>
                   </Col>
                   <Col xs={24} md={12}>
@@ -111,7 +104,7 @@ export function PortGroupDrawer({
                     icon={<ReloadOutlined />}
                     onClick={() => {
                       const portStart = form.getFieldValue("portStart");
-                      const portEnd = form.getFieldValue("portEnd");
+                      const portEnd = portStart ? portStart + 9 : undefined;
                       const slots = form.getFieldValue("slots");
                       form.setFieldValue("slots", makeSlots(portStart, portEnd, slots));
                     }}
@@ -165,20 +158,57 @@ export function PortGroupDrawer({
               ),
             },
             {
-              key: "components",
-              label: "组件",
+              key: "projects",
+              label: "项目",
               children: (
-                <Form.List name="components">
+                <Form.List name="projects">
                   {(fields, { add, remove }) => (
                     <Space direction="vertical" className="content-stack">
-                      <Button icon={<PlusOutlined />} onClick={() => add({ type: "opensource" })}>
-                        添加组件
+                      <Button icon={<PlusOutlined />} onClick={() => add({})}>
+                        添加项目
                       </Button>
                       {fields.map((field) => (
                         <Row key={field.key} gutter={10} className="compact-form-row">
                           <Col xs={24} md={7}>
                             <Form.Item name={[field.name, "name"]}>
-                              <Input placeholder="kafka / nginx / redis" />
+                              <Input placeholder="项目名" />
+                            </Form.Item>
+                          </Col>
+                          <Col xs={24} md={10}>
+                            <Form.Item name={[field.name, "description"]}>
+                              <Input placeholder="说明" />
+                            </Form.Item>
+                          </Col>
+                          <Col xs={24} md={6}>
+                            <Form.Item name={[field.name, "notes"]}>
+                              <Input placeholder="备注" />
+                            </Form.Item>
+                          </Col>
+                          <Col xs={24} md={1}>
+                            <Button danger icon={<DeleteOutlined />} onClick={() => remove(field.name)} />
+                          </Col>
+                        </Row>
+                      ))}
+                    </Space>
+                  )}
+                </Form.List>
+              ),
+            },
+            {
+              key: "components",
+              label: "依赖",
+              children: (
+                <Form.List name="components">
+                  {(fields, { add, remove }) => (
+                    <Space direction="vertical" className="content-stack">
+                      <Button icon={<PlusOutlined />} onClick={() => add({ type: "opensource" })}>
+                        添加依赖
+                      </Button>
+                      {fields.map((field) => (
+                        <Row key={field.key} gutter={10} className="compact-form-row">
+                          <Col xs={24} md={7}>
+                            <Form.Item name={[field.name, "name"]}>
+                              <Input placeholder="kafka / etcd / postgresql" />
                             </Form.Item>
                           </Col>
                           <Col xs={24} sm={12} md={5}>

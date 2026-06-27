@@ -194,7 +194,7 @@ func TestAuthStateReturnsCurrentUser(t *testing.T) {
 	require.True(t, state.Session.User.Admin)
 }
 
-func TestInventoryWriteRequiresAdmin(t *testing.T) {
+func TestInventoryWriteAllowsAuthenticatedUser(t *testing.T) {
 	app, handler := setupAuthTestApp(t, []string{"root-admin"})
 
 	user, err := app.container.users.Create(context.Background(), service.CreateUserInput{Username: "member"})
@@ -209,13 +209,13 @@ func TestInventoryWriteRequiresAdmin(t *testing.T) {
 	require.Equal(t, http.StatusOK, loginRec.Code, loginRec.Body.String())
 	cookie := loginRec.Result().Cookies()[0]
 
-	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/api/inventory/hosts", strings.NewReader(`{"ip":"172.22.11.12","name":"node-12","network":"","environment":"","notes":""}`))
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/api/inventory/allocations", strings.NewReader(`{"name":"member-allocation","dindIp":"172.22.11.12","projects":[{"name":"miniport"}]}`))
 	req.Header.Set("Content-Type", "application/json")
 	req.RemoteAddr = "127.0.0.1:12345"
 	req.AddCookie(cookie)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
-	require.Equal(t, http.StatusForbidden, rec.Code, rec.Body.String())
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
 }
 
 func TestProtectedReadRejectsDuplicateSessionCookie(t *testing.T) {
@@ -233,14 +233,14 @@ func TestProtectedReadRejectsDuplicateSessionCookie(t *testing.T) {
 	require.Equal(t, http.StatusOK, loginRec.Code, loginRec.Body.String())
 	validCookie := loginRec.Result().Cookies()[0]
 
-	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/inventory/hosts", nil)
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/inventory/allocations", nil)
 	req.RemoteAddr = "127.0.0.1:12345"
 	req.Header.Set("Cookie", validCookie.Name+"=sess_stale; "+validCookie.Name+"="+validCookie.Value)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 	require.Equal(t, http.StatusUnauthorized, rec.Code, rec.Body.String())
 
-	req = httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/inventory/hosts", nil)
+	req = httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/inventory/allocations", nil)
 	req.RemoteAddr = "127.0.0.1:12345"
 	req.AddCookie(validCookie)
 	rec = httptest.NewRecorder()

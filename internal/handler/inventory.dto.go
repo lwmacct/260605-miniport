@@ -1,63 +1,120 @@
 package handler
 
-import "github.com/lwmacct/260605-miniport/internal/service"
+type PortSlotPayloadDTO struct {
+	Port     int    `json:"port,omitempty"`
+	Name     string `json:"name,omitempty"`
+	Protocol string `json:"protocol,omitempty"`
+	Purpose  string `json:"purpose,omitempty"`
+	Status   string `json:"status,omitempty"`
+	Notes    string `json:"notes,omitempty"`
+}
 
-type HostDTO struct {
-	ID          int64  `json:"id"`
-	IP          string `json:"ip"`
-	Name        string `json:"name"`
-	Network     string `json:"network"`
-	Environment string `json:"environment"`
-	Notes       string `json:"notes"`
-	CreatedAt   string `json:"createdAt"`
-	UpdatedAt   string `json:"updatedAt"`
+type ProjectPayloadDTO struct {
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+	Notes       string `json:"notes,omitempty"`
+}
+
+type ComponentPayloadDTO struct {
+	Name    string `json:"name,omitempty"`
+	Type    string `json:"type,omitempty"`
+	URL     string `json:"url,omitempty"`
+	Version string `json:"version,omitempty"`
+	Notes   string `json:"notes,omitempty"`
+}
+
+type RepositoryPayloadDTO struct {
+	ProjectID int64  `json:"projectId,omitempty"`
+	Name      string `json:"name,omitempty"`
+	URL       string `json:"url,omitempty"`
+	Kind      string `json:"kind,omitempty"`
+	Notes     string `json:"notes,omitempty"`
+}
+
+type AllocationPayloadDTO struct {
+	UserID        int64                  `json:"userId,omitempty"`
+	PortStart     int                    `json:"portStart,omitempty"`
+	PortEnd       int                    `json:"portEnd,omitempty"`
+	Name          string                 `json:"name,omitempty"`
+	DindIP        string                 `json:"dindIp,omitempty"`
+	DindContainer string                 `json:"dindContainer,omitempty"`
+	Status        string                 `json:"status,omitempty"`
+	Owner         string                 `json:"owner,omitempty"`
+	Tags          string                 `json:"tags,omitempty"`
+	Notes         string                 `json:"notes,omitempty"`
+	Slots         []PortSlotPayloadDTO   `json:"slots,omitempty"`
+	Projects      []ProjectPayloadDTO    `json:"projects,omitempty"`
+	Components    []ComponentPayloadDTO  `json:"components,omitempty"`
+	Repositories  []RepositoryPayloadDTO `json:"repositories,omitempty"`
+}
+
+type AllocationBatchUpdateDTO struct {
+	IDs    []int64 `json:"ids,omitempty"`
+	Owner  *string `json:"owner,omitempty"`
+	Status *string `json:"status,omitempty"`
+	Tags   *string `json:"tags,omitempty"`
+}
+
+type AllocationBatchDeleteDTO struct {
+	IDs []int64 `json:"ids,omitempty"`
 }
 
 type PortSlotDTO struct {
-	ID          int64  `json:"id"`
-	PortGroupID int64  `json:"portGroupId"`
-	Port        int    `json:"port"`
-	Name        string `json:"name"`
-	Protocol    string `json:"protocol"`
-	Purpose     string `json:"purpose"`
-	Status      string `json:"status"`
-	Notes       string `json:"notes"`
-	CreatedAt   string `json:"createdAt"`
-	UpdatedAt   string `json:"updatedAt"`
+	ID           int64  `json:"id"`
+	AllocationID int64  `json:"allocationId"`
+	Port         int    `json:"port"`
+	Name         string `json:"name"`
+	Protocol     string `json:"protocol"`
+	Purpose      string `json:"purpose"`
+	Status       string `json:"status"`
+	Notes        string `json:"notes"`
+	CreatedAt    string `json:"createdAt"`
+	UpdatedAt    string `json:"updatedAt"`
+}
+
+type ProjectDTO struct {
+	ID           int64  `json:"id"`
+	AllocationID int64  `json:"allocationId"`
+	Name         string `json:"name"`
+	Description  string `json:"description"`
+	Notes        string `json:"notes"`
+	CreatedAt    string `json:"createdAt"`
+	UpdatedAt    string `json:"updatedAt"`
 }
 
 type ComponentDTO struct {
-	ID          int64  `json:"id"`
-	PortGroupID int64  `json:"portGroupId"`
-	Name        string `json:"name"`
-	Type        string `json:"type"`
-	URL         string `json:"url"`
-	Version     string `json:"version"`
-	Notes       string `json:"notes"`
-	CreatedAt   string `json:"createdAt"`
-	UpdatedAt   string `json:"updatedAt"`
+	ID           int64  `json:"id"`
+	AllocationID int64  `json:"allocationId"`
+	Name         string `json:"name"`
+	Type         string `json:"type"`
+	URL          string `json:"url"`
+	Version      string `json:"version"`
+	Notes        string `json:"notes"`
+	CreatedAt    string `json:"createdAt"`
+	UpdatedAt    string `json:"updatedAt"`
 }
 
 type RepositoryDTO struct {
-	ID          int64  `json:"id"`
-	PortGroupID int64  `json:"portGroupId"`
-	Name        string `json:"name"`
-	URL         string `json:"url"`
-	Kind        string `json:"kind"`
-	Notes       string `json:"notes"`
-	CreatedAt   string `json:"createdAt"`
-	UpdatedAt   string `json:"updatedAt"`
+	ID           int64  `json:"id"`
+	AllocationID int64  `json:"allocationId"`
+	ProjectID    int64  `json:"projectId"`
+	Name         string `json:"name"`
+	URL          string `json:"url"`
+	Kind         string `json:"kind"`
+	Notes        string `json:"notes"`
+	CreatedAt    string `json:"createdAt"`
+	UpdatedAt    string `json:"updatedAt"`
 }
 
-type PortGroupDTO struct {
+type AllocationDTO struct {
 	ID            int64           `json:"id"`
-	HostID        int64           `json:"hostId"`
-	Host          *HostDTO        `json:"host,omitempty"`
+	UserID        int64           `json:"userId"`
+	Username      string          `json:"username"`
 	PortStart     int             `json:"portStart"`
 	PortEnd       int             `json:"portEnd"`
-	ServiceName   string          `json:"serviceName"`
-	ContainerName string          `json:"containerName"`
-	DindHost      string          `json:"dindHost"`
+	Name          string          `json:"name"`
+	DindIP        string          `json:"dindIp"`
+	DindContainer string          `json:"dindContainer"`
 	Status        string          `json:"status"`
 	Owner         string          `json:"owner"`
 	Tags          string          `json:"tags"`
@@ -65,65 +122,45 @@ type PortGroupDTO struct {
 	CreatedAt     string          `json:"createdAt"`
 	UpdatedAt     string          `json:"updatedAt"`
 	Slots         []PortSlotDTO   `json:"slots"`
+	Projects      []ProjectDTO    `json:"projects"`
 	Components    []ComponentDTO  `json:"components"`
 	Repositories  []RepositoryDTO `json:"repositories"`
 }
 
-type HostListInputDTO struct {
+type AllocationListInputDTO struct {
 	Session     string `cookie:"web_session"`
-	Environment string `query:"environment" example:"dev"`
-	Query       string `query:"q" example:"172.22.11"`
-	Sort        string `query:"sort" example:"ip"`
+	UserID      int64  `query:"userId" example:"1"`
+	Query       string `query:"q" example:"postgres"`
+	Sort        string `query:"sort" example:"port"`
+	Status      string `query:"status" example:"running"`
+	ProjectName string `query:"projectName" example:"miniport"`
+	DindIP      string `query:"dindIp" example:"172.20.0.12"`
 }
 
-type HostInputDTO struct {
+type AllocationInputDTO struct {
 	Session string `cookie:"web_session"`
 	ID      int64  `path:"id" example:"1"`
 }
 
-type HostBodyInputDTO struct {
+type AllocationBodyInputDTO struct {
 	Session string `cookie:"web_session"`
-	Body    service.HostPayload
+	Body    AllocationPayloadDTO
 }
 
-type HostUpdateInputDTO struct {
+type AllocationUpdateInputDTO struct {
 	Session string `cookie:"web_session"`
 	ID      int64  `path:"id" example:"1"`
-	Body    service.HostPayload
+	Body    AllocationPayloadDTO
 }
 
-type PortGroupListInputDTO struct {
+type AllocationBatchUpdateInputDTO struct {
 	Session string `cookie:"web_session"`
-	HostID  int64  `query:"hostId" example:"1"`
-	Query   string `query:"q" example:"order-service"`
-	Sort    string `query:"sort" example:"host_port"`
-	Status  string `query:"status" example:"running"`
+	Body    AllocationBatchUpdateDTO
 }
 
-type PortGroupInputDTO struct {
+type AllocationBatchDeleteInputDTO struct {
 	Session string `cookie:"web_session"`
-	ID      int64  `path:"id" example:"1"`
-}
-
-type PortGroupBodyInputDTO struct {
-	Session string `cookie:"web_session"`
-	Body    service.PortGroupPayload
-}
-
-type PortGroupUpdateInputDTO struct {
-	Session string `cookie:"web_session"`
-	ID      int64  `path:"id" example:"1"`
-	Body    service.PortGroupPayload
-}
-
-type PortGroupBatchUpdateInputDTO struct {
-	Session string `cookie:"web_session"`
-	Body    service.PortGroupBatchUpdateInput
-}
-
-type PortGroupBatchDeleteInputDTO struct {
-	Session string `cookie:"web_session"`
-	Body    service.PortGroupBatchDeleteInput
+	Body    AllocationBatchDeleteDTO
 }
 
 type CSVOutputDTO struct {

@@ -6,17 +6,9 @@ export type Meta = {
   docsPath: string;
 };
 
-export type Host = {
-  id: number;
-  ip: string;
-  name: string;
-  network: string;
-  environment: string;
-  notes: string;
-};
-
 export type PortSlot = {
   id?: number;
+  allocationId?: number;
   port: number;
   name: string;
   protocol: string;
@@ -25,8 +17,17 @@ export type PortSlot = {
   notes: string;
 };
 
+export type ProjectItem = {
+  id?: number;
+  allocationId?: number;
+  name: string;
+  description: string;
+  notes: string;
+};
+
 export type ComponentItem = {
   id?: number;
+  allocationId?: number;
   name: string;
   type: string;
   url: string;
@@ -36,6 +37,8 @@ export type ComponentItem = {
 
 export type RepositoryItem = {
   id?: number;
+  allocationId?: number;
+  projectId?: number;
   name: string;
   url: string;
   kind: string;
@@ -44,47 +47,40 @@ export type RepositoryItem = {
 
 export type PortGroup = {
   id: number;
-  hostId: number;
-  host?: Host;
+  userId: number;
+  username: string;
   portStart: number;
   portEnd: number;
-  serviceName: string;
-  containerName: string;
-  dindHost: string;
+  name: string;
+  dindIp: string;
+  dindContainer: string;
   status: string;
   owner: string;
   tags: string;
   notes: string;
   slots: PortSlot[];
+  projects: ProjectItem[];
   components: ComponentItem[];
   repositories: RepositoryItem[];
 };
 
-export type GroupForm = Partial<Omit<PortGroup, "id" | "host">> & {
-  hostId?: number;
+export type GroupForm = Partial<Omit<PortGroup, "id" | "username">> & {
+  name?: string;
   portStart?: number;
-  portEnd?: number;
-  serviceName?: string;
-};
-
-export type HostForm = Partial<Omit<Host, "id">> & {
-  ip?: string;
 };
 
 export type InventorySnapshot = {
   meta: Meta;
-  hosts: Host[];
   groups: PortGroup[];
 };
 
 export type InventoryQuery = {
-  environment?: string;
-  hostSort?: string;
-  hostQuery?: string;
-  hostId?: number;
+  dindIp?: string;
   portGroupQuery?: string;
   portGroupSort?: string;
+  projectName?: string;
   status?: string;
+  userId?: number;
 };
 
 export type BatchPortGroupUpdate = {
@@ -94,10 +90,11 @@ export type BatchPortGroupUpdate = {
 };
 
 export type AppStats = {
-  hosts: number;
-  groups: number;
+  allocations: number;
+  users: number;
   usedSlots: number;
   emptySlots: number;
+  projects: number;
   components: number;
   repositories: number;
 };

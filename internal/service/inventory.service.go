@@ -18,68 +18,29 @@ func NewInventoryService(store *repository.Store) *InventoryService {
 	return &InventoryService{store: store}
 }
 
-func (s *InventoryService) ListHosts(ctx context.Context, params HostListParams) ([]InventoryHost, error) {
-	return s.store.ListInventoryHosts(ctx, repository.InventoryHostListFilter(params))
-}
-
-func (s *InventoryService) CreateHost(ctx context.Context, payload HostPayload) (*InventoryHost, error) {
-	host := utilInventoryHostFromPayload(payload)
-	if err := validateHost(host); err != nil {
-		return nil, err
-	}
-	now := utilNowUTC()
-	host.CreatedAt = now
-	host.UpdatedAt = now
-	if _, err := s.store.CreateInventoryHost(ctx, host); err != nil {
-		return nil, err
-	}
-	return host, nil
-}
-
-func (s *InventoryService) UpdateHost(ctx context.Context, id int64, payload HostPayload) (*InventoryHost, error) {
-	host := utilInventoryHostFromPayload(payload)
-	host.ID = id
-	if err := validateHost(host); err != nil {
-		return nil, err
-	}
-	host.UpdatedAt = utilNowUTC()
-	out, err := s.store.UpdateInventoryHost(ctx, id, host)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (s *InventoryService) DeleteHost(ctx context.Context, id int64) error {
-	count, err := s.store.CountInventoryPortGroupsByHostID(ctx, id)
-	if err != nil {
-		return err
-	}
-	if count > 0 {
-		return utilBadInventoryRequest("host still has port groups")
-	}
-	deleted, err := s.store.DeleteInventoryHost(ctx, id)
-	if err != nil {
-		return err
-	}
-	if !deleted {
-		return utilInventoryNotFound("host not found")
-	}
-	return nil
-}
-
 func (s *InventoryService) ListPortGroups(ctx context.Context, params PortGroupListParams) ([]PortGroupView, error) {
-	groups, err := s.store.ListInventoryPortGroups(ctx, repository.InventoryPortGroupListFilter(params))
+	groups, err := s.store.ListInventoryPortGroups(ctx, repository.InventoryPortGroupListFilter{
+		UserID:      utilVisibleUserID(params.Actor, params.UserID),
+		Admin:       params.Actor.Admin,
+		Query:       params.Query,
+		Sort:        params.Sort,
+		Status:      params.Status,
+		ProjectName: params.ProjectName,
+		DindIP:      params.DindIP,
+	})
 	if err != nil {
 		return nil, err
 	}
 	return s.buildPortGroupViews(ctx, groups)
 }
 
-func (s *InventoryService) GetPortGroup(ctx context.Context, id int64) (*PortGroupView, error) {
+func (s *InventoryService) GetPortGroup(ctx context.Context, actor InventoryActor, id int64) (*PortGroupView, error) {
 	group, err := s.store.FetchInventoryPortGroupWithHostByID(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+	if !actor.Admin && group.UserID != actor.UserID {
+		return nil, utilInventoryNotFound("allocation not found")
 	}
 	views, err := s.buildPortGroupViews(ctx, []InventoryPortGroup{*group})
 	if err != nil {
@@ -88,25 +49,27 @@ func (s *InventoryService) GetPortGroup(ctx context.Context, id int64) (*PortGro
 	return &views[0], nil
 }
 
-func (s *InventoryService) CreatePortGroup(ctx context.Context, payload PortGroupPayload) (*PortGroupView, error) {
+func (s *InventoryService) CreatePortGroup(ctx context.Context, actor InventoryActor, payload PortGroupPayload) (*PortGroupView, error) {
 	var out *PortGroupView
 	err := s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
 		tx := NewInventoryService(txStore)
-		group, groupErr := utilInventoryPortGroupFromPayload(ctx, tx.store, 0, payload)
+		group, groupErr := utilInventoryPortGroupFromPayload(ctx, tx.store, actor, nil, payload)
 		if groupErr != nil {
 			return groupErr
 		}
 		now := utilNowUTC()
 		group.CreatedAt = now
 		group.UpdatedAt = now
-		if _, createErr := tx.store.CreateInventoryPortGroup(ctx, group); createErr != nil {
+		created, createErr := tx.store.CreateInventoryPortGroup(ctx, group)
+		if createErr != nil {
 			return createErr
 		}
-		replaceErr := utilReplacePortGroupChildren(ctx, tx.store, group.ID, payload, now)
-		if replaceErr != nil {
+		group.ID = created.ID
+		group.Username = created.Username
+		if replaceErr := utilReplacePortGroupChildren(ctx, tx.store, group.ID, payload, now, *group); replaceErr != nil {
 			return replaceErr
 		}
-		view, viewErr := tx.GetPortGroup(ctx, group.ID)
+		view, viewErr := tx.GetPortGroup(ctx, InventoryActor{UserID: group.UserID, Admin: true}, group.ID)
 		if viewErr != nil {
 			return viewErr
 		}
@@ -116,29 +79,30 @@ func (s *InventoryService) CreatePortGroup(ctx context.Context, payload PortGrou
 	return out, err
 }
 
-func (s *InventoryService) UpdatePortGroup(ctx context.Context, id int64, payload PortGroupPayload) (*PortGroupView, error) {
+func (s *InventoryService) UpdatePortGroup(ctx context.Context, actor InventoryActor, id int64, payload PortGroupPayload) (*PortGroupView, error) {
 	var out *PortGroupView
 	err := s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
 		tx := NewInventoryService(txStore)
-		if _, err := tx.store.FetchInventoryPortGroupByID(ctx, id); err != nil {
+		current, err := tx.store.FetchInventoryPortGroupByID(ctx, id)
+		if err != nil {
 			return err
 		}
-		group, groupErr := utilInventoryPortGroupFromPayload(ctx, tx.store, id, payload)
+		if !actor.Admin && current.UserID != actor.UserID {
+			return utilInventoryNotFound("allocation not found")
+		}
+		group, groupErr := utilInventoryPortGroupFromPayload(ctx, tx.store, actor, current, payload)
 		if groupErr != nil {
 			return groupErr
 		}
 		group.ID = id
 		group.UpdatedAt = utilNowUTC()
-		updated, updateErr := tx.store.UpdateInventoryPortGroup(ctx, id, group)
-		if updateErr != nil {
+		if _, updateErr := tx.store.UpdateInventoryPortGroup(ctx, id, group); updateErr != nil {
 			return updateErr
 		}
-		_ = updated
-		replaceErr := utilReplacePortGroupChildren(ctx, tx.store, id, payload, group.UpdatedAt)
-		if replaceErr != nil {
+		if replaceErr := utilReplacePortGroupChildren(ctx, tx.store, id, payload, group.UpdatedAt, *group); replaceErr != nil {
 			return replaceErr
 		}
-		view, viewErr := tx.GetPortGroup(ctx, id)
+		view, viewErr := tx.GetPortGroup(ctx, InventoryActor{UserID: group.UserID, Admin: true}, id)
 		if viewErr != nil {
 			return viewErr
 		}
@@ -148,17 +112,17 @@ func (s *InventoryService) UpdatePortGroup(ctx context.Context, id int64, payloa
 	return out, err
 }
 
-func (s *InventoryService) DeletePortGroup(ctx context.Context, id int64) error {
+func (s *InventoryService) DeletePortGroup(ctx context.Context, actor InventoryActor, id int64) error {
 	return s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
 		tx := NewInventoryService(txStore)
-		count, err := tx.store.CountInventoryPortGroupsByIDs(ctx, []int64{id})
+		count, err := tx.store.CountInventoryPortGroupsByIDs(ctx, []int64{id}, actor.UserID, actor.Admin)
 		if err != nil {
 			return err
 		}
 		if count == 0 {
-			return utilInventoryNotFound("port group not found")
+			return utilInventoryNotFound("allocation not found")
 		}
-		return tx.store.DeleteInventoryPortGroups(ctx, []int64{id})
+		return tx.store.DeleteInventoryPortGroups(ctx, []int64{id}, actor.UserID, actor.Admin)
 	})
 }
 
@@ -170,17 +134,17 @@ func (s *InventoryService) UpdatePortGroups(ctx context.Context, input PortGroup
 	var out []PortGroupView
 	err = s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
 		tx := NewInventoryService(txStore)
-		count, countErr := tx.store.CountInventoryPortGroupsByIDs(ctx, normalized.IDs)
+		count, countErr := tx.store.CountInventoryPortGroupsByIDs(ctx, normalized.IDs, normalized.Actor.UserID, normalized.Actor.Admin)
 		if countErr != nil {
 			return countErr
 		}
 		if count != len(normalized.IDs) {
-			return utilInventoryNotFound("one or more port groups were not found")
+			return utilInventoryNotFound("one or more allocations were not found")
 		}
-		if _, updateErr := tx.store.UpdateInventoryPortGroupsBatch(ctx, normalized.IDs, normalized.Status, normalized.Owner, normalized.Tags, utilNowUTC()); updateErr != nil {
+		if _, updateErr := tx.store.UpdateInventoryPortGroupsBatch(ctx, normalized.IDs, normalized.Status, normalized.Owner, normalized.Tags, utilNowUTC(), normalized.Actor.UserID, normalized.Actor.Admin); updateErr != nil {
 			return updateErr
 		}
-		groups, listErr := tx.store.ListInventoryPortGroupsByIDs(ctx, normalized.IDs)
+		groups, listErr := tx.store.ListInventoryPortGroupsByIDs(ctx, normalized.IDs, normalized.Actor.UserID, normalized.Actor.Admin)
 		if listErr != nil {
 			return listErr
 		}
@@ -201,14 +165,14 @@ func (s *InventoryService) DeletePortGroups(ctx context.Context, input PortGroup
 	}
 	return s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
 		tx := NewInventoryService(txStore)
-		count, err := tx.store.CountInventoryPortGroupsByIDs(ctx, normalized.IDs)
+		count, err := tx.store.CountInventoryPortGroupsByIDs(ctx, normalized.IDs, normalized.Actor.UserID, normalized.Actor.Admin)
 		if err != nil {
 			return err
 		}
 		if count != len(normalized.IDs) {
-			return utilInventoryNotFound("one or more port groups were not found")
+			return utilInventoryNotFound("one or more allocations were not found")
 		}
-		return tx.store.DeleteInventoryPortGroups(ctx, normalized.IDs)
+		return tx.store.DeleteInventoryPortGroups(ctx, normalized.IDs, normalized.Actor.UserID, normalized.Actor.Admin)
 	})
 }
 
@@ -218,30 +182,21 @@ func (s *InventoryService) ExportPortGroupsCSV(ctx context.Context, params PortG
 		return nil, err
 	}
 	records := [][]string{{
-		"host_ip", "host_name", "environment", "service_name", "status", "port_start", "port_end",
-		"container_name", "dind_host", "owner", "tags", "components", "repositories", "slots", "notes",
+		"username", "name", "status", "port_start", "port_end", "dind_ip", "dind_container",
+		"owner", "tags", "projects", "dependencies", "repositories", "ports", "notes",
 	}}
 	for _, group := range groups {
-		hostIP := ""
-		hostName := ""
-		hostEnvironment := ""
-		if group.Host != nil {
-			hostIP = group.Host.IP
-			hostName = group.Host.Name
-			hostEnvironment = group.Host.Environment
-		}
 		records = append(records, []string{
-			hostIP,
-			hostName,
-			hostEnvironment,
-			group.ServiceName,
+			group.Username,
+			group.Name,
 			group.Status,
 			strconv.Itoa(group.PortStart),
 			strconv.Itoa(group.PortEnd),
-			group.ContainerName,
-			group.DindHost,
+			group.DindIP,
+			group.DindContainer,
 			group.Owner,
 			group.Tags,
+			utilPortGroupProjects(group.Projects),
 			utilPortGroupComponents(group.Components),
 			utilPortGroupRepositories(group.Repositories),
 			utilPortGroupSlots(group.Slots),
@@ -261,22 +216,20 @@ func (s *InventoryService) buildPortGroupViews(ctx context.Context, groups []Inv
 		ids[idx] = group.ID
 		views[idx] = PortGroupView{InventoryPortGroup: group}
 	}
-	children, err := s.store.FetchInventoryPortGroupChildrenByPortGroupIDs(ctx, ids)
+	childrenList, err := s.store.ListInventoryPortGroupChildrenByPortGroupIDs(ctx, ids)
 	if err != nil {
 		return nil, err
 	}
-	viewByID := make(map[int64]*PortGroupView, len(views))
+	children := make(map[int64]repository.InventoryPortGroupChildrenRecord, len(childrenList))
+	for _, child := range childrenList {
+		children[child.PortGroupID] = child
+	}
 	for idx := range views {
-		viewByID[views[idx].ID] = &views[idx]
-	}
-	for _, slot := range children.Slots {
-		viewByID[slot.PortGroupID].Slots = append(viewByID[slot.PortGroupID].Slots, slot)
-	}
-	for _, component := range children.Components {
-		viewByID[component.PortGroupID].Components = append(viewByID[component.PortGroupID].Components, component)
-	}
-	for _, repo := range children.Repositories {
-		viewByID[repo.PortGroupID].Repositories = append(viewByID[repo.PortGroupID].Repositories, repo)
+		child := children[views[idx].ID]
+		views[idx].Slots = child.Slots
+		views[idx].Projects = child.Projects
+		views[idx].Components = child.Components
+		views[idx].Repositories = child.Repositories
 	}
 	return views, nil
 }

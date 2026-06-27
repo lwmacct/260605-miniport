@@ -8,10 +8,10 @@ import (
 )
 
 type InventoryPortSlotModel struct {
-	bun.BaseModel `bun:"table:inventory_port_slots,alias:port_slot"`
+	bun.BaseModel `bun:"table:allocation_ports,alias:port_slot"`
 
 	ID          int64     `bun:"id,pk,autoincrement" json:"id"`
-	PortGroupID int64     `bun:"port_group_id,notnull" json:"portGroupId"`
+	PortGroupID int64     `bun:"allocation_id,notnull" json:"allocationId"`
 	Port        int       `bun:"port,notnull" json:"port"`
 	Name        string    `bun:"name" json:"name"`
 	Protocol    string    `bun:"protocol,notnull" json:"protocol"`
@@ -27,12 +27,12 @@ func InventoryPortSlotSchema() []any {
 }
 
 func (*InventoryPortSlotModel) BeforeCreateTable(_ context.Context, query *bun.CreateTableQuery) error {
-	query.ForeignKey("(port_group_id) REFERENCES inventory_port_groups (id) ON DELETE CASCADE")
+	query.ForeignKey("(allocation_id) REFERENCES port_allocations (id) ON DELETE CASCADE")
 	return nil
 }
 
 func InventoryPortSlotIndexesSchema() []string {
 	return []string{
-		`CREATE UNIQUE INDEX IF NOT EXISTS idx_inventory_port_slots_group_port ON inventory_port_slots(port_group_id, port)`,
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_allocation_ports_allocation_port ON allocation_ports(allocation_id, port)`,
 	}
 }

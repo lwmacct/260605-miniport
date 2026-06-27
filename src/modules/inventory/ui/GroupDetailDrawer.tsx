@@ -21,7 +21,7 @@ export function GroupDetailDrawer({
 }: GroupDetailDrawerProps) {
   return (
     <Drawer
-      title={group?.serviceName}
+      title={group?.name}
       open={Boolean(group)}
       size="large"
       onClose={onClose}
@@ -36,8 +36,8 @@ export function GroupDetailDrawer({
               icon={<DeleteOutlined />}
               onClick={() => {
                 Modal.confirm({
-                  title: "删除端口组",
-                  content: `${group.host?.ip ?? ""} ${group.portStart}-${group.portEnd}`,
+                  title: "删除端口分配",
+                  content: `${group.portStart}-${group.portEnd} ${group.name}`,
                   onOk: () => onDelete(group),
                 });
               }}
@@ -55,10 +55,10 @@ export function GroupDetailDrawer({
               size="small"
               column={{ xs: 1, sm: 2 }}
               items={[
-                { key: "ip", label: "IP", children: group.host?.ip ?? "-" },
+                { key: "user", label: "用户", children: group.username || group.userId },
                 { key: "ports", label: "端口组", children: `${group.portStart}-${group.portEnd}` },
-                { key: "container", label: "容器", children: group.containerName || "-" },
-                { key: "dind", label: "DIND", children: group.dindHost || "-" },
+                { key: "dindIp", label: "DIND IP", children: group.dindIp || "-" },
+                { key: "container", label: "容器", children: group.dindContainer || "-" },
                 { key: "owner", label: "负责人", children: group.owner || "-" },
                 {
                   key: "status",
@@ -73,6 +73,14 @@ export function GroupDetailDrawer({
               ))}
             </Space>
             {group.notes ? <Typography.Paragraph>{group.notes}</Typography.Paragraph> : null}
+          </Card>
+          <Card title="项目">
+            <Space size={[6, 6]} wrap>
+              {group.projects.length === 0 ? <Typography.Text type="secondary">未记录项目</Typography.Text> : null}
+              {group.projects.map((project) => (
+                <Tag key={project.name}>{project.name}</Tag>
+              ))}
+            </Space>
           </Card>
           <Card title="端口槽位">
             <Table<PortSlot>
@@ -89,9 +97,9 @@ export function GroupDetailDrawer({
               ]}
             />
           </Card>
-          <Card title="组件">
+          <Card title="依赖">
             <Space size={[6, 6]} wrap>
-              {group.components.length === 0 ? <Typography.Text type="secondary">未记录组件</Typography.Text> : null}
+              {group.components.length === 0 ? <Typography.Text type="secondary">未记录依赖</Typography.Text> : null}
               {group.components.map((item) => (
                 <Tag key={item.name}>
                   {item.name}
@@ -104,8 +112,8 @@ export function GroupDetailDrawer({
             <Space direction="vertical" className="content-stack">
               {group.repositories.length === 0 ? <Typography.Text type="secondary">未记录仓库</Typography.Text> : null}
               {group.repositories.map((repo) => (
-                <Typography.Text key={repo.url} copyable>
-                  {repo.name}: {repo.url}
+                <Typography.Text key={`${repo.name}-${repo.url}`} copyable>
+                  {repo.name || repo.kind}: {repo.url}
                 </Typography.Text>
               ))}
             </Space>

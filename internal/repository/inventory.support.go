@@ -5,45 +5,41 @@ import (
 	"time"
 )
 
-type InventoryHostListFilter struct {
-	Environment string
+type InventoryPortGroupListFilter struct {
+	UserID      int64
+	Admin       bool
 	Query       string
 	Sort        string
-}
-
-type InventoryPortGroupListFilter struct {
-	HostID int64
-	Query  string
-	Sort   string
-	Status string
-}
-
-type InventoryHostRecord struct {
-	ID          int64
-	IP          string
-	Name        string
-	Network     string
-	Environment string
-	Notes       string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	Status      string
+	ProjectName string
+	DindIP      string
 }
 
 type InventoryPortGroupRecord struct {
 	ID            int64
-	HostID        int64
-	Host          *InventoryHostRecord
+	UserID        int64
+	Username      string
 	PortStart     int
 	PortEnd       int
-	ServiceName   string
-	ContainerName string
-	DindHost      string
+	Name          string
+	DindIP        string
+	DindContainer string
 	Status        string
 	Owner         string
 	Tags          string
 	Notes         string
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
+}
+
+type InventoryProjectRecord struct {
+	ID          int64
+	PortGroupID int64
+	Name        string
+	Description string
+	Notes       string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 type InventoryPortSlotRecord struct {
@@ -74,6 +70,7 @@ type InventoryComponentRecord struct {
 type InventoryRepositoryRefRecord struct {
 	ID          int64
 	PortGroupID int64
+	ProjectID   int64
 	Name        string
 	URL         string
 	Kind        string
@@ -83,25 +80,11 @@ type InventoryRepositoryRefRecord struct {
 }
 
 type InventoryPortGroupChildrenRecord struct {
+	PortGroupID  int64
 	Slots        []InventoryPortSlotRecord
+	Projects     []InventoryProjectRecord
 	Components   []InventoryComponentRecord
 	Repositories []InventoryRepositoryRefRecord
-}
-
-func utilInventoryHostRecordFromModel(model *InventoryHostModel) *InventoryHostRecord {
-	if model == nil {
-		return nil
-	}
-	return &InventoryHostRecord{
-		ID:          model.ID,
-		IP:          model.IP,
-		Name:        model.Name,
-		Network:     model.Network,
-		Environment: model.Environment,
-		Notes:       model.Notes,
-		CreatedAt:   model.CreatedAt,
-		UpdatedAt:   model.UpdatedAt,
-	}
 }
 
 func utilInventoryPortGroupRecordFromModel(model *InventoryPortGroupModel) *InventoryPortGroupRecord {
@@ -110,12 +93,12 @@ func utilInventoryPortGroupRecordFromModel(model *InventoryPortGroupModel) *Inve
 	}
 	out := &InventoryPortGroupRecord{
 		ID:            model.ID,
-		HostID:        model.HostID,
+		UserID:        model.UserID,
 		PortStart:     model.PortStart,
 		PortEnd:       model.PortEnd,
-		ServiceName:   model.ServiceName,
-		ContainerName: model.ContainerName,
-		DindHost:      model.DindHost,
+		Name:          model.Name,
+		DindIP:        model.DindIP,
+		DindContainer: model.DindContainer,
 		Status:        model.Status,
 		Owner:         model.Owner,
 		Tags:          model.Tags,
@@ -123,8 +106,25 @@ func utilInventoryPortGroupRecordFromModel(model *InventoryPortGroupModel) *Inve
 		CreatedAt:     model.CreatedAt,
 		UpdatedAt:     model.UpdatedAt,
 	}
-	out.Host = utilInventoryHostRecordFromModel(model.Host)
+	if model.User != nil {
+		out.Username = model.User.Username
+	}
 	return out
+}
+
+func utilInventoryProjectRecordFromModel(model *InventoryProjectModel) *InventoryProjectRecord {
+	if model == nil {
+		return nil
+	}
+	return &InventoryProjectRecord{
+		ID:          model.ID,
+		PortGroupID: model.PortGroupID,
+		Name:        model.Name,
+		Description: model.Description,
+		Notes:       model.Notes,
+		CreatedAt:   model.CreatedAt,
+		UpdatedAt:   model.UpdatedAt,
+	}
 }
 
 func utilInventoryPortSlotRecordFromModel(model *InventoryPortSlotModel) *InventoryPortSlotRecord {
@@ -169,6 +169,7 @@ func utilInventoryRepositoryRefRecordFromModel(model *InventoryRepositoryRefMode
 	return &InventoryRepositoryRefRecord{
 		ID:          model.ID,
 		PortGroupID: model.PortGroupID,
+		ProjectID:   model.ProjectID,
 		Name:        model.Name,
 		URL:         model.URL,
 		Kind:        model.Kind,

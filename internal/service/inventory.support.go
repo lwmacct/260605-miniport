@@ -12,25 +12,27 @@ import (
 )
 
 const (
-	defaultGroupStatus    = "planned"
-	defaultSlotProtocol   = "tcp"
-	defaultSlotStatus     = "empty"
-	defaultComponentType  = "opensource"
-	defaultRepositoryKind = "source"
+	allocationPortMin       = 10000
+	allocationPortMax       = 59999
+	allocationPortMaxStart  = 59990
+	allocationGroupSize     = 10
+	defaultAllocationStatus = "planned"
+	defaultSlotProtocol     = "tcp"
+	defaultSlotStatus       = "empty"
+	defaultComponentType    = "opensource"
+	defaultRepositoryKind   = "source"
 )
 
-type InventoryHost = repository.InventoryHostRecord
 type InventoryPortGroup = repository.InventoryPortGroupRecord
 type InventoryPortSlot = repository.InventoryPortSlotRecord
+type InventoryProject = repository.InventoryProjectRecord
 type InventoryComponent = repository.InventoryComponentRecord
 type InventoryRepositoryRef = repository.InventoryRepositoryRefRecord
 
-type HostPayload struct {
-	IP          string
-	Name        string
-	Network     string
-	Environment string
-	Notes       string
+type InventoryActor struct {
+	UserID   int64
+	Username string
+	Admin    bool
 }
 
 type PortSlotPayload struct {
@@ -42,6 +44,12 @@ type PortSlotPayload struct {
 	Notes    string
 }
 
+type ProjectPayload struct {
+	Name        string
+	Description string
+	Notes       string
+}
+
 type ComponentPayload struct {
 	Name    string
 	Type    string
@@ -51,50 +59,51 @@ type ComponentPayload struct {
 }
 
 type RepositoryPayload struct {
-	Name  string
-	URL   string
-	Kind  string
-	Notes string
+	ProjectID int64
+	Name      string
+	URL       string
+	Kind      string
+	Notes     string
 }
 
 type PortGroupPayload struct {
-	HostID        int64
+	UserID        int64
 	PortStart     int
 	PortEnd       int
-	ServiceName   string
-	ContainerName string
-	DindHost      string
+	Name          string
+	DindIP        string
+	DindContainer string
 	Status        string
 	Owner         string
 	Tags          string
 	Notes         string
 	Slots         []PortSlotPayload
+	Projects      []ProjectPayload
 	Components    []ComponentPayload
 	Repositories  []RepositoryPayload
-}
-
-type HostListParams struct {
-	Environment string
-	Query       string
-	Sort        string
 }
 
 type PortGroupView struct {
 	InventoryPortGroup
 
 	Slots        []InventoryPortSlot
+	Projects     []InventoryProject
 	Components   []InventoryComponent
 	Repositories []InventoryRepositoryRef
 }
 
 type PortGroupListParams struct {
-	HostID int64
-	Query  string
-	Sort   string
-	Status string
+	Actor       InventoryActor
+	UserID      int64
+	Query       string
+	Sort        string
+	Status      string
+	ProjectName string
+	DindIP      string
 }
 
 type PortGroupBatchUpdateInput struct {
+	Actor  InventoryActor
 	IDs    []int64
 	Owner  *string
 	Status *string
@@ -102,7 +111,8 @@ type PortGroupBatchUpdateInput struct {
 }
 
 type PortGroupBatchDeleteInput struct {
-	IDs []int64
+	Actor InventoryActor
+	IDs   []int64
 }
 
 var (
@@ -125,102 +135,142 @@ func utilInventoryNotFound(message string) error {
 	return InventoryError{Kind: ErrInventoryNotFound, Message: message}
 }
 
-func utilInventoryHostFromPayload(payload HostPayload) *InventoryHost {
-	return &InventoryHost{
-		IP:          strings.TrimSpace(payload.IP),
-		Name:        strings.TrimSpace(payload.Name),
-		Network:     strings.TrimSpace(payload.Network),
-		Environment: strings.TrimSpace(payload.Environment),
-		Notes:       strings.TrimSpace(payload.Notes),
-	}
+func utilNowUTC() time.Time {
+	return time.Now().UTC()
 }
 
-func validateHost(host *InventoryHost) error {
-	if host.IP == "" {
-		return utilBadInventoryRequest("host ip is required")
+func utilVisibleUserID(actor InventoryActor, requestedUserID int64) int64 {
+	if actor.Admin {
+		return requestedUserID
 	}
-	return nil
+	return actor.UserID
 }
 
-func utilInventoryPortGroupFromPayload(ctx context.Context, store *repository.Store, currentID int64, payload PortGroupPayload) (*InventoryPortGroup, error) {
+func utilInventoryPortGroupFromPayload(ctx context.Context, store *repository.Store, actor InventoryActor, current *InventoryPortGroup, payload PortGroupPayload) (*InventoryPortGroup, error) {
+	userID := actor.UserID
+	if actor.Admin {
+		if payload.UserID > 0 {
+			userID = payload.UserID
+		} else if current != nil {
+			userID = current.UserID
+		}
+	}
+	if userID <= 0 {
+		return nil, utilBadInventoryRequest("userId is required")
+	}
+	if _, err := store.FetchUserByID(ctx, userID); err != nil {
+		return nil, err
+	}
+
+	portStart := payload.PortStart
+	if portStart == 0 {
+		allocated, err := utilNextAvailablePortStart(ctx, store, userID, utilCurrentID(current))
+		if err != nil {
+			return nil, err
+		}
+		portStart = allocated
+	}
+	portEnd := portStart + allocationGroupSize - 1
+	if payload.PortEnd > 0 && payload.PortEnd != portEnd {
+		return nil, utilBadInventoryRequest("portEnd must equal portStart + 9")
+	}
+
 	group := &InventoryPortGroup{
-		HostID:        payload.HostID,
-		PortStart:     payload.PortStart,
-		PortEnd:       payload.PortEnd,
-		ServiceName:   strings.TrimSpace(payload.ServiceName),
-		ContainerName: strings.TrimSpace(payload.ContainerName),
-		DindHost:      strings.TrimSpace(payload.DindHost),
+		UserID:        userID,
+		PortStart:     portStart,
+		PortEnd:       portEnd,
+		Name:          strings.TrimSpace(payload.Name),
+		DindIP:        strings.TrimSpace(payload.DindIP),
+		DindContainer: strings.TrimSpace(payload.DindContainer),
 		Status:        strings.TrimSpace(payload.Status),
 		Owner:         strings.TrimSpace(payload.Owner),
 		Tags:          strings.TrimSpace(payload.Tags),
 		Notes:         strings.TrimSpace(payload.Notes),
 	}
 	if group.Status == "" {
-		group.Status = defaultGroupStatus
+		group.Status = defaultAllocationStatus
 	}
-	if err := utilValidatePortGroup(ctx, store, currentID, group); err != nil {
+	if err := utilValidatePortGroup(ctx, store, utilCurrentID(current), group); err != nil {
 		return nil, err
 	}
 	return group, nil
 }
 
+func utilCurrentID(group *InventoryPortGroup) int64 {
+	if group == nil {
+		return 0
+	}
+	return group.ID
+}
+
 func utilValidatePortGroup(ctx context.Context, store *repository.Store, currentID int64, group *InventoryPortGroup) error {
-	if group.HostID <= 0 {
-		return utilBadInventoryRequest("hostId is required")
+	if group.Name == "" {
+		return utilBadInventoryRequest("name is required")
 	}
-	if group.ServiceName == "" {
-		return utilBadInventoryRequest("serviceName is required")
+	if group.PortStart < allocationPortMin || group.PortStart > allocationPortMaxStart {
+		return utilBadInventoryRequest("portStart must be between 10000 and 59990")
 	}
-	if group.PortStart <= 0 || group.PortEnd <= 0 {
-		return utilBadInventoryRequest("portStart and portEnd are required")
+	if group.PortStart%allocationGroupSize != 0 {
+		return utilBadInventoryRequest("portStart must align to a 10-port group")
 	}
-	if group.PortEnd < group.PortStart {
-		return utilBadInventoryRequest("portEnd must be greater than or equal to portStart")
-	}
-	if group.PortEnd-group.PortStart+1 != 10 {
+	if group.PortEnd != group.PortStart+allocationGroupSize-1 {
 		return utilBadInventoryRequest("port group must contain exactly 10 ports")
 	}
-	if _, err := store.FetchInventoryHostByID(ctx, group.HostID); err != nil {
-		return err
+	if group.PortEnd > allocationPortMax {
+		return utilBadInventoryRequest("portEnd must be less than or equal to 59999")
 	}
 	count, err := store.CountInventoryOverlappingPortGroups(ctx, currentID, group)
 	if err != nil {
 		return err
 	}
 	if count > 0 {
-		return utilBadInventoryRequest("port range overlaps an existing group on this host")
+		return utilBadInventoryRequest("port group is already allocated for this user")
 	}
 	return nil
 }
 
-func utilReplacePortGroupChildren(ctx context.Context, store *repository.Store, groupID int64, payload PortGroupPayload, now time.Time) error {
+func utilNextAvailablePortStart(ctx context.Context, store *repository.Store, userID int64, excludeID int64) (int, error) {
+	used, err := store.ListInventoryPortStartsByUser(ctx, userID, excludeID)
+	if err != nil {
+		return 0, err
+	}
+	usedSet := map[int]struct{}{}
+	for _, portStart := range used {
+		usedSet[portStart] = struct{}{}
+	}
+	for portStart := allocationPortMin; portStart <= allocationPortMaxStart; portStart += allocationGroupSize {
+		if _, exists := usedSet[portStart]; !exists {
+			return portStart, nil
+		}
+	}
+	return 0, utilBadInventoryRequest("no available port groups for this user")
+}
+
+func utilReplacePortGroupChildren(ctx context.Context, store *repository.Store, groupID int64, payload PortGroupPayload, now time.Time, group InventoryPortGroup) error {
 	if err := store.ReplaceInventoryPortGroupChildren(ctx, groupID); err != nil {
 		return err
 	}
-	slots, err := utilSlotsFromPayload(groupID, payload, now)
+	slots, err := utilSlotsFromPayload(groupID, payload, now, group)
 	if err != nil {
 		return err
 	}
-	addSlotErr := store.AddInventoryPortSlots(ctx, slots)
-	if addSlotErr != nil {
+	if addSlotErr := store.AddInventoryPortSlots(ctx, slots); addSlotErr != nil {
 		return addSlotErr
 	}
-	components := utilComponentsFromPayload(groupID, payload.Components, now)
-	addComponentErr := store.AddInventoryComponents(ctx, components)
-	if addComponentErr != nil {
+	if addProjectErr := store.AddInventoryProjects(ctx, utilProjectsFromPayload(groupID, payload.Projects, now)); addProjectErr != nil {
+		return addProjectErr
+	}
+	if addComponentErr := store.AddInventoryComponents(ctx, utilComponentsFromPayload(groupID, payload.Components, now)); addComponentErr != nil {
 		return addComponentErr
 	}
-	repositories, err := utilRepositoriesFromPayload(groupID, payload.Repositories, now)
-	if err != nil {
-		return err
-	}
+	repositories := utilRepositoriesFromPayload(groupID, payload.Repositories, now)
 	return store.AddInventoryRepositoryRefs(ctx, repositories)
 }
 
-func utilSlotsFromPayload(groupID int64, payload PortGroupPayload, now time.Time) ([]InventoryPortSlot, error) {
+func utilSlotsFromPayload(groupID int64, payload PortGroupPayload, now time.Time, group InventoryPortGroup) ([]InventoryPortSlot, error) {
 	byPort := map[int]PortSlotPayload{}
 	for _, slot := range payload.Slots {
-		if slot.Port < payload.PortStart || slot.Port > payload.PortEnd {
+		if slot.Port < group.PortStart || slot.Port > group.PortEnd {
 			return nil, utilBadInventoryRequest("slot port must be inside the port group range")
 		}
 		if _, exists := byPort[slot.Port]; exists {
@@ -228,8 +278,8 @@ func utilSlotsFromPayload(groupID int64, payload PortGroupPayload, now time.Time
 		}
 		byPort[slot.Port] = slot
 	}
-	slots := make([]InventoryPortSlot, 0, payload.PortEnd-payload.PortStart+1)
-	for port := payload.PortStart; port <= payload.PortEnd; port++ {
+	slots := make([]InventoryPortSlot, 0, allocationGroupSize)
+	for port := group.PortStart; port <= group.PortEnd; port++ {
 		source := byPort[port]
 		protocol := strings.TrimSpace(source.Protocol)
 		if protocol == "" {
@@ -252,6 +302,25 @@ func utilSlotsFromPayload(groupID int64, payload PortGroupPayload, now time.Time
 		})
 	}
 	return slots, nil
+}
+
+func utilProjectsFromPayload(groupID int64, payload []ProjectPayload, now time.Time) []InventoryProject {
+	items := make([]InventoryProject, 0, len(payload))
+	for _, item := range payload {
+		name := strings.TrimSpace(item.Name)
+		if name == "" {
+			continue
+		}
+		items = append(items, InventoryProject{
+			PortGroupID: groupID,
+			Name:        name,
+			Description: strings.TrimSpace(item.Description),
+			Notes:       strings.TrimSpace(item.Notes),
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		})
+	}
+	return items
 }
 
 func utilComponentsFromPayload(groupID int64, payload []ComponentPayload, now time.Time) []InventoryComponent {
@@ -279,7 +348,7 @@ func utilComponentsFromPayload(groupID int64, payload []ComponentPayload, now ti
 	return items
 }
 
-func utilRepositoriesFromPayload(groupID int64, payload []RepositoryPayload, now time.Time) ([]InventoryRepositoryRef, error) {
+func utilRepositoriesFromPayload(groupID int64, payload []RepositoryPayload, now time.Time) []InventoryRepositoryRef {
 	items := make([]InventoryRepositoryRef, 0, len(payload))
 	for _, item := range payload {
 		name := strings.TrimSpace(item.Name)
@@ -287,15 +356,13 @@ func utilRepositoriesFromPayload(groupID int64, payload []RepositoryPayload, now
 		if name == "" && url == "" {
 			continue
 		}
-		if name == "" || url == "" {
-			return nil, utilBadInventoryRequest("repository name and url are required together")
-		}
 		kind := strings.TrimSpace(item.Kind)
 		if kind == "" {
 			kind = defaultRepositoryKind
 		}
 		items = append(items, InventoryRepositoryRef{
 			PortGroupID: groupID,
+			ProjectID:   item.ProjectID,
 			Name:        name,
 			URL:         url,
 			Kind:        kind,
@@ -304,61 +371,59 @@ func utilRepositoriesFromPayload(groupID int64, payload []RepositoryPayload, now
 			UpdatedAt:   now,
 		})
 	}
-	return items, nil
+	return items
 }
 
 func utilNormalizeBatchUpdateInput(input PortGroupBatchUpdateInput) (PortGroupBatchUpdateInput, error) {
-	input.IDs = utilUniqueInt64s(input.IDs)
-	if len(input.IDs) == 0 {
-		return input, utilBadInventoryRequest("ids are required")
+	ids, err := utilNormalizeIDs(input.IDs)
+	if err != nil {
+		return input, err
 	}
-	hasChanges := false
-	if input.Status != nil {
-		status := strings.TrimSpace(*input.Status)
-		if status == "" {
-			return input, utilBadInventoryRequest("status cannot be empty")
-		}
-		input.Status = &status
-		hasChanges = true
-	}
+	input.IDs = ids
 	if input.Owner != nil {
-		owner := strings.TrimSpace(*input.Owner)
-		input.Owner = &owner
-		hasChanges = true
+		value := strings.TrimSpace(*input.Owner)
+		input.Owner = &value
+	}
+	if input.Status != nil {
+		value := strings.TrimSpace(*input.Status)
+		input.Status = &value
 	}
 	if input.Tags != nil {
-		tags := strings.TrimSpace(*input.Tags)
-		input.Tags = &tags
-		hasChanges = true
+		value := strings.TrimSpace(*input.Tags)
+		input.Tags = &value
 	}
-	if !hasChanges {
-		return input, utilBadInventoryRequest("at least one field must be provided")
+	if input.Owner == nil && input.Status == nil && input.Tags == nil {
+		return input, utilBadInventoryRequest("no changes provided")
 	}
 	return input, nil
 }
 
 func utilNormalizeBatchDeleteInput(input PortGroupBatchDeleteInput) (PortGroupBatchDeleteInput, error) {
-	input.IDs = utilUniqueInt64s(input.IDs)
-	if len(input.IDs) == 0 {
-		return input, utilBadInventoryRequest("ids are required")
+	ids, err := utilNormalizeIDs(input.IDs)
+	if err != nil {
+		return input, err
 	}
+	input.IDs = ids
 	return input, nil
 }
 
-func utilUniqueInt64s(items []int64) []int64 {
-	seen := make(map[int64]struct{}, len(items))
-	out := make([]int64, 0, len(items))
-	for _, item := range items {
-		if item <= 0 {
+func utilNormalizeIDs(ids []int64) ([]int64, error) {
+	seen := map[int64]struct{}{}
+	out := make([]int64, 0, len(ids))
+	for _, id := range ids {
+		if id <= 0 {
+			return nil, utilBadInventoryRequest("ids must be positive")
+		}
+		if _, exists := seen[id]; exists {
 			continue
 		}
-		if _, ok := seen[item]; ok {
-			continue
-		}
-		seen[item] = struct{}{}
-		out = append(out, item)
+		seen[id] = struct{}{}
+		out = append(out, id)
 	}
-	return out
+	if len(out) == 0 {
+		return nil, utilBadInventoryRequest("ids are required")
+	}
+	return out, nil
 }
 
 func utilCSVBytes(records [][]string) ([]byte, error) {
@@ -367,43 +432,52 @@ func utilCSVBytes(records [][]string) ([]byte, error) {
 	if err := writer.WriteAll(records); err != nil {
 		return nil, err
 	}
-	writer.Flush()
-	if err := writer.Error(); err != nil {
-		return nil, err
-	}
 	return []byte(builder.String()), nil
 }
 
-func utilPortGroupComponents(items []InventoryComponent) string {
-	parts := make([]string, 0, len(items))
+func utilPortGroupProjects(items []InventoryProject) string {
+	values := make([]string, 0, len(items))
 	for _, item := range items {
-		label := item.Name
-		if version := strings.TrimSpace(item.Version); version != "" {
-			label += "@" + version
-		}
-		parts = append(parts, label)
+		values = append(values, item.Name)
 	}
-	return strings.Join(parts, "; ")
+	return strings.Join(values, "; ")
+}
+
+func utilPortGroupComponents(items []InventoryComponent) string {
+	values := make([]string, 0, len(items))
+	for _, item := range items {
+		value := item.Name
+		if item.Version != "" {
+			value += " " + item.Version
+		}
+		values = append(values, value)
+	}
+	return strings.Join(values, "; ")
 }
 
 func utilPortGroupRepositories(items []InventoryRepositoryRef) string {
-	parts := make([]string, 0, len(items))
+	values := make([]string, 0, len(items))
 	for _, item := range items {
-		parts = append(parts, item.Kind+":"+item.URL)
+		value := item.Name
+		if item.URL != "" {
+			value += " " + item.URL
+		}
+		values = append(values, value)
 	}
-	return strings.Join(parts, "; ")
+	return strings.Join(values, "; ")
 }
 
 func utilPortGroupSlots(items []InventoryPortSlot) string {
-	parts := make([]string, 0, len(items))
+	values := make([]string, 0, len(items))
 	for _, item := range items {
-		label := strconv.Itoa(item.Port) + "/" + item.Protocol + "/" + item.Status
-		if name := strings.TrimSpace(item.Name); name != "" {
-			label += "/" + name
+		value := strconv.Itoa(item.Port)
+		if item.Name != "" {
+			value += " " + item.Name
 		}
-		parts = append(parts, label)
+		if item.Purpose != "" {
+			value += " " + item.Purpose
+		}
+		values = append(values, value)
 	}
-	return strings.Join(parts, "; ")
+	return strings.Join(values, "; ")
 }
-
-func utilNowUTC() time.Time { return time.Now().UTC() }

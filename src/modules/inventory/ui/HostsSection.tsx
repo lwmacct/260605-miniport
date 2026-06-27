@@ -1,52 +1,43 @@
-import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
-import { Button, Card, Popconfirm, Space, Table, Tooltip } from "antd";
+import { Card, Space, Table, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import type { Host, PortGroup } from "../model/inventoryTypes";
+import type { PortGroup } from "../model/inventoryTypes";
 
 type HostsSectionProps = {
-  canManage: boolean;
   groups: PortGroup[];
-  hosts: Host[];
-  onDeleteHost: (host: Host) => void;
-  onEditHost: (host: Host) => void;
+  onSelectGroup: (group: PortGroup) => void;
 };
 
-export function HostsSection({ canManage, groups, hosts, onDeleteHost, onEditHost }: HostsSectionProps) {
-  const columns: ColumnsType<Host> = [
-    { title: "IP", dataIndex: "ip", width: 160 },
-    { title: "名称", dataIndex: "name" },
-    { title: "网段", dataIndex: "network" },
-    { title: "环境", dataIndex: "environment", width: 120 },
+export function HostsSection({ groups, onSelectGroup }: HostsSectionProps) {
+  const columns: ColumnsType<PortGroup> = [
     {
-      title: "端口组",
-      width: 100,
-      render: (_, host) => groups.filter((group) => group.hostId === host.id).length,
+      title: "项目",
+      render: (_, group) => (
+        <Space size={[4, 4]} wrap>
+          {group.projects.length === 0 ? <Typography.Text type="secondary">未记录项目</Typography.Text> : null}
+          {group.projects.map((project) => (
+            <Tag key={`${group.id}-${project.name}`}>{project.name}</Tag>
+          ))}
+        </Space>
+      ),
     },
     {
-      title: "操作",
-      width: 120,
-      render: (_, host) =>
-        canManage ? (
-          <Space>
-            <Tooltip title="编辑">
-              <Button icon={<EditOutlined />} onClick={() => onEditHost(host)} />
-            </Tooltip>
-            <Popconfirm title="删除主机" onConfirm={() => onDeleteHost(host)}>
-              <Button danger icon={<DeleteOutlined />} />
-            </Popconfirm>
-          </Space>
-        ) : null,
+      title: "端口分配",
+      render: (_, group) => <Typography.Link onClick={() => onSelectGroup(group)}>{group.name}</Typography.Link>,
     },
+    { title: "端口组", width: 140, render: (_, group) => `${group.portStart}-${group.portEnd}` },
+    { title: "DIND IP", dataIndex: "dindIp", width: 150 },
+    { title: "容器", dataIndex: "dindContainer" },
+    { title: "用户", dataIndex: "username", width: 120 },
   ];
 
   return (
     <Card>
-      <Table<Host>
+      <Table<PortGroup>
         rowKey="id"
         columns={columns}
-        dataSource={hosts}
-        pagination={false}
-        scroll={{ x: 760 }}
+        dataSource={groups}
+        pagination={{ pageSize: 12 }}
+        scroll={{ x: 900 }}
       />
     </Card>
   );

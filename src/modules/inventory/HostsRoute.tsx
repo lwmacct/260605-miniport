@@ -3,8 +3,8 @@ import { InventoryWorkspace } from "./ui/InventoryWorkspace";
 export function HostsRoute() {
 	return (
 		<InventoryWorkspace
-			description="管理 IP 主机、网段和每台主机下的端口组数量。"
-			title="主机管理"
+			description="按端口组查看项目、服务和 DIND 容器归属。"
+			title="项目服务"
 			view="hosts"
 		/>
 	);

@@ -2,8 +2,6 @@ import { apiGet, apiSend } from "@/shared/api/client";
 import type {
   BatchPortGroupUpdate,
   GroupForm,
-  Host,
-  HostForm,
   InventoryQuery,
   InventorySnapshot,
   Meta,
@@ -23,30 +21,26 @@ function buildQueryString(params: Record<string, string | number | undefined>) {
 }
 
 export async function loadInventory(query: InventoryQuery): Promise<InventorySnapshot> {
-  const hostsPath = "/api/inventory/hosts" + buildQueryString({
-    environment: query.environment,
-    q: query.hostQuery,
-    sort: query.hostSort,
-  });
-  const groupsPath = "/api/inventory/port-groups" + buildQueryString({
-    hostId: query.hostId,
+  const groupsPath = "/api/inventory/allocations" + buildQueryString({
+    dindIp: query.dindIp,
+    projectName: query.projectName,
     q: query.portGroupQuery,
     sort: query.portGroupSort,
     status: query.status,
+    userId: query.userId,
   });
 
-  const [meta, hosts, groups] = await Promise.all([
+  const [meta, groups] = await Promise.all([
     apiGet<Meta>("/api/meta"),
-    apiGet<Host[]>(hostsPath),
     apiGet<PortGroup[]>(groupsPath),
   ]);
 
   return {
     meta,
-    hosts: hosts ?? [],
     groups: (groups ?? []).map((group) => ({
       ...group,
       components: group.components ?? [],
+      projects: group.projects ?? [],
       repositories: group.repositories ?? [],
       slots: group.slots ?? [],
       tags: group.tags ?? "",
@@ -54,42 +48,24 @@ export async function loadInventory(query: InventoryQuery): Promise<InventorySna
   };
 }
 
-export function saveHost(host: HostForm, editingHost?: Host | null) {
-  const payload = {
-    environment: host.environment ?? "",
-    ip: host.ip ?? "",
-    name: host.name ?? "",
-    network: host.network ?? "",
-    notes: host.notes ?? "",
-  };
-  return apiSend<Host>(editingHost ? `/api/inventory/hosts/${editingHost.id}` : "/api/inventory/hosts", {
-    method: editingHost ? "PUT" : "POST",
-    body: JSON.stringify(payload),
-  });
-}
-
-export function removeHost(host: Host) {
-  return apiSend<{ deleted: boolean }>(`/api/inventory/hosts/${host.id}`, { method: "DELETE" });
-}
-
 export function savePortGroup(group: GroupForm, editingGroup?: PortGroup | null) {
   const payload = {
     components: group.components ?? [],
-    containerName: group.containerName ?? "",
-    dindHost: group.dindHost ?? "",
-    hostId: group.hostId ?? 0,
+    dindContainer: group.dindContainer ?? "",
+    dindIp: group.dindIp ?? "",
+    name: group.name ?? "",
     notes: group.notes ?? "",
     owner: group.owner ?? "",
-    portEnd: group.portEnd ?? 0,
     portStart: group.portStart ?? 0,
+    projects: group.projects ?? [],
     repositories: group.repositories ?? [],
-    serviceName: group.serviceName ?? "",
     slots: group.slots ?? [],
     status: group.status ?? "planned",
     tags: group.tags ?? "",
+    userId: group.userId ?? 0,
   };
   return apiSend<PortGroup>(
-    editingGroup ? `/api/inventory/port-groups/${editingGroup.id}` : "/api/inventory/port-groups",
+    editingGroup ? `/api/inventory/allocations/${editingGroup.id}` : "/api/inventory/allocations",
     {
       method: editingGroup ? "PUT" : "POST",
       body: JSON.stringify(payload),
@@ -98,20 +74,22 @@ export function savePortGroup(group: GroupForm, editingGroup?: PortGroup | null)
 }
 
 export function removePortGroup(group: PortGroup) {
-  return apiSend<{ deleted: boolean }>(`/api/inventory/port-groups/${group.id}`, { method: "DELETE" });
+  return apiSend<{ deleted: boolean }>(`/api/inventory/allocations/${group.id}`, { method: "DELETE" });
 }
 
 export function exportPortGroupsURL(query: InventoryQuery) {
-  return "/api/inventory/exports/port-groups.csv" + buildQueryString({
-    hostId: query.hostId,
+  return "/api/inventory/exports/allocations.csv" + buildQueryString({
+    dindIp: query.dindIp,
+    projectName: query.projectName,
     q: query.portGroupQuery,
     sort: query.portGroupSort,
     status: query.status,
+    userId: query.userId,
   });
 }
 
 export function batchUpdatePortGroups(ids: number[], changes: BatchPortGroupUpdate) {
-  return apiSend<PortGroup[]>("/api/inventory/port-groups/batch-update", {
+  return apiSend<PortGroup[]>("/api/inventory/allocations/batch-update", {
     method: "POST",
     body: JSON.stringify({
       ids,
@@ -121,7 +99,7 @@ export function batchUpdatePortGroups(ids: number[], changes: BatchPortGroupUpda
 }
 
 export function batchDeletePortGroups(ids: number[]) {
-  return apiSend<{ deleted: boolean }>("/api/inventory/port-groups/batch-delete", {
+  return apiSend<{ deleted: boolean }>("/api/inventory/allocations/batch-delete", {
     method: "POST",
     body: JSON.stringify({ ids }),
   });

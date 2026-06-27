@@ -1,4 +1,4 @@
-import { AppstoreOutlined, ClusterOutlined, LinkOutlined, TableOutlined } from "@ant-design/icons";
+import { AppstoreOutlined, DeploymentUnitOutlined, LinkOutlined, TableOutlined } from "@ant-design/icons";
 
 export const statusOptions = [
   { value: "planned", label: "规划中" },
@@ -29,7 +29,7 @@ export const repositoryKindOptions = [
 
 export const navItems = [
   { key: "overview", icon: <AppstoreOutlined />, label: "端口总览" },
-  { key: "services", icon: <TableOutlined />, label: "服务列表" },
-  { key: "hosts", icon: <ClusterOutlined />, label: "主机管理" },
+  { key: "services", icon: <TableOutlined />, label: "端口分配" },
+  { key: "hosts", icon: <DeploymentUnitOutlined />, label: "项目服务" },
   { key: "dependencies", icon: <LinkOutlined />, label: "依赖与仓库" },
 ];

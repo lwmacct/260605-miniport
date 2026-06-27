@@ -38,21 +38,23 @@ export function makeSlots(portStart?: number | null, portEnd?: number | null, ex
   });
 }
 
-export function buildStats(groups: PortGroupLike[], hosts: HostLike[]) {
+export function buildStats(groups: PortGroupLike[]) {
   const slots = groups.flatMap((group) => group.slots ?? []);
   return {
-    hosts: hosts.length,
-    groups: groups.length,
+    allocations: groups.length,
+    users: new Set(groups.map((group) => group.username).filter(Boolean)).size,
     usedSlots: slots.filter((slot) => slot.status !== "empty").length,
     emptySlots: slots.filter((slot) => slot.status === "empty").length,
+    projects: groups.reduce((sum, group) => sum + (group.projects ?? []).length, 0),
     components: groups.reduce((sum, group) => sum + (group.components ?? []).length, 0),
     repositories: groups.reduce((sum, group) => sum + (group.repositories ?? []).length, 0),
   };
 }
 
-type HostLike = { id: number };
 type PortGroupLike = {
   components?: unknown[];
+  projects?: unknown[];
   repositories?: unknown[];
   slots?: Array<{ status: string }>;
+  username?: string;
 };

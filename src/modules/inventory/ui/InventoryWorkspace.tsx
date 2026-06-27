@@ -9,13 +9,11 @@ import {
   batchDeletePortGroups,
   batchUpdatePortGroups,
   exportPortGroupsURL,
-  removeHost,
   removePortGroup,
-  saveHost,
   savePortGroup,
 } from "../api/inventoryApi";
 import { statusOptions } from "../model/inventoryConstants";
-import type { BatchPortGroupUpdate, GroupForm, Host, HostForm, InventoryQuery, PortGroup } from "../model/inventoryTypes";
+import type { BatchPortGroupUpdate, GroupForm, InventoryQuery, PortGroup } from "../model/inventoryTypes";
 import { buildStats } from "../model/inventoryUtils";
 import { BatchPortGroupModal, type BatchPortGroupForm } from "./BatchPortGroupModal";
 import { OverviewSection } from "./OverviewSection";
@@ -23,7 +21,6 @@ import { ServicesSection } from "./ServicesSection";
 import { HostsSection } from "./HostsSection";
 import { DependenciesSection } from "./DependenciesSection";
 import { GroupDetailDrawer } from "./GroupDetailDrawer";
-import { HostDrawer } from "./HostDrawer";
 import { PortGroupDrawer } from "./PortGroupDrawer";
 
 type InventoryView = "dependencies" | "hosts" | "overview" | "services";
@@ -42,87 +39,49 @@ export function InventoryWorkspace({
   const queryClient = useQueryClient();
   const authState = useAuthStateQuery();
   const [search, setSearch] = useState("");
-  const [environment, setEnvironment] = useState<string>();
   const [status, setStatus] = useState<string>();
-  const [sort, setSort] = useState<string>(view === "hosts" ? "ip" : "host_port");
+  const [sort, setSort] = useState<string>("port");
   const [saving, setSaving] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<PortGroup | null>(null);
-  const [hostDrawerOpen, setHostDrawerOpen] = useState(false);
   const [groupDrawerOpen, setGroupDrawerOpen] = useState(false);
-  const [editingHost, setEditingHost] = useState<Host | null>(null);
   const [editingGroup, setEditingGroup] = useState<PortGroup | null>(null);
   const [selectedGroupIDs, setSelectedGroupIDs] = useState<number[]>([]);
   const [batchModalOpen, setBatchModalOpen] = useState(false);
-  const [hostForm] = Form.useForm<HostForm>();
   const [groupForm] = Form.useForm<GroupForm>();
   const [batchForm] = Form.useForm<BatchPortGroupForm>();
 
   const query = useMemo<InventoryQuery>(() => {
-    if (view === "hosts") {
-      return {
-        environment,
-        hostQuery: search.trim(),
-        hostSort: sort,
-      };
-    }
-
     return {
-      hostQuery: "",
       portGroupQuery: search.trim(),
       portGroupSort: sort,
       status,
     };
-  }, [environment, search, sort, status, view]);
+  }, [search, sort, status]);
 
   const inventoryQuery = useInventoryQuery(query);
 
   const snapshot = inventoryQuery.data;
-  const hosts: Host[] = snapshot?.hosts ?? [];
   const groups: PortGroup[] = snapshot?.groups ?? [];
   const meta = snapshot?.meta;
-  const canManage = Boolean(authState.data?.session.user?.admin);
+  const canManage = Boolean(authState.data?.session.authenticated);
 
   useEffect(() => {
     setSelectedGroupIDs([]);
   }, [query]);
 
-  const stats = useMemo(() => buildStats(groups, hosts), [groups, hosts]);
-
-  const groupsByHost = useMemo(
-    () =>
-      hosts.map((host) => ({
-        host,
-        groups: groups
-          .filter((group) => group.hostId === host.id)
-          .sort((left, right) => left.portStart - right.portStart),
-      })),
-    [groups, hosts],
-  );
+  const stats = useMemo(() => buildStats(groups), [groups]);
 
   async function refresh() {
     await queryClient.invalidateQueries({ queryKey: inventoryKeys.snapshot(query) });
   }
 
-  function openCreateHost() {
-    setEditingHost(null);
-    hostForm.resetFields();
-    setHostDrawerOpen(true);
-  }
-
-  function openEditHost(host: Host) {
-    setEditingHost(host);
-    hostForm.setFieldsValue(host);
-    setHostDrawerOpen(true);
-  }
-
   function openCreateGroup() {
-    const firstHost = hosts[0];
     setEditingGroup(null);
     groupForm.resetFields();
     groupForm.setFieldsValue({
-      hostId: firstHost?.id,
       status: "planned",
       slots: [],
+      projects: [],
       components: [],
       repositories: [],
     } as GroupForm);
@@ -134,31 +93,18 @@ export function InventoryWorkspace({
     groupForm.setFieldsValue({
       ...group,
       components: group.components,
+      projects: group.projects,
       repositories: group.repositories,
       slots: group.slots,
     });
     setGroupDrawerOpen(true);
   }
 
-  async function handleSaveHost(values: HostForm) {
-    setSaving(true);
-    try {
-      await saveHost(values, editingHost);
-      message.success("主机已保存");
-      setHostDrawerOpen(false);
-      await refresh();
-    } catch (error) {
-      message.error(error instanceof Error ? error.message : "保存失败");
-    } finally {
-      setSaving(false);
-    }
-  }
-
   async function handleSaveGroup(values: GroupForm) {
     setSaving(true);
     try {
       await savePortGroup(values, editingGroup);
-      message.success("端口组已保存");
+      message.success("端口分配已保存");
       setGroupDrawerOpen(false);
       await refresh();
     } catch (error) {
@@ -170,14 +116,8 @@ export function InventoryWorkspace({
 
   async function handleDeleteGroup(group: PortGroup) {
     await removePortGroup(group);
-    message.success("端口组已删除");
+    message.success("端口分配已删除");
     setSelectedGroup(null);
-    await refresh();
-  }
-
-  async function handleDeleteHost(host: Host) {
-    await removeHost(host);
-    message.success("主机已删除");
     await refresh();
   }
 
@@ -201,7 +141,7 @@ export function InventoryWorkspace({
     setSaving(true);
     try {
       await batchUpdatePortGroups(selectedGroupIDs, changes);
-      message.success(`已批量更新 ${selectedGroupIDs.length} 个端口组`);
+      message.success(`已批量更新 ${selectedGroupIDs.length} 个端口分配`);
       setBatchModalOpen(false);
       setSelectedGroupIDs([]);
       await refresh();
@@ -214,12 +154,12 @@ export function InventoryWorkspace({
 
   function confirmBatchDelete() {
     Modal.confirm({
-      title: "批量删除端口组",
-      content: `确认删除已选择的 ${selectedGroupIDs.length} 个端口组？`,
+      title: "批量删除端口分配",
+      content: `确认删除已选择的 ${selectedGroupIDs.length} 个端口分配？`,
       okButtonProps: { danger: true },
       onOk: async () => {
         await batchDeletePortGroups(selectedGroupIDs);
-        message.success(`已删除 ${selectedGroupIDs.length} 个端口组`);
+        message.success(`已删除 ${selectedGroupIDs.length} 个端口分配`);
         setSelectedGroupIDs([]);
         await refresh();
       },
@@ -227,30 +167,14 @@ export function InventoryWorkspace({
   }
 
   const canBatchOperate = canManage && view === "services" && selectedGroupIDs.length > 0;
-  const canExport = view !== "hosts";
   const exportURL = exportPortGroupsURL(query);
-  const environmentOptions = useMemo(
-    () =>
-      Array.from(new Set((snapshot?.hosts ?? []).map((host) => host.environment).filter(Boolean))).map((value) => ({
-        label: value,
-        value,
-      })),
-    [snapshot?.hosts],
-  );
-
-  const sortOptions =
-    view === "hosts"
-      ? [
-          { label: "IP", value: "ip" },
-          { label: "环境", value: "environment" },
-          { label: "最近更新", value: "updated_desc" },
-        ]
-      : [
-          { label: "主机 + 端口", value: "host_port" },
-          { label: "服务名", value: "service" },
-          { label: "状态", value: "status" },
-          { label: "最近更新", value: "updated_desc" },
-        ];
+  const sortOptions = [
+    { label: "端口", value: "port" },
+    { label: "名称", value: "name" },
+    { label: "状态", value: "status" },
+    { label: "用户", value: "user" },
+    { label: "最近更新", value: "updated_desc" },
+  ];
 
   let content: ReactNode;
   if (inventoryQuery.isPending) {
@@ -277,15 +201,7 @@ export function InventoryWorkspace({
         );
         break;
       case "hosts":
-        content = (
-          <HostsSection
-            canManage={canManage}
-            groups={groups}
-            hosts={hosts}
-            onDeleteHost={(host) => void handleDeleteHost(host)}
-            onEditHost={openEditHost}
-          />
-        );
+        content = <HostsSection groups={groups} onSelectGroup={setSelectedGroup} />;
         break;
       case "dependencies":
         content = <DependenciesSection groups={groups} stats={stats} />;
@@ -294,10 +210,8 @@ export function InventoryWorkspace({
         content = (
           <OverviewSection
             canManage={canManage}
-            groupsByHost={groupsByHost}
-            hosts={hosts}
-            onCreateHost={openCreateHost}
-            onEditHost={openEditHost}
+            groups={groups}
+            onCreateGroup={openCreateGroup}
             onSelectGroup={setSelectedGroup}
             stats={stats}
           />
@@ -325,38 +239,25 @@ export function InventoryWorkspace({
             <Input
               prefix={<SearchOutlined />}
               className="page-search"
-              placeholder={view === "hosts" ? "搜索 IP、名称、网段、备注" : "搜索服务、IP、组件、仓库"}
+              placeholder="搜索分配、DIND IP、项目、依赖、仓库"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
-            {view === "hosts" ? (
-              <Select
-                allowClear
-                placeholder="环境"
-                style={{ width: 140 }}
-                value={environment}
-                options={environmentOptions}
-                onChange={setEnvironment}
-              />
-            ) : (
-              <Select
-                allowClear
-                placeholder="状态"
-                style={{ width: 140 }}
-                value={status}
-                options={statusOptions}
-                onChange={setStatus}
-              />
-            )}
+            <Select
+              allowClear
+              placeholder="状态"
+              style={{ width: 140 }}
+              value={status}
+              options={statusOptions}
+              onChange={setStatus}
+            />
             <Select style={{ width: 150 }} value={sort} options={sortOptions} onChange={setSort} />
             <Button icon={<ReloadOutlined />} onClick={() => void refresh()} loading={inventoryQuery.isFetching}>
               刷新
             </Button>
-            {canExport ? (
-              <Button icon={<DownloadOutlined />} href={exportURL} target="_blank">
-                导出 CSV
-              </Button>
-            ) : null}
+            <Button icon={<DownloadOutlined />} href={exportURL} target="_blank">
+              导出 CSV
+            </Button>
             {canBatchOperate ? (
               <>
                 <Typography.Text type="secondary">{`已选 ${selectedGroupIDs.length} 项`}</Typography.Text>
@@ -368,16 +269,13 @@ export function InventoryWorkspace({
                 </Button>
               </>
             ) : null}
-            <Button icon={<PlusOutlined />} onClick={openCreateHost} disabled={!canManage}>
-              主机
-            </Button>
             <Button
               type="primary"
               icon={<PlusOutlined />}
               onClick={openCreateGroup}
-              disabled={!canManage || hosts.length === 0}
+              disabled={!canManage}
             >
-              端口组
+              端口分配
             </Button>
           </Space>
         </Flex>
@@ -395,18 +293,9 @@ export function InventoryWorkspace({
           openEditGroup(group);
         }}
       />
-      <HostDrawer
-        editingHost={editingHost}
-        form={hostForm}
-        onClose={() => setHostDrawerOpen(false)}
-        onSave={(values) => void handleSaveHost(values)}
-        open={hostDrawerOpen}
-        saving={saving}
-      />
       <PortGroupDrawer
         editingGroup={editingGroup}
         form={groupForm}
-        hosts={hosts}
         onClose={() => setGroupDrawerOpen(false)}
         onSave={(values) => void handleSaveGroup(values)}
         open={groupDrawerOpen}

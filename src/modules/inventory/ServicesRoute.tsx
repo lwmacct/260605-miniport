@@ -3,8 +3,8 @@ import { InventoryWorkspace } from "./ui/InventoryWorkspace";
 export function ServicesRoute() {
 	return (
 		<InventoryWorkspace
-			description="集中查看服务、端口范围、组件和容器分配。"
-			title="服务列表"
+			description="集中查看端口组、DIND IP、项目和容器分配。"
+			title="端口分配"
 			view="services"
 		/>
 	);

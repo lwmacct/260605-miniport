@@ -14,53 +14,77 @@ import (
 	"github.com/lwmacct/260605-miniport/internal/infra/dbschema"
 )
 
-func TestListInventoryPortGroupsSortsByHostPort(t *testing.T) {
+func TestListInventoryPortGroupsSortsByPort(t *testing.T) {
 	ctx := t.Context()
 	db := newInventoryTestDB(t, ctx)
 	store := NewStore(db)
+	user := createInventoryTestUser(t, ctx, store, "member")
 	now := time.Now().UTC()
 
-	firstHost, err := store.CreateInventoryHost(ctx, &InventoryHostRecord{IP: "10.0.0.2", Name: "beta", CreatedAt: now, UpdatedAt: now})
-	require.NoError(t, err)
-	secondHost, err := store.CreateInventoryHost(ctx, &InventoryHostRecord{IP: "10.0.0.1", Name: "alpha", CreatedAt: now, UpdatedAt: now})
-	require.NoError(t, err)
-
-	_, err = store.CreateInventoryPortGroup(ctx, &InventoryPortGroupRecord{
-		HostID: firstHost.ID, PortStart: 2000, PortEnd: 2009, ServiceName: "beta-service", Status: "used", CreatedAt: now, UpdatedAt: now,
+	_, err := store.CreateInventoryPortGroup(ctx, &InventoryPortGroupRecord{
+		UserID: user.ID, PortStart: 10020, PortEnd: 10029, Name: "beta", Status: "used", CreatedAt: now, UpdatedAt: now,
 	})
 	require.NoError(t, err)
 	_, err = store.CreateInventoryPortGroup(ctx, &InventoryPortGroupRecord{
-		HostID: secondHost.ID, PortStart: 1000, PortEnd: 1009, ServiceName: "alpha-service", Status: "used", CreatedAt: now, UpdatedAt: now,
+		UserID: user.ID, PortStart: 10000, PortEnd: 10009, Name: "alpha", Status: "used", CreatedAt: now, UpdatedAt: now,
 	})
 	require.NoError(t, err)
 
-	groups, err := store.ListInventoryPortGroups(ctx, InventoryPortGroupListFilter{Sort: "host_port"})
+	groups, err := store.ListInventoryPortGroups(ctx, InventoryPortGroupListFilter{UserID: user.ID})
 	require.NoError(t, err)
 	require.Len(t, groups, 2)
-	require.Equal(t, "10.0.0.1", groups[0].Host.IP)
-	require.Equal(t, 1000, groups[0].PortStart)
-	require.Equal(t, "10.0.0.2", groups[1].Host.IP)
-	require.Equal(t, 2000, groups[1].PortStart)
+	require.Equal(t, 10000, groups[0].PortStart)
+	require.Equal(t, 10020, groups[1].PortStart)
 }
 
-func TestListInventoryPortGroupsSearchesHostFields(t *testing.T) {
+func TestListInventoryPortGroupsSearchesProjectFields(t *testing.T) {
 	ctx := t.Context()
 	db := newInventoryTestDB(t, ctx)
 	store := NewStore(db)
+	user := createInventoryTestUser(t, ctx, store, "member")
 	now := time.Now().UTC()
 
-	host, err := store.CreateInventoryHost(ctx, &InventoryHostRecord{IP: "10.0.0.3", Name: "searchable-host", CreatedAt: now, UpdatedAt: now})
-	require.NoError(t, err)
-	_, err = store.CreateInventoryPortGroup(ctx, &InventoryPortGroupRecord{
-		HostID: host.ID, PortStart: 3000, PortEnd: 3009, ServiceName: "worker", Status: "used", CreatedAt: now, UpdatedAt: now,
+	group, err := store.CreateInventoryPortGroup(ctx, &InventoryPortGroupRecord{
+		UserID: user.ID, PortStart: 10000, PortEnd: 10009, Name: "worker", Status: "used", CreatedAt: now, UpdatedAt: now,
 	})
 	require.NoError(t, err)
+	require.NoError(t, store.AddInventoryProjects(ctx, []InventoryProjectRecord{{
+		PortGroupID: group.ID, Name: "searchable-project", CreatedAt: now, UpdatedAt: now,
+	}}))
 
-	groups, err := store.ListInventoryPortGroups(ctx, InventoryPortGroupListFilter{Query: "searchable"})
+	groups, err := store.ListInventoryPortGroups(ctx, InventoryPortGroupListFilter{UserID: user.ID, Query: "searchable"})
 	require.NoError(t, err)
 	require.Len(t, groups, 1)
-	require.Equal(t, host.ID, groups[0].HostID)
-	require.Equal(t, "searchable-host", groups[0].Host.Name)
+	require.Equal(t, group.ID, groups[0].ID)
+}
+
+func TestInventoryPortGroupsAreUniquePerUser(t *testing.T) {
+	ctx := t.Context()
+	db := newInventoryTestDB(t, ctx)
+	store := NewStore(db)
+	first := createInventoryTestUser(t, ctx, store, "first")
+	second := createInventoryTestUser(t, ctx, store, "second")
+	now := time.Now().UTC()
+
+	_, err := store.CreateInventoryPortGroup(ctx, &InventoryPortGroupRecord{
+		UserID: first.ID, PortStart: 10000, PortEnd: 10009, Name: "first", Status: "used", CreatedAt: now, UpdatedAt: now,
+	})
+	require.NoError(t, err)
+	_, err = store.CreateInventoryPortGroup(ctx, &InventoryPortGroupRecord{
+		UserID: second.ID, PortStart: 10000, PortEnd: 10009, Name: "second", Status: "used", CreatedAt: now, UpdatedAt: now,
+	})
+	require.NoError(t, err)
+	_, err = store.CreateInventoryPortGroup(ctx, &InventoryPortGroupRecord{
+		UserID: first.ID, PortStart: 10000, PortEnd: 10009, Name: "duplicate", Status: "used", CreatedAt: now, UpdatedAt: now,
+	})
+	require.Error(t, err)
+}
+
+func createInventoryTestUser(t *testing.T, ctx context.Context, store *Store, username string) *UserModel {
+	t.Helper()
+	user, err := store.CreateUser(ctx, username, username)
+	require.NoError(t, err)
+	return user
 }
 
 func newInventoryTestDB(t *testing.T, ctx context.Context) *bun.DB {
@@ -71,6 +95,8 @@ func newInventoryTestDB(t *testing.T, ctx context.Context) *bun.DB {
 	t.Cleanup(func() {
 		require.NoError(t, db.Close())
 	})
-	require.NoError(t, dbschema.Apply(ctx, db, InventorySchema(), InventoryIndexesSchema()))
+	models := append([]any{}, UserSchema()...)
+	models = append(models, InventorySchema()...)
+	require.NoError(t, dbschema.Apply(ctx, db, models, InventoryIndexesSchema()))
 	return db
 }
