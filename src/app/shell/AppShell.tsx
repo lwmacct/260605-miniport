@@ -1,12 +1,11 @@
-import { Layout, Space, type MenuProps } from "antd";
+import { WorkbenchShell } from "@lwmacct/260627-antd-workbench";
+import { Space, type MenuProps } from "antd";
 import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { AppHeader } from "./AppHeader";
 import { appPaths, topNavFromPathname, type TopNavKey } from "../router/navigation";
 import { APP_NAME, DISPLAY_VERSION } from "@/shared/config/appConfig";
 import { useThemeModeContext } from "@/shared/theme/ThemeModeContext";
 import { useAuthStateQuery, useLogoutMutation, UserMenu } from "@/modules/auth";
-import styles from "./AppShell.module.css";
 
 function navItems(admin: boolean): MenuProps["items"] {
   const items: MenuProps["items"] = [
@@ -58,28 +57,30 @@ export function AppShell() {
   }
 
   return (
-    <Layout className={styles.shell}>
-      <AppHeader
-        actions={
-          <Space>
-            <UserMenu
-              themeMode={themeMode}
-              username={user?.username}
-              onLogout={() => void logoutMutation.mutateAsync()}
-              onOpenAccount={() => navigate(appPaths.admin)}
-              onToggleTheme={toggleTheme}
-            />
-          </Space>
-        }
-        activeNavKeys={[visibleActiveKey]}
-        brandName={APP_NAME}
-        navItems={navItems(Boolean(user?.admin))}
-        onNavigate={handleNavigate}
-        version={DISPLAY_VERSION}
-      />
-      <Layout.Content className={isFlushContent ? `${styles.content} ${styles.contentFlush}` : styles.content}>
-        <Outlet />
-      </Layout.Content>
-    </Layout>
+    <WorkbenchShell
+      actions={
+        <Space>
+          <UserMenu
+            themeMode={themeMode}
+            username={user?.username}
+            onLogout={() => void logoutMutation.mutateAsync()}
+            onOpenAccount={() => navigate(appPaths.admin)}
+            onToggleTheme={toggleTheme}
+          />
+        </Space>
+      }
+      activeNavKey={visibleActiveKey}
+      brand={{
+        mark: "M",
+        name: APP_NAME,
+        subtitle: "端口服务资产管理",
+        version: DISPLAY_VERSION,
+      }}
+      flushContent={isFlushContent}
+      navItems={navItems(Boolean(user?.admin))}
+      onNavigate={handleNavigate}
+    >
+      <Outlet />
+    </WorkbenchShell>
   );
 }
