@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.2.5",
-    "@lwmacct/260627-antd-workbench": "https://github.com/lwmacct/260627-antd-workbench/releases/download/v0.8.260627/package.tar.gz",
+    "@lwmacct/260627-antd-workbench": "https://github.com/lwmacct/260627-antd-workbench/releases/download/v0.11.260627/package.tar.gz",
     "@tanstack/react-query": "^5.101.1",
     "antd": "^6.4.5",
     "react": "^19.2.7",
