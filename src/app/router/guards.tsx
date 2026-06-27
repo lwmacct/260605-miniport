@@ -1,15 +1,11 @@
 import { Alert, Result, Spin } from "antd";
+import { WorkbenchCenterState } from "@lwmacct/260627-antd-workbench";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuthStateQuery } from "@/modules/auth";
 import { appPaths } from "./navigation";
-import styles from "../shell/AppShell.module.css";
 
 function CenterState({ children }: { children: React.ReactNode }) {
-  return (
-    <main className={styles.content}>
-      <div className={styles.centerState}>{children}</div>
-    </main>
-  );
+  return <WorkbenchCenterState>{children}</WorkbenchCenterState>;
 }
 
 export function GuestOnlyBoundary() {
