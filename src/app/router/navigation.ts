@@ -1,14 +1,14 @@
 export const appPaths = {
   admin: "/admin/users",
   dependencies: "/dependencies",
-  hosts: "/hosts",
+  projects: "/projects",
   login: "/login",
   overview: "/overview",
   register: "/register",
   services: "/services",
 } as const;
 
-export type TopNavKey = "admin" | "dependencies" | "hosts" | "overview" | "services";
+export type TopNavKey = "admin" | "dependencies" | "projects" | "overview" | "services";
 
 export function topNavFromPathname(pathname: string): TopNavKey {
   if (pathname.startsWith("/admin")) {
@@ -17,8 +17,8 @@ export function topNavFromPathname(pathname: string): TopNavKey {
   if (pathname.startsWith("/services")) {
     return "services";
   }
-  if (pathname.startsWith("/hosts")) {
-    return "hosts";
+  if (pathname.startsWith("/projects")) {
+    return "projects";
   }
   if (pathname.startsWith("/dependencies")) {
     return "dependencies";

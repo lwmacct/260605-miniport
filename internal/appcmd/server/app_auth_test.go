@@ -194,7 +194,7 @@ func TestAuthStateReturnsCurrentUser(t *testing.T) {
 	require.True(t, state.Session.User.Admin)
 }
 
-func TestInventoryWriteAllowsAuthenticatedUser(t *testing.T) {
+func TestPortsvcWriteAllowsAuthenticatedUser(t *testing.T) {
 	app, handler := setupAuthTestApp(t, []string{"root-admin"})
 
 	user, err := app.container.users.Create(context.Background(), service.CreateUserInput{Username: "member"})
@@ -209,7 +209,7 @@ func TestInventoryWriteAllowsAuthenticatedUser(t *testing.T) {
 	require.Equal(t, http.StatusOK, loginRec.Code, loginRec.Body.String())
 	cookie := loginRec.Result().Cookies()[0]
 
-	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/api/inventory/allocations", strings.NewReader(`{"name":"member-allocation","dindIp":"172.22.11.12","projects":[{"name":"miniport"}]}`))
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/api/services", strings.NewReader(`{"name":"member-service","projectName":"miniport","dindIp":"172.22.11.12"}`))
 	req.Header.Set("Content-Type", "application/json")
 	req.RemoteAddr = "127.0.0.1:12345"
 	req.AddCookie(cookie)
@@ -233,14 +233,14 @@ func TestProtectedReadRejectsDuplicateSessionCookie(t *testing.T) {
 	require.Equal(t, http.StatusOK, loginRec.Code, loginRec.Body.String())
 	validCookie := loginRec.Result().Cookies()[0]
 
-	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/inventory/allocations", nil)
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/services", nil)
 	req.RemoteAddr = "127.0.0.1:12345"
 	req.Header.Set("Cookie", validCookie.Name+"=sess_stale; "+validCookie.Name+"="+validCookie.Value)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 	require.Equal(t, http.StatusUnauthorized, rec.Code, rec.Body.String())
 
-	req = httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/inventory/allocations", nil)
+	req = httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/services", nil)
 	req.RemoteAddr = "127.0.0.1:12345"
 	req.AddCookie(validCookie)
 	rec = httptest.NewRecorder()

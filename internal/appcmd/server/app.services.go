@@ -17,17 +17,17 @@ func (app *App) bootstrap(ctx context.Context) error {
 		return fmt.Errorf("open database: %w", err)
 	}
 	models := append([]any{}, repository.UserSchema()...)
-	models = append(models, repository.InventorySchema()...)
+	models = append(models, repository.PortsvcSchema()...)
 	models = append(models, repository.AuthPasswordSchema()...)
 	models = append(models, repository.AuthSessionSchema()...)
-	if err := dbschema.Apply(ctx, db, models, repository.InventoryIndexesSchema()); err != nil {
+	if err := dbschema.Apply(ctx, db, models, repository.PortsvcIndexesSchema()); err != nil {
 		_ = db.Close()
 		return fmt.Errorf("apply database schema: %w", err)
 	}
 
 	app.container.db = db
 	app.container.store = repository.NewStore(db)
-	app.container.inventory = service.NewInventoryService(app.container.store)
+	app.container.portsvc = service.NewPortsvcService(app.container.store)
 	app.container.users = service.NewUserService(app.container.store)
 	app.container.passwords = service.NewAuthPasswordService(app.container.store)
 	app.container.sessions = service.NewAuthSessionService(app.container.store, app.cfg.Server.HTTP.SessionTTL)

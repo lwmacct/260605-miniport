@@ -71,6 +71,6 @@ func (app *App) handlerServices() handler.Services {
 		Sessions:   app.container.sessions,
 		Challenges: app.container.challenges,
 		AdminUsers: app.container.adminUsers,
-		Inventory:  app.container.inventory,
+		Portsvc:    app.container.portsvc,
 	}
 }

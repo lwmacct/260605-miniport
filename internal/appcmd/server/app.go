@@ -18,7 +18,7 @@ type App struct {
 type appContainer struct {
 	db         *bun.DB
 	store      *repository.Store
-	inventory  *service.InventoryService
+	portsvc    *service.PortsvcService
 	users      *service.UserService
 	passwords  *service.AuthPasswordService
 	sessions   *service.AuthSessionService

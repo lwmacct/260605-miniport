@@ -20,7 +20,7 @@ type Services struct {
 	Sessions   *service.AuthSessionService
 	Challenges *service.AuthChallengeService
 	AdminUsers *service.AdminUserService
-	Inventory  *service.InventoryService
+	Portsvc    *service.PortsvcService
 }
 
 type RequestAuth func(context.Context) (service.AuthSessionInput, bool)

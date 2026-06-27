@@ -29,7 +29,7 @@ func (e *Endpoint) Handler() http.Handler {
 func (e *Endpoint) Register(api huma.API) {
 	RegisterAuth(api, e.config, e.services)
 	RegisterAdminUser(api, e.config, e.services)
-	RegisterInventory(api, e.config, e.services)
+	RegisterPortsvc(api, e.config, e.services)
 	huma.Register(api, huma.Operation{OperationID: "get-health", Method: http.MethodGet, Path: "/health", Summary: "Get service health"}, e.health)
 	huma.Register(api, huma.Operation{OperationID: "get-meta", Method: http.MethodGet, Path: "/meta", Summary: "Get service metadata"}, e.meta)
 }

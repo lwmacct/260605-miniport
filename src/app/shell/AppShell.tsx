@@ -14,7 +14,7 @@ function navItems(admin: boolean): MenuProps["items"] {
   const items: MenuProps["items"] = [
     { key: "overview", label: "端口总览" },
     { key: "services", label: "端口分配" },
-    { key: "hosts", label: "项目服务" },
+    { key: "projects", label: "项目服务" },
     { key: "dependencies", label: "依赖与仓库" },
   ];
   if (admin) {
@@ -26,7 +26,7 @@ function navItems(admin: boolean): MenuProps["items"] {
 const navTargets: Record<TopNavKey, string> = {
   admin: appPaths.admin,
   dependencies: appPaths.dependencies,
-  hosts: appPaths.hosts,
+  projects: appPaths.projects,
   overview: appPaths.overview,
   services: appPaths.services,
 };
