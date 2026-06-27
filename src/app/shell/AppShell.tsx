@@ -1,6 +1,6 @@
 import {
-  useWorkbenchThemeMode,
   WorkbenchShell,
+  WorkbenchThemeToggle,
   WorkbenchUserMenu,
 } from "@lwmacct/260627-antd-workbench";
 import { Space, type MenuProps } from "antd";
@@ -34,7 +34,6 @@ const navTargets: Record<TopNavKey, string> = {
 export function AppShell() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { themeMode, toggleThemeMode } = useWorkbenchThemeMode();
   const authState = useAuthStateQuery();
   const logoutMutation = useLogoutMutation();
   const activeNavKey = topNavFromPathname(location.pathname);
@@ -63,12 +62,11 @@ export function AppShell() {
     <WorkbenchShell
       actions={
         <Space>
+          <WorkbenchThemeToggle />
           <WorkbenchUserMenu
-            themeMode={themeMode}
             username={user?.username}
             onLogout={() => void logoutMutation.mutateAsync()}
             onOpenAccount={() => navigate(appPaths.admin)}
-            onToggleTheme={toggleThemeMode}
           />
         </Space>
       }
