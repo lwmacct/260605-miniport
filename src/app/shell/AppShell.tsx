@@ -1,11 +1,14 @@
-import { WorkbenchShell } from "@lwmacct/260627-antd-workbench";
+import {
+  useWorkbenchThemeMode,
+  WorkbenchShell,
+  WorkbenchUserMenu,
+} from "@lwmacct/260627-antd-workbench";
 import { Space, type MenuProps } from "antd";
 import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { appPaths, topNavFromPathname, type TopNavKey } from "../router/navigation";
 import { APP_NAME, DISPLAY_VERSION } from "@/shared/config/appConfig";
-import { useThemeModeContext } from "@/shared/theme/ThemeModeContext";
-import { useAuthStateQuery, useLogoutMutation, UserMenu } from "@/modules/auth";
+import { useAuthStateQuery, useLogoutMutation } from "@/modules/auth";
 
 function navItems(admin: boolean): MenuProps["items"] {
   const items: MenuProps["items"] = [
@@ -31,7 +34,7 @@ const navTargets: Record<TopNavKey, string> = {
 export function AppShell() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { themeMode, toggleTheme } = useThemeModeContext();
+  const { themeMode, toggleThemeMode } = useWorkbenchThemeMode();
   const authState = useAuthStateQuery();
   const logoutMutation = useLogoutMutation();
   const activeNavKey = topNavFromPathname(location.pathname);
@@ -60,12 +63,12 @@ export function AppShell() {
     <WorkbenchShell
       actions={
         <Space>
-          <UserMenu
+          <WorkbenchUserMenu
             themeMode={themeMode}
             username={user?.username}
             onLogout={() => void logoutMutation.mutateAsync()}
             onOpenAccount={() => navigate(appPaths.admin)}
-            onToggleTheme={toggleTheme}
+            onToggleTheme={toggleThemeMode}
           />
         </Space>
       }

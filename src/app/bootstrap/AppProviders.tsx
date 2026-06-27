@@ -1,16 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WorkbenchProvider } from "@lwmacct/260627-antd-workbench";
 import { useState, type PropsWithChildren } from "react";
-import type { ThemeMode } from "@/shared/theme/theme";
 
-interface AppProvidersProps {
-  themeMode: ThemeMode;
-}
-
-export function AppProviders({
-  children,
-  themeMode,
-}: PropsWithChildren<AppProvidersProps>) {
+export function AppProviders({ children }: PropsWithChildren) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -26,8 +18,7 @@ export function AppProviders({
   return (
     <QueryClientProvider client={queryClient}>
       <WorkbenchProvider
-        storageKey={false}
-        themeMode={themeMode}
+        storageKey="miniport-theme"
         withAntdApp
       >
         {children}
