@@ -1,17 +1,18 @@
 import {
-  WorkbenchShell,
-  WorkbenchThemeToggle,
-  WorkbenchUserMenu,
+  AppShell as WorkbenchShell,
+  ThemeToggle as WorkbenchThemeToggle,
+  UserMenu as WorkbenchUserMenu,
+  type WorkbenchNavEntry,
 } from "@lwmacct/260627-antd-workbench";
-import { Space, type MenuProps } from "antd";
+import { Space } from "antd";
 import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { appPaths, topNavFromPathname, type TopNavKey } from "../router/navigation";
 import { APP_NAME, DISPLAY_VERSION } from "@/shared/config/appConfig";
 import { useAuthStateQuery, useLogoutMutation } from "@/modules/auth";
 
-function navItems(admin: boolean): MenuProps["items"] {
-  const items: MenuProps["items"] = [
+function navItems(admin: boolean): WorkbenchNavEntry[] {
+  const items: WorkbenchNavEntry[] = [
     { key: "overview", label: "端口总览" },
     { key: "services", label: "端口分配" },
     { key: "projects", label: "项目服务" },
@@ -64,13 +65,12 @@ export function AppShell() {
         <Space>
           <WorkbenchThemeToggle />
           <WorkbenchUserMenu
-            username={user?.username}
+            user={{ name: user?.username, username: user?.username }}
             onLogout={() => void logoutMutation.mutateAsync()}
             onOpenAccount={() => navigate(appPaths.admin)}
           />
         </Space>
       }
-      activeNavKey={visibleActiveKey}
       brand={{
         mark: "M",
         name: APP_NAME,
@@ -78,8 +78,9 @@ export function AppShell() {
         version: DISPLAY_VERSION,
       }}
       flushContent={isFlushContent}
-      navItems={navItems(Boolean(user?.admin))}
-      onNavigate={handleNavigate}
+      nav={navItems(Boolean(user?.admin))}
+      selectedNavKey={visibleActiveKey}
+      onSelectNav={handleNavigate}
     >
       <Outlet />
     </WorkbenchShell>

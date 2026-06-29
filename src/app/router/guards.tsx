@@ -1,5 +1,5 @@
 import { Alert, Result, Spin } from "antd";
-import { WorkbenchCenterState } from "@lwmacct/260627-antd-workbench";
+import { CenterState as WorkbenchCenterState } from "@lwmacct/260627-antd-workbench";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuthStateQuery } from "@/modules/auth";
 import { appPaths } from "./navigation";

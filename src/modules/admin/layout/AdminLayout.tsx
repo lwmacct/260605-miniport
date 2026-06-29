@@ -4,7 +4,7 @@ import {
   SettingOutlined,
   TeamOutlined,
 } from "@ant-design/icons";
-import { WorkbenchSectionLayout } from "@lwmacct/260627-antd-workbench";
+import { SectionLayout as WorkbenchSectionLayout } from "@lwmacct/260627-antd-workbench";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
 type AdminSectionKey = "audit" | "integrations" | "system" | "users";
@@ -34,15 +34,16 @@ export function AdminLayout() {
 
   return (
     <WorkbenchSectionLayout
-      activeKey={activeSection(location.pathname)}
-      menuItems={[
+      selectedKey={activeSection(location.pathname)}
+      nav={[
         {
           type: "group",
+          key: "system-management",
           label: "系统管理",
           children: [...sectionItems],
         },
       ]}
-      onChange={(key) => navigate(`/admin/${key}`)}
+      onSelect={(key) => navigate(`/admin/${key}`)}
     >
       <Outlet />
     </WorkbenchSectionLayout>

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { WorkbenchProvider } from "@lwmacct/260627-antd-workbench";
+import { WorkbenchRoot } from "@lwmacct/260627-antd-workbench";
 import { useState, type PropsWithChildren } from "react";
 
 export function AppProviders({ children }: PropsWithChildren) {
@@ -17,12 +17,12 @@ export function AppProviders({ children }: PropsWithChildren) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <WorkbenchProvider
-        storageKey="miniport-theme"
+      <WorkbenchRoot
+        appearance={{ storageKey: "miniport-theme" }}
         withAntdApp
       >
         {children}
-      </WorkbenchProvider>
+      </WorkbenchRoot>
     </QueryClientProvider>
   );
 }

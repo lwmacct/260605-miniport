@@ -1,6 +1,6 @@
 {
   "name": "webapp-web",
-  "version": "0.21.260627",
+  "version": "0.22.260629",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,16 +10,16 @@
     "typecheck": "vite-workspace typecheck"
   },
   "dependencies": {
-    "@ant-design/icons": "^6.2.5",
-    "@lwmacct/260627-antd-workbench": "https://github.com/lwmacct/260627-antd-workbench/releases/download/v0.19.260627/package.tar.gz",
-    "@tanstack/react-query": "^5.101.1",
-    "antd": "^6.4.5",
+    "@ant-design/icons": "^6.3.2",
+    "@lwmacct/260627-antd-workbench": "^0.34.260629",
+    "@tanstack/react-query": "^5.101.2",
+    "antd": "^6.5.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.0"
   },
   "devDependencies": {
-    "@lwmacct/260627-vite-workspace": "https://github.com/lwmacct/260627-vite-workspace/releases/download/v0.6.260627/package.tar.gz",
+    "@lwmacct/260627-vite-workspace": "^0.11.260628",
     "@types/node": "^26.0.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
