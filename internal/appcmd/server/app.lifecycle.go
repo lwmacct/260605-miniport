@@ -16,15 +16,16 @@ func (app *App) Run(ctx context.Context) error {
 	if err := app.validateHTTPTLS(); err != nil {
 		return err
 	}
-	if err := app.bootstrap(ctx); err != nil {
+	deps, err := newDependencies(ctx, app.cfg)
+	if err != nil {
 		return err
 	}
-	defer app.closeDatabase()
+	app.deps = deps
+	defer app.deps.Close()
 
-	if err := app.bootstrapTLSManager(ctx); err != nil {
-		return err
+	if tlsErr := app.bootstrapTLSManager(ctx); tlsErr != nil {
+		return tlsErr
 	}
-	defer app.closeTLSManager()
 
 	srv := app.newHTTPServer()
 

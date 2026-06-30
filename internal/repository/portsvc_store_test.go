@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lwmacct/260630-go-hsr-auth/pkg/auth"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
@@ -79,11 +80,32 @@ func TestServicePortAllocationIsUnique(t *testing.T) {
 	require.Error(t, err)
 }
 
-func createPortsvcTestUser(t *testing.T, ctx context.Context, store *Store, username string) *UserModel {
+func createPortsvcTestUser(t *testing.T, ctx context.Context, store *Store, username string) *authUserRow {
 	t.Helper()
-	user, err := store.CreateUser(ctx, username, username)
+	now := time.Now().UTC()
+	user := &authUserRow{
+		Username:    username,
+		DisplayName: username,
+		Role:        auth.UserRoleUser,
+		Status:      auth.UserStatusActive,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+	_, err := store.db.NewInsert().Model(user).Exec(ctx)
 	require.NoError(t, err)
 	return user
+}
+
+type authUserRow struct {
+	bun.BaseModel `bun:"table:users"`
+
+	ID          int64     `bun:"id,pk,autoincrement"`
+	Username    string    `bun:"username,notnull,unique"`
+	DisplayName string    `bun:"display_name,notnull"`
+	Role        string    `bun:"role,notnull"`
+	Status      string    `bun:"status,notnull"`
+	CreatedAt   time.Time `bun:"created_at,notnull"`
+	UpdatedAt   time.Time `bun:"updated_at,notnull"`
 }
 
 func newPortsvcTestDB(t *testing.T, ctx context.Context) *bun.DB {
@@ -94,8 +116,7 @@ func newPortsvcTestDB(t *testing.T, ctx context.Context) *bun.DB {
 	t.Cleanup(func() {
 		require.NoError(t, db.Close())
 	})
-	models := append([]any{}, UserSchema()...)
-	models = append(models, PortsvcSchema()...)
-	require.NoError(t, dbschema.Apply(ctx, db, models, PortsvcIndexesSchema()))
+	require.NoError(t, auth.ApplySchema(ctx, db))
+	require.NoError(t, dbschema.Apply(ctx, db, PortsvcSchema(), PortsvcIndexesSchema()))
 	return db
 }

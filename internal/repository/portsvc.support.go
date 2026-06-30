@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"strings"
 	"time"
 )
@@ -118,9 +119,6 @@ func utilPortsvcServiceRecordFromModel(model *ServicesModel) *PortsvcServiceReco
 		CreatedAt:        model.CreatedAt,
 		UpdatedAt:        model.UpdatedAt,
 	}
-	if model.User != nil {
-		out.Username = model.User.Username
-	}
 	out.PortAllocation = utilPortsvcPortAllocationRecordFromModel(model.PortAllocation)
 	return out
 }
@@ -139,10 +137,56 @@ func utilPortsvcPortAllocationRecordFromModel(model *PortAllocationsModel) *Port
 		CreatedAt: model.CreatedAt,
 		UpdatedAt: model.UpdatedAt,
 	}
-	if model.User != nil {
-		out.Username = model.User.Username
-	}
 	return out
+}
+
+func (s *Store) attachServiceUsernames(ctx context.Context, records []PortsvcServiceRecord) error {
+	userIDs := make([]int64, 0, len(records))
+	for _, record := range records {
+		userIDs = append(userIDs, record.UserID)
+	}
+	usernames, err := s.identityUsernames(ctx, userIDs)
+	if err != nil {
+		return err
+	}
+	for idx := range records {
+		records[idx].Username = usernames[records[idx].UserID]
+	}
+	return nil
+}
+
+func (s *Store) attachServicePortAllocationUsernames(ctx context.Context, records []PortsvcServiceRecord) error {
+	userIDs := make([]int64, 0, len(records))
+	for _, record := range records {
+		if record.PortAllocation != nil {
+			userIDs = append(userIDs, record.PortAllocation.UserID)
+		}
+	}
+	usernames, err := s.identityUsernames(ctx, userIDs)
+	if err != nil {
+		return err
+	}
+	for idx := range records {
+		if records[idx].PortAllocation != nil {
+			records[idx].PortAllocation.Username = usernames[records[idx].PortAllocation.UserID]
+		}
+	}
+	return nil
+}
+
+func (s *Store) attachPortAllocationUsernames(ctx context.Context, records []PortsvcPortAllocationRecord) error {
+	userIDs := make([]int64, 0, len(records))
+	for _, record := range records {
+		userIDs = append(userIDs, record.UserID)
+	}
+	usernames, err := s.identityUsernames(ctx, userIDs)
+	if err != nil {
+		return err
+	}
+	for idx := range records {
+		records[idx].Username = usernames[records[idx].UserID]
+	}
+	return nil
 }
 
 func utilPortsvcDependencyRecordFromModel(model *DependenciesModel) *PortsvcDependencyRecord {

@@ -1,7 +1,7 @@
 import {
-  AppShell as WorkbenchShell,
-  ThemeToggle as WorkbenchThemeToggle,
-  UserMenu as WorkbenchUserMenu,
+  WorkbenchShell,
+  WorkbenchThemeToggle,
+  WorkbenchUserMenu,
   type WorkbenchNavEntry,
 } from "@lwmacct/260627-antd-workbench";
 import { Space } from "antd";

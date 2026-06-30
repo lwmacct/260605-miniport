@@ -117,6 +117,26 @@ var Command = &cli.Command{
 			Usage: usage.MustUsage("auth.challenge.turnstile.verify-url"),
 			Value: defaults.Server.Auth.Challenge.Turnstile.VerifyURL,
 		},
+		&cli.DurationFlag{
+			Name:  "auth.session.ttl",
+			Usage: usage.MustUsage("auth.session.ttl"),
+			Value: defaults.Server.Auth.Session.TTL,
+		},
+		&cli.StringFlag{
+			Name:  "auth.session.cookie.name",
+			Usage: usage.MustUsage("auth.session.cookie.name"),
+			Value: defaults.Server.Auth.Session.Cookie.Name,
+		},
+		&cli.StringFlag{
+			Name:  "auth.session.cookie.path",
+			Usage: usage.MustUsage("auth.session.cookie.path"),
+			Value: defaults.Server.Auth.Session.Cookie.Path,
+		},
+		&cli.BoolFlag{
+			Name:  "auth.session.cookie.secure",
+			Usage: usage.MustUsage("auth.session.cookie.secure"),
+			Value: defaults.Server.Auth.Session.Cookie.Secure,
+		},
 		&cli.StringFlag{
 			Name:  "http.listen",
 			Usage: usage.MustUsage("http.listen"),
@@ -146,11 +166,6 @@ var Command = &cli.Command{
 			Name:  "http.tls.reload-interval",
 			Usage: usage.MustUsage("http.tls.reload-interval"),
 			Value: defaults.Server.HTTP.TLS.ReloadInterval,
-		},
-		&cli.DurationFlag{
-			Name:  "http.session-ttl",
-			Usage: usage.MustUsage("http.session-ttl"),
-			Value: defaults.Server.HTTP.SessionTTL,
 		},
 		&cli.DurationFlag{
 			Name:  "http.read-timeout",

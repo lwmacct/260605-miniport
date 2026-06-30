@@ -5,18 +5,20 @@ import (
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/lwmacct/260630-go-hsr-shared/pkg/identity"
+	"github.com/lwmacct/260630-go-hsr-shared/pkg/requestctx"
 
 	"github.com/lwmacct/260605-miniport/internal/service"
 )
 
 type portsvcHandler struct {
-	auth     authHandler
+	config   Config
 	services Services
 }
 
 func RegisterPortsvc(api huma.API, config Config, services Services) {
 	handler := portsvcHandler{
-		auth:     authHandler{config: config, services: services},
+		config:   config,
 		services: services,
 	}
 	huma.Register(api, huma.Operation{OperationID: "list-services", Method: http.MethodGet, Path: "/services", Summary: "List services", Tags: []string{"services"}}, handler.listServices)
@@ -166,9 +168,23 @@ func (h portsvcHandler) exportServices(ctx context.Context, input *ServiceListIn
 }
 
 func (h portsvcHandler) actor(ctx context.Context, sessionID string) (service.PortsvcActor, error) {
-	session, err := h.auth.session(ctx, sessionID)
-	if err != nil {
+	if sessionID == "" || h.config.Identity == nil {
 		return service.PortsvcActor{}, huma.Error401Unauthorized("unauthorized")
 	}
-	return ToPortsvcActor(session), nil
+	request, ok := requestctx.RequestFromContext(ctx)
+	if !ok {
+		return service.PortsvcActor{}, huma.Error401Unauthorized("unauthorized")
+	}
+	principal, err := h.config.Identity.CurrentPrincipal(ctx, sessionID, request)
+	if err != nil || principal == nil {
+		return service.PortsvcActor{}, huma.Error401Unauthorized("unauthorized")
+	}
+	if !principal.Active() || principal.Status == identity.StatusDisabled {
+		return service.PortsvcActor{}, huma.Error401Unauthorized("unauthorized")
+	}
+	actor := ToPortsvcActor(principal)
+	if actor.UserID <= 0 {
+		return service.PortsvcActor{}, huma.Error401Unauthorized("unauthorized")
+	}
+	return actor, nil
 }

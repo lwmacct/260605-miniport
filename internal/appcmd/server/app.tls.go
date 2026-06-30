@@ -27,14 +27,6 @@ func (app *App) bootstrapTLSManager(ctx context.Context) error {
 		return err
 	}
 
-	app.tlsReloader = reloader
+	app.deps.tlsReloader = reloader
 	return nil
-}
-
-func (app *App) closeTLSManager() {
-	if app.tlsReloader == nil {
-		return
-	}
-	app.tlsReloader.Close()
-	app.tlsReloader = nil
 }

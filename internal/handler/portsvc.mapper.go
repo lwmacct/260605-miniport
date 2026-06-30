@@ -1,15 +1,19 @@
 package handler
 
-import "github.com/lwmacct/260605-miniport/internal/service"
+import (
+	"github.com/lwmacct/260630-go-hsr-shared/pkg/identity"
 
-func ToPortsvcActor(session *AuthSessionDTO) service.PortsvcActor {
+	"github.com/lwmacct/260605-miniport/internal/service"
+)
+
+func ToPortsvcActor(user *identity.Principal) service.PortsvcActor {
 	actor := service.PortsvcActor{}
-	if session == nil || session.User == nil {
+	if user == nil {
 		return actor
 	}
-	actor.UserID = session.User.ID
-	actor.Username = session.User.Username
-	actor.Admin = session.User.Admin
+	actor.UserID = user.ID
+	actor.Username = user.Username
+	actor.Admin = user.Admin
 	return actor
 }
 

@@ -4,7 +4,7 @@ import {
   SettingOutlined,
   TeamOutlined,
 } from "@ant-design/icons";
-import { SectionLayout as WorkbenchSectionLayout } from "@lwmacct/260627-antd-workbench";
+import { WorkbenchSectionLayout } from "@lwmacct/260627-antd-workbench";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
 type AdminSectionKey = "audit" | "integrations" | "system" | "users";

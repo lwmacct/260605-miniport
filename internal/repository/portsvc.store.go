@@ -9,7 +9,7 @@ import (
 
 func (s *Store) ListPortsvcServices(ctx context.Context, params PortsvcServiceListFilter) ([]PortsvcServiceRecord, error) {
 	var rows []ServicesModel
-	query := s.db.NewSelect().Model(&rows).Relation("User").Relation("PortAllocation")
+	query := s.db.NewSelect().Model(&rows).Relation("PortAllocation")
 	if !params.Admin {
 		query = query.Where("service.user_id = ?", params.UserID)
 	} else if params.UserID > 0 {
@@ -55,16 +55,29 @@ func (s *Store) ListPortsvcServices(ctx context.Context, params PortsvcServiceLi
 	for idx := range rows {
 		out = append(out, *utilPortsvcServiceRecordFromModel(&rows[idx]))
 	}
+	if err := s.attachServiceUsernames(ctx, out); err != nil {
+		return nil, err
+	}
+	if err := s.attachServicePortAllocationUsernames(ctx, out); err != nil {
+		return nil, err
+	}
 	return out, nil
 }
 
 func (s *Store) FetchPortsvcServiceByID(ctx context.Context, id int64) (*PortsvcServiceRecord, error) {
 	row := new(ServicesModel)
-	err := s.db.NewSelect().Model(row).Relation("User").Relation("PortAllocation").Where("service.id = ?", id).Scan(ctx)
+	err := s.db.NewSelect().Model(row).Relation("PortAllocation").Where("service.id = ?", id).Scan(ctx)
 	if err != nil {
 		return nil, WrapNotFound(err)
 	}
-	return utilPortsvcServiceRecordFromModel(row), nil
+	records := []PortsvcServiceRecord{*utilPortsvcServiceRecordFromModel(row)}
+	if err := s.attachServiceUsernames(ctx, records); err != nil {
+		return nil, err
+	}
+	if err := s.attachServicePortAllocationUsernames(ctx, records); err != nil {
+		return nil, err
+	}
+	return &records[0], nil
 }
 
 func (s *Store) CreatePortsvcService(ctx context.Context, service *PortsvcServiceRecord) (*PortsvcServiceRecord, error) {
@@ -209,7 +222,7 @@ func (s *Store) ReplacePortsvcServiceChildren(ctx context.Context, serviceID int
 
 func (s *Store) ListPortsvcPortAllocations(ctx context.Context, params PortsvcPortAllocationListFilter) ([]PortsvcPortAllocationRecord, error) {
 	var rows []PortAllocationsModel
-	query := s.db.NewSelect().Model(&rows).Relation("User")
+	query := s.db.NewSelect().Model(&rows)
 	if !params.Admin {
 		query = query.Where("allocation.user_id = ?", params.UserID)
 	} else if params.UserID > 0 {
@@ -233,16 +246,23 @@ func (s *Store) ListPortsvcPortAllocations(ctx context.Context, params PortsvcPo
 	for idx := range rows {
 		out = append(out, *utilPortsvcPortAllocationRecordFromModel(&rows[idx]))
 	}
+	if err := s.attachPortAllocationUsernames(ctx, out); err != nil {
+		return nil, err
+	}
 	return out, nil
 }
 
 func (s *Store) FetchPortsvcPortAllocationByID(ctx context.Context, id int64) (*PortsvcPortAllocationRecord, error) {
 	row := new(PortAllocationsModel)
-	err := s.db.NewSelect().Model(row).Relation("User").Where("allocation.id = ?", id).Scan(ctx)
+	err := s.db.NewSelect().Model(row).Where("allocation.id = ?", id).Scan(ctx)
 	if err != nil {
 		return nil, WrapNotFound(err)
 	}
-	return utilPortsvcPortAllocationRecordFromModel(row), nil
+	records := []PortsvcPortAllocationRecord{*utilPortsvcPortAllocationRecordFromModel(row)}
+	if err := s.attachPortAllocationUsernames(ctx, records); err != nil {
+		return nil, err
+	}
+	return &records[0], nil
 }
 
 func (s *Store) CreatePortsvcPortAllocation(ctx context.Context, group *PortsvcPortAllocationRecord) (*PortsvcPortAllocationRecord, error) {

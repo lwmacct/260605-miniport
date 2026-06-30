@@ -10,15 +10,14 @@ import (
 type PortAllocationsModel struct {
 	bun.BaseModel `bun:"table:port_allocations,alias:allocation"`
 
-	ID        int64      `bun:"id,pk,autoincrement" json:"id"`
-	UserID    int64      `bun:"user_id,notnull" json:"userId"`
-	User      *UserModel `bun:"rel:belongs-to,join:user_id=id" json:"user,omitempty"`
-	PortStart int        `bun:"port_start,notnull" json:"portStart"`
-	PortEnd   int        `bun:"port_end,notnull" json:"portEnd"`
-	Status    string     `bun:"status,notnull" json:"status"`
-	Notes     string     `bun:"notes" json:"notes"`
-	CreatedAt time.Time  `bun:"created_at,notnull" json:"createdAt"`
-	UpdatedAt time.Time  `bun:"updated_at,notnull" json:"updatedAt"`
+	ID        int64     `bun:"id,pk,autoincrement" json:"id"`
+	UserID    int64     `bun:"user_id,notnull" json:"userId"`
+	PortStart int       `bun:"port_start,notnull" json:"portStart"`
+	PortEnd   int       `bun:"port_end,notnull" json:"portEnd"`
+	Status    string    `bun:"status,notnull" json:"status"`
+	Notes     string    `bun:"notes" json:"notes"`
+	CreatedAt time.Time `bun:"created_at,notnull" json:"createdAt"`
+	UpdatedAt time.Time `bun:"updated_at,notnull" json:"updatedAt"`
 }
 
 func PortAllocationSchema() []any {

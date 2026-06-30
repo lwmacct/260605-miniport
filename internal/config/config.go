@@ -31,7 +31,6 @@ type ServerHTTP struct {
 	Listen          string        `json:"listen" desc:"HTTP 服务监听地址"`
 	WebRoot         string        `json:"web-root" desc:"静态 Web 根目录，留空则不托管前端"`
 	TLS             ServerHTTPTLS `json:"tls" desc:"HTTPS TLS 配置"`
-	SessionTTL      time.Duration `json:"session-ttl" desc:"HTTP 登录会话有效期"`
 	TrustedProxies  []string      `json:"trusted-proxies" desc:"可信 HTTP 反向代理 CIDR/IP 列表"`
 	ReadTimeout     time.Duration `json:"read-timeout" desc:"HTTP 读取超时时间"`
 	WriteTimeout    time.Duration `json:"write-timeout" desc:"HTTP 写入超时时间"`
@@ -43,6 +42,7 @@ type ServerAuth struct {
 	Admins    []string            `json:"admins" desc:"运行时管理员用户名列表"`
 	Local     ServerAuthLocal     `json:"local" desc:"本地账号认证配置"`
 	Challenge ServerAuthChallenge `json:"challenge" desc:"认证挑战配置"`
+	Session   ServerAuthSession   `json:"session" desc:"认证会话配置"`
 }
 
 type ServerAuthLocal struct {
@@ -65,6 +65,17 @@ type ServerAuthChallengeRemote struct {
 	SiteKey   string `json:"sitekey" desc:"认证挑战站点公钥"`
 	Secret    string `json:"secret" desc:"认证挑战服务端密钥"`
 	VerifyURL string `json:"verify-url" desc:"认证挑战服务端验证地址"`
+}
+
+type ServerAuthSession struct {
+	TTL    time.Duration           `json:"ttl" desc:"登录会话有效期"`
+	Cookie ServerAuthSessionCookie `json:"cookie" desc:"登录会话 Cookie 策略"`
+}
+
+type ServerAuthSessionCookie struct {
+	Name   string `json:"name" desc:"登录会话 Cookie 名称"`
+	Path   string `json:"path" desc:"登录会话 Cookie Path"`
+	Secure bool   `json:"secure" desc:"是否给登录会话 Cookie 设置 Secure 属性"`
 }
 
 type ServerHTTPTLS struct {
@@ -106,6 +117,13 @@ func DefaultConfig() Config {
 						VerifyURL: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
 					},
 				},
+				Session: ServerAuthSession{
+					TTL: 7 * 24 * time.Hour,
+					Cookie: ServerAuthSessionCookie{
+						Name: "web_session",
+						Path: "/api",
+					},
+				},
 			},
 			HTTP: ServerHTTP{
 				Listen:  ":40238",
@@ -116,7 +134,6 @@ func DefaultConfig() Config {
 					KeyFile:        "${APP_DATA:-.local/data}/ssl/privkey.pem",
 					ReloadInterval: 3 * time.Second,
 				},
-				SessionTTL:      7 * 24 * time.Hour,
 				TrustedProxies:  nil,
 				ReadTimeout:     15 * time.Second,
 				WriteTimeout:    30 * time.Second,

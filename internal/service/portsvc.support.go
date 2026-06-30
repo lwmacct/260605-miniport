@@ -146,7 +146,7 @@ func utilNormalizeService(ctx context.Context, store *repository.Store, actor Po
 	if userID <= 0 {
 		return nil, utilBadPortsvcRequest("userId is required")
 	}
-	if _, err := store.FetchUserByID(ctx, userID); err != nil {
+	if _, err := store.FetchIdentityUser(ctx, userID); err != nil {
 		return nil, err
 	}
 	portID := payload.PortAllocationID
@@ -192,7 +192,7 @@ func utilNormalizePortAllocation(ctx context.Context, store *repository.Store, a
 	if userID <= 0 {
 		return nil, utilBadPortsvcRequest("userId is required")
 	}
-	if _, err := store.FetchUserByID(ctx, userID); err != nil {
+	if _, err := store.FetchIdentityUser(ctx, userID); err != nil {
 		return nil, err
 	}
 

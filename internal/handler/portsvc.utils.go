@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"time"
 
 	"github.com/danielgtaylor/huma/v2"
 
@@ -28,4 +29,11 @@ func utilPortsvcAPIError(err error) error {
 		return huma.Error400BadRequest("bad request")
 	}
 	return err
+}
+
+func utilHTTPTime(value time.Time) string {
+	if value.IsZero() {
+		return ""
+	}
+	return value.UTC().Format(time.RFC3339)
 }

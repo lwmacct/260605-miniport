@@ -8,112 +8,48 @@
 
 ## APIs
 
-| Method   | Path                      | Operation                | Tags             | Handler                | Register            | File                                     |
-| -------- | ------------------------- | ------------------------ | ---------------- | ---------------------- | ------------------- | ---------------------------------------- |
-| `GET`    | `/admin/users`            | `list-admin-users`       | Admin            | `listUsers`            | `RegisterAdminUser` | `internal/handler/admin_user.handler.go` |
-| `POST`   | `/auth/challenges`        | `create-auth-challenge`  | Auth             | `createChallenge`      | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
-| `GET`    | `/auth/config`            | `get-auth-config`        | Auth             | `configOutput`         | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
-| `POST`   | `/auth/logout`            | `logout`                 | Auth             | `logout`               | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
-| `GET`    | `/auth/me`                | `get-current-user`       | Auth             | `me`                   | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
-| `POST`   | `/auth/password/login`    | `login-password`         | Auth             | `passwordLogin`        | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
-| `POST`   | `/auth/password/register` | `register-password-user` | Auth             | `passwordRegister`     | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
-| `GET`    | `/auth/state`             | `get-auth-state`         | Auth             | `state`                | `RegisterAuth`      | `internal/handler/auth.handler.go`       |
-| `GET`    | `/health`                 | `get-health`             |                  | `health`               | `Endpoint.Register` | `internal/handler/x_http.endpoint.go`    |
-| `GET`    | `/meta`                   | `get-meta`               |                  | `meta`                 | `Endpoint.Register` | `internal/handler/x_http.endpoint.go`    |
-| `GET`    | `/port-allocations`       | `list-port-allocations`  | port-allocations | `listPortAllocations`  | `RegisterPortsvc`   | `internal/handler/portsvc.handler.go`    |
-| `POST`   | `/port-allocations`       | `create-port-allocation` | port-allocations | `createPortAllocation` | `RegisterPortsvc`   | `internal/handler/portsvc.handler.go`    |
-| `DELETE` | `/port-allocations/{id}`  | `delete-port-allocation` | port-allocations | `deletePortAllocation` | `RegisterPortsvc`   | `internal/handler/portsvc.handler.go`    |
-| `PUT`    | `/port-allocations/{id}`  | `update-port-allocation` | port-allocations | `updatePortAllocation` | `RegisterPortsvc`   | `internal/handler/portsvc.handler.go`    |
-| `GET`    | `/services`               | `list-services`          | services         | `listServices`         | `RegisterPortsvc`   | `internal/handler/portsvc.handler.go`    |
-| `POST`   | `/services`               | `create-service`         | services         | `createService`        | `RegisterPortsvc`   | `internal/handler/portsvc.handler.go`    |
-| `POST`   | `/services/batch-delete`  | `batch-delete-services`  | services         | `batchDeleteServices`  | `RegisterPortsvc`   | `internal/handler/portsvc.handler.go`    |
-| `GET`    | `/services/export.csv`    | `export-services`        | services         | `exportServices`       | `RegisterPortsvc`   | `internal/handler/portsvc.handler.go`    |
-| `DELETE` | `/services/{id}`          | `delete-service`         | services         | `deleteService`        | `RegisterPortsvc`   | `internal/handler/portsvc.handler.go`    |
-| `GET`    | `/services/{id}`          | `get-service`            | services         | `getService`           | `RegisterPortsvc`   | `internal/handler/portsvc.handler.go`    |
-| `PUT`    | `/services/{id}`          | `update-service`         | services         | `updateService`        | `RegisterPortsvc`   | `internal/handler/portsvc.handler.go`    |
+| Method   | Full Path                | Mount | Operation Path           | Operation                | Tags             | Handler                | Register          | File                                  |
+| -------- | ------------------------ | ----- | ------------------------ | ------------------------ | ---------------- | ---------------------- | ----------------- | ------------------------------------- |
+| `GET`    | `/port-allocations`      | `-`   | `/port-allocations`      | `list-port-allocations`  | port-allocations | `listPortAllocations`  | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `POST`   | `/port-allocations`      | `-`   | `/port-allocations`      | `create-port-allocation` | port-allocations | `createPortAllocation` | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `DELETE` | `/port-allocations/{id}` | `-`   | `/port-allocations/{id}` | `delete-port-allocation` | port-allocations | `deletePortAllocation` | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `PUT`    | `/port-allocations/{id}` | `-`   | `/port-allocations/{id}` | `update-port-allocation` | port-allocations | `updatePortAllocation` | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `GET`    | `/services`              | `-`   | `/services`              | `list-services`          | services         | `listServices`         | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `POST`   | `/services`              | `-`   | `/services`              | `create-service`         | services         | `createService`        | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `POST`   | `/services/batch-delete` | `-`   | `/services/batch-delete` | `batch-delete-services`  | services         | `batchDeleteServices`  | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `GET`    | `/services/export.csv`   | `-`   | `/services/export.csv`   | `export-services`        | services         | `exportServices`       | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `DELETE` | `/services/{id}`         | `-`   | `/services/{id}`         | `delete-service`         | services         | `deleteService`        | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `GET`    | `/services/{id}`         | `-`   | `/services/{id}`         | `get-service`            | services         | `getService`           | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `PUT`    | `/services/{id}`         | `-`   | `/services/{id}`         | `update-service`         | services         | `updateService`        | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
 
 ## Handlers
 
-| Scope        | Handler            | Register            | File                                     | Methods                                                                                                                                                                                                  |
-| ------------ | ------------------ | ------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `admin_user` | `adminUserHandler` | `RegisterAdminUser` | `internal/handler/admin_user.handler.go` | listUsers, requireAdmin                                                                                                                                                                                  |
-| `auth`       | `authHandler`      | `RegisterAuth`      | `internal/handler/auth.handler.go`       | configBody, configOutput, createChallenge, createSessionResponse, logout, me, passwordLogin, passwordRegister, session, state, verifyChallenge                                                           |
-| `portsvc`    | `portsvcHandler`   | `RegisterPortsvc`   | `internal/handler/portsvc.handler.go`    | actor, batchDeleteServices, createPortAllocation, createService, deletePortAllocation, deleteService, exportServices, getService, listPortAllocations, listServices, updatePortAllocation, updateService |
+| Scope     | Handler          | Register          | File                                  | Methods                                                                                                                                                                                                  |
+| --------- | ---------------- | ----------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `portsvc` | `portsvcHandler` | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` | actor, batchDeleteServices, createPortAllocation, createService, deletePortAllocation, deleteService, exportServices, getService, listPortAllocations, listServices, updatePortAllocation, updateService |
 
 ## Services
 
-| Service                | Scope            | File                                         | Constructor               | Dependencies | Methods                                                                                                                                                                                                                                                                                           |
-| ---------------------- | ---------------- | -------------------------------------------- | ------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `AdminUserService`     | `admin_user`     | `internal/service/admin_user.service.go`     | `NewAdminUserService`     | UserService  | List                                                                                                                                                                                                                                                                                              |
-| `AuthChallengeService` | `auth_challenge` | `internal/service/auth_challenge.service.go` | `NewAuthChallengeService` |              | Create, PublicConfig, Verify                                                                                                                                                                                                                                                                      |
-| `AuthPasswordService`  | `auth_password`  | `internal/service/auth_password.service.go`  | `NewAuthPasswordService`  |              | Authenticate, CheckStrength, Register, Set                                                                                                                                                                                                                                                        |
-| `AuthSessionService`   | `auth_session`   | `internal/service/auth_session.service.go`   | `NewAuthSessionService`   |              | Create, Delete, User                                                                                                                                                                                                                                                                              |
-| `PortsvcService`       | `portsvc`        | `internal/service/portsvc.service.go`        | `NewPortsvcService`       |              | CreatePortAllocation, CreateService, DeletePortAllocation, DeleteService, DeleteServices, ExportServicesCSV, GetPortAllocation, GetService, ListPortAllocations, ListServices, UpdatePortAllocation, UpdateService, buildServiceViews, ensureDependency, ensureRepository, replaceServiceChildren |
-| `UserService`          | `user`           | `internal/service/user.service.go`           | `NewUserService`          |              | ByID, ByUsername, Create, EnsureActive, List                                                                                                                                                                                                                                                      |
+| Service          | Scope     | File                                  | Constructor         | Dependencies | Methods                                                                                                                                                                                                                                                                                           |
+| ---------------- | --------- | ------------------------------------- | ------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PortsvcService` | `portsvc` | `internal/service/portsvc.service.go` | `NewPortsvcService` |              | CreatePortAllocation, CreateService, DeletePortAllocation, DeleteService, DeleteServices, ExportServicesCSV, GetPortAllocation, GetService, ListPortAllocations, ListServices, UpdatePortAllocation, UpdateService, buildServiceViews, ensureDependency, ensureRepository, replaceServiceChildren |
 
 ## Stores
 
-| Scope           | File                                         | Methods                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| --------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `auth_password` | `internal/repository/auth_password.store.go` | CreateAuthPassword, FetchAuthPasswordByUserID                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| `auth_session`  | `internal/repository/auth_session.store.go`  | CreateAuthSession, CreateAuthSessionFromInput, DeleteAuthSessionByHash, FetchAuthSessionByHash, UpdateAuthSessionTouch                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| `portsvc`       | `internal/repository/portsvc.store.go`       | AddPortsvcServiceDependencies, AddPortsvcServiceRepositories, CountPortsvcOverlappingPortAllocations, CountPortsvcPortAllocationsByIDs, CountPortsvcServicesByIDs, CreatePortsvcDependency, CreatePortsvcPortAllocation, CreatePortsvcRepository, CreatePortsvcService, DeletePortsvcPortAllocations, DeletePortsvcServices, FetchPortsvcDependencyByIdentity, FetchPortsvcPortAllocationByID, FetchPortsvcRepositoryByUserAndURL, FetchPortsvcServiceByID, ListPortsvcPortAllocationStartsByUser, ListPortsvcPortAllocations, ListPortsvcServiceChildrenByServiceIDs, ListPortsvcServices, ReplacePortsvcServiceChildren, UpdatePortsvcPortAllocation, UpdatePortsvcService |
-| `user`          | `internal/repository/user.store.go`          | CreateUser, FetchUserByID, FetchUserByUsername, ListUsers                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Scope     | File                                   | Methods                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| --------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `portsvc` | `internal/repository/portsvc.store.go` | AddPortsvcServiceDependencies, AddPortsvcServiceRepositories, CountPortsvcOverlappingPortAllocations, CountPortsvcPortAllocationsByIDs, CountPortsvcServicesByIDs, CreatePortsvcDependency, CreatePortsvcPortAllocation, CreatePortsvcRepository, CreatePortsvcService, DeletePortsvcPortAllocations, DeletePortsvcServices, FetchPortsvcDependencyByIdentity, FetchPortsvcPortAllocationByID, FetchPortsvcRepositoryByUserAndURL, FetchPortsvcServiceByID, ListPortsvcPortAllocationStartsByUser, ListPortsvcPortAllocations, ListPortsvcServiceChildrenByServiceIDs, ListPortsvcServices, ReplacePortsvcServiceChildren, UpdatePortsvcPortAllocation, UpdatePortsvcService |
 
 ## Tables
 
 | Table                  | Model                      | Scope                  | File                                                 | Alias             | Fields | Foreign Keys |
 | ---------------------- | -------------------------- | ---------------------- | ---------------------------------------------------- | ----------------- | ------ | ------------ |
-| `auth_passwords`       | `AuthPasswordModel`        | `auth_password`        | `internal/repository/auth_password.schema.go`        | `ap`              | 4      | 1            |
-| `auth_sessions`        | `AuthSessionModel`         | `auth_session`         | `internal/repository/auth_session.schema.go`         | `as`              | 9      | 1            |
 | `dependencies`         | `DependenciesModel`        | `dependencies`         | `internal/repository/dependencies.schema.go`         | `dependency`      | 9      | 1            |
-| `port_allocations`     | `PortAllocationsModel`     | `port_allocations`     | `internal/repository/port_allocations.schema.go`     | `allocation`      | 9      | 1            |
+| `port_allocations`     | `PortAllocationsModel`     | `port_allocations`     | `internal/repository/port_allocations.schema.go`     | `allocation`      | 8      | 1            |
 | `repositories`         | `RepositoriesModel`        | `repositories`         | `internal/repository/repositories.schema.go`         | `repository_ref`  | 8      | 1            |
 | `service_dependencies` | `ServiceDependenciesModel` | `service_dependencies` | `internal/repository/service_dependencies.schema.go` | `dependency_link` | 7      | 2            |
 | `service_repositories` | `ServiceRepositoriesModel` | `service_repositories` | `internal/repository/service_repositories.schema.go` | `source_link`     | 6      | 2            |
-| `services`             | `ServicesModel`            | `services`             | `internal/repository/services.schema.go`             | `service`         | 15     | 2            |
-| `users`                | `UserModel`                | `user`                 | `internal/repository/user.schema.go`                 | `iu`              | 7      | 0            |
-
-### `auth_passwords`
-
-- Model: `AuthPasswordModel`
-- Scope: `auth_password`
-- File: `internal/repository/auth_password.schema.go`
-- Alias: `ap`
-
-| Field          | Column          | Go Type     | Attributes |
-| -------------- | --------------- | ----------- | ---------- |
-| `UserID`       | `user_id`       | `int64`     | [pk]       |
-| `PasswordHash` | `password_hash` | `string`    | [notnull]  |
-| `CreatedAt`    | `created_at`    | `time.Time` | [notnull]  |
-| `UpdatedAt`    | `updated_at`    | `time.Time` | [notnull]  |
-
-Foreign keys:
-
-- `(user_id) REFERENCES users (id) ON DELETE CASCADE`
-
-### `auth_sessions`
-
-- Model: `AuthSessionModel`
-- Scope: `auth_session`
-- File: `internal/repository/auth_session.schema.go`
-- Alias: `as`
-
-| Field           | Column            | Go Type      | Attributes |
-| --------------- | ----------------- | ------------ | ---------- |
-| `IDHash`        | `id_hash`         | `string`     | [pk]       |
-| `UserID`        | `user_id`         | `int64`      | [notnull]  |
-| `LoginIP`       | `login_ip`        | `string`     |            |
-| `LastIP`        | `last_ip`         | `string`     |            |
-| `UserAgentHash` | `user_agent_hash` | `string`     |            |
-| `ExpiresAt`     | `expires_at`      | `time.Time`  | [notnull]  |
-| `RevokedAt`     | `revoked_at`      | `*time.Time` | [nullable] |
-| `CreatedAt`     | `created_at`      | `time.Time`  | [notnull]  |
-| `LastSeenAt`    | `last_seen_at`    | `time.Time`  | [notnull]  |
-
-Foreign keys:
-
-- `(user_id) REFERENCES users (id) ON DELETE CASCADE`
+| `services`             | `ServicesModel`            | `services`             | `internal/repository/services.schema.go`             | `service`         | 14     | 2            |
 
 ### `dependencies`
 
@@ -145,17 +81,16 @@ Foreign keys:
 - File: `internal/repository/port_allocations.schema.go`
 - Alias: `allocation`
 
-| Field       | Column       | Go Type      | Attributes          |
-| ----------- | ------------ | ------------ | ------------------- |
-| `ID`        | `id`         | `int64`      | [pk, autoincrement] |
-| `UserID`    | `user_id`    | `int64`      | [notnull]           |
-| `User`      | `user`       | `*UserModel` |                     |
-| `PortStart` | `port_start` | `int`        | [notnull]           |
-| `PortEnd`   | `port_end`   | `int`        | [notnull]           |
-| `Status`    | `status`     | `string`     | [notnull]           |
-| `Notes`     | `notes`      | `string`     |                     |
-| `CreatedAt` | `created_at` | `time.Time`  | [notnull]           |
-| `UpdatedAt` | `updated_at` | `time.Time`  | [notnull]           |
+| Field       | Column       | Go Type     | Attributes          |
+| ----------- | ------------ | ----------- | ------------------- |
+| `ID`        | `id`         | `int64`     | [pk, autoincrement] |
+| `UserID`    | `user_id`    | `int64`     | [notnull]           |
+| `PortStart` | `port_start` | `int`       | [notnull]           |
+| `PortEnd`   | `port_end`   | `int`       | [notnull]           |
+| `Status`    | `status`     | `string`    | [notnull]           |
+| `Notes`     | `notes`      | `string`    |                     |
+| `CreatedAt` | `created_at` | `time.Time` | [notnull]           |
+| `UpdatedAt` | `updated_at` | `time.Time` | [notnull]           |
 
 Foreign keys:
 
@@ -202,8 +137,8 @@ Foreign keys:
 
 Foreign keys:
 
-- `(service_id) REFERENCES services (id) ON DELETE CASCADE`
 - `(dependency_id) REFERENCES dependencies (id) ON DELETE CASCADE`
+- `(service_id) REFERENCES services (id) ON DELETE CASCADE`
 
 ### `service_repositories`
 
@@ -223,8 +158,8 @@ Foreign keys:
 
 Foreign keys:
 
-- `(service_id) REFERENCES services (id) ON DELETE CASCADE`
 - `(repository_id) REFERENCES repositories (id) ON DELETE CASCADE`
+- `(service_id) REFERENCES services (id) ON DELETE CASCADE`
 
 ### `services`
 
@@ -237,7 +172,6 @@ Foreign keys:
 | ------------------ | -------------------- | ----------------------- | ------------------- |
 | `ID`               | `id`                 | `int64`                 | [pk, autoincrement] |
 | `UserID`           | `user_id`            | `int64`                 | [notnull]           |
-| `User`             | `user`               | `*UserModel`            |                     |
 | `PortAllocationID` | `port_allocation_id` | `int64`                 | [nullable]          |
 | `PortAllocation`   | `port_allocation`    | `*PortAllocationsModel` |                     |
 | `Name`             | `name`               | `string`                | [notnull]           |
@@ -253,22 +187,10 @@ Foreign keys:
 
 Foreign keys:
 
-- `(user_id) REFERENCES users (id) ON DELETE CASCADE`
 - `(port_allocation_id) REFERENCES port_allocations (id) ON DELETE SET NULL`
+- `(user_id) REFERENCES users (id) ON DELETE CASCADE`
 
-### `users`
 
-- Model: `UserModel`
-- Scope: `user`
-- File: `internal/repository/user.schema.go`
-- Alias: `iu`
+## Projections
 
-| Field         | Column         | Go Type      | Attributes          |
-| ------------- | -------------- | ------------ | ------------------- |
-| `ID`          | `id`           | `int64`      | [pk, autoincrement] |
-| `Username`    | `username`     | `string`     | [notnull, unique]   |
-| `DisplayName` | `display_name` | `string`     | [notnull]           |
-| `Status`      | `status`       | `string`     | [notnull]           |
-| `DisabledAt`  | `disabled_at`  | `*time.Time` | [nullable]          |
-| `CreatedAt`   | `created_at`   | `time.Time`  | [notnull]           |
-| `UpdatedAt`   | `updated_at`   | `time.Time`  | [notnull]           |
+No projections found.

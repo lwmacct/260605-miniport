@@ -50,6 +50,16 @@ server:
         secret: "" # 认证挑战服务端密钥
         verify-url: "https://challenges.cloudflare.com/turnstile/v0/siteverify" # 认证挑战服务端验证地址
 
+    # 认证会话配置
+    session:
+      ttl: 168h0m0s # 登录会话有效期
+
+      # 登录会话 Cookie 策略
+      cookie:
+        name: "web_session" # 登录会话 Cookie 名称
+        path: "/api" # 登录会话 Cookie Path
+        secure: false # 是否给登录会话 Cookie 设置 Secure 属性
+
   # HTTP 服务配置
   http:
     listen: ":40238" # HTTP 服务监听地址
@@ -61,7 +71,6 @@ server:
       cert-file: "${APP_DATA:-.local/data}/ssl/fullchain.pem" # TLS 证书文件路径
       key-file: "${APP_DATA:-.local/data}/ssl/privkey.pem" # TLS 私钥文件路径
       reload-interval: 3s # TLS 证书文件事件监听之外的兜底轮询间隔，0 表示禁用兜底轮询
-    session-ttl: 168h0m0s # HTTP 登录会话有效期
 
     # 可信 HTTP 反向代理 CIDR/IP 列表
     trusted-proxies: []
