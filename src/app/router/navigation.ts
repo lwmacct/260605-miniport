@@ -1,27 +1,23 @@
 export const appPaths = {
   admin: "/admin/users",
-  dependencies: "/dependencies",
-  projects: "/projects",
+  console: "/console/overview",
+  consoleDependencies: "/console/dependencies",
+  consoleOverview: "/console/overview",
+  consoleProjects: "/console/projects",
+  consoleServices: "/console/services",
   login: "/login",
-  overview: "/overview",
   register: "/register",
-  services: "/services",
+  settings: "/settings/appearance",
 } as const;
 
-export type TopNavKey = "admin" | "dependencies" | "projects" | "overview" | "services";
+export type TopNavKey = "admin" | "console" | "settings";
 
 export function topNavFromPathname(pathname: string): TopNavKey {
   if (pathname.startsWith("/admin")) {
     return "admin";
   }
-  if (pathname.startsWith("/services")) {
-    return "services";
+  if (pathname.startsWith("/settings")) {
+    return "settings";
   }
-  if (pathname.startsWith("/projects")) {
-    return "projects";
-  }
-  if (pathname.startsWith("/dependencies")) {
-    return "dependencies";
-  }
-  return "overview";
+  return "console";
 }

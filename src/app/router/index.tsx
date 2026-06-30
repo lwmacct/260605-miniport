@@ -4,7 +4,8 @@ import { appPaths } from "./navigation";
 import { ProtectedBoundary } from "./guards";
 import { adminRoutes } from "@/modules/admin/routes";
 import { authRoutes } from "@/modules/auth/routes";
-import { portsvcRoutes } from "@/modules/portsvc/routes";
+import { consoleRoutes } from "@/modules/console/routes";
+import { settingsRoutes } from "@/modules/settings/routes";
 
 export const router = createHashRouter([
   {
@@ -18,8 +19,9 @@ export const router = createHashRouter([
           {
             element: <AppShell />,
             children: [
-              { index: true, element: <Navigate to={appPaths.overview} replace /> },
-              ...portsvcRoutes,
+              { index: true, element: <Navigate to={appPaths.console} replace /> },
+              consoleRoutes,
+              settingsRoutes,
               adminRoutes,
             ],
           },

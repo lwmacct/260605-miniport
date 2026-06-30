@@ -1,13 +1,10 @@
-name: warm-cache-bin
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+name: cache-warmup-bin
 
 on:
   workflow_dispatch:
 
 concurrency:
-  group: warm-cache-bin-main
+  group: cache-warmup-bin-main
   cancel-in-progress: true
 
 jobs:
@@ -17,21 +14,23 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7.0.0
+        with:
+          ref: main
 
       - name: Restore CI bin cache
         id: ci-bin-cache
-        uses: actions/cache/restore@v5
+        uses: actions/cache/restore@v6.1.0
         with:
           path: .cache/ci-bin
-          key: ${{ runner.os }}-${{ runner.arch }}-ci-bin-${{ hashFiles('.github/scripts/install-ci-bin.sh') }}
+          key: cache-warmup-${{ runner.os }}-${{ runner.arch }}-ci-bin-${{ hashFiles('.github/scripts/install-ci-bin.sh') }}
 
       - name: Install CI binaries
         run: bash .github/scripts/install-ci-bin.sh .cache/ci-bin
 
       - name: Save CI bin cache
         if: steps.ci-bin-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@v6.1.0
         with:
           path: .cache/ci-bin
-          key: ${{ runner.os }}-${{ runner.arch }}-ci-bin-${{ hashFiles('.github/scripts/install-ci-bin.sh') }}
+          key: ${{ steps.ci-bin-cache.outputs.cache-primary-key }}

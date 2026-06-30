@@ -13,23 +13,19 @@ import { useAuthStateQuery, useLogoutMutation } from "@/modules/auth";
 
 function navItems(admin: boolean): WorkbenchNavEntry[] {
   const items: WorkbenchNavEntry[] = [
-    { key: "overview", label: "端口总览" },
-    { key: "services", label: "端口分配" },
-    { key: "projects", label: "项目服务" },
-    { key: "dependencies", label: "依赖与仓库" },
+    { key: "console", label: "Console" },
+    { key: "settings", label: "Settings" },
   ];
   if (admin) {
-    items.push({ key: "admin", label: "管理员" });
+    items.push({ key: "admin", label: "Admin" });
   }
   return items;
 }
 
 const navTargets: Record<TopNavKey, string> = {
   admin: appPaths.admin,
-  dependencies: appPaths.dependencies,
-  projects: appPaths.projects,
-  overview: appPaths.overview,
-  services: appPaths.services,
+  console: appPaths.console,
+  settings: appPaths.settings,
 };
 
 export function AppShell() {
@@ -38,7 +34,7 @@ export function AppShell() {
   const authState = useAuthStateQuery();
   const logoutMutation = useLogoutMutation();
   const activeNavKey = topNavFromPathname(location.pathname);
-  const isFlushContent = activeNavKey === "admin";
+  const isFlushContent = activeNavKey === "admin" || activeNavKey === "console" || activeNavKey === "settings";
   const [optimisticActiveKey, setOptimisticActiveKey] = useState<TopNavKey>();
   const user = authState.data?.session.user;
   const visibleActiveKey = optimisticActiveKey ?? activeNavKey;
@@ -67,7 +63,7 @@ export function AppShell() {
           <WorkbenchUserMenu
             user={{ name: user?.username, username: user?.username }}
             onLogout={() => void logoutMutation.mutateAsync()}
-            onOpenAccount={() => navigate(appPaths.admin)}
+            onOpenAccount={() => navigate(appPaths.settings)}
           />
         </Space>
       }

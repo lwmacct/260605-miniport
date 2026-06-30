@@ -28,7 +28,7 @@ export function GuestOnlyBoundary() {
   }
 
   if (authState.data.session.authenticated) {
-    return <Navigate to={appPaths.overview} replace />;
+    return <Navigate to={appPaths.console} replace />;
   }
 
   return <Outlet />;

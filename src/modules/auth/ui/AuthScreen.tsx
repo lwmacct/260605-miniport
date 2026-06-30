@@ -51,7 +51,7 @@ export function AuthScreen({ mode }: AuthScreenProps) {
       password: values.password,
       username: values.username,
     });
-    navigate(appPaths.overview, { replace: true });
+    navigate(appPaths.console, { replace: true });
   }
 
   return (
