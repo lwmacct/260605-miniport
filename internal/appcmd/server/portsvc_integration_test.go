@@ -27,13 +27,13 @@ func TestPortsvcWriteAllowsAuthenticatedUser(t *testing.T) {
 	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
 
 	var body struct {
-		UserID   int64  `json:"userId"`
-		Username string `json:"username"`
-		Name     string `json:"name"`
+		OwnerSubject string `json:"ownerSubject"`
+		OwnerName    string `json:"ownerName"`
+		Name         string `json:"name"`
 	}
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
-	require.NotZero(t, body.UserID)
-	require.Equal(t, "member", body.Username)
+	require.NotEmpty(t, body.OwnerSubject)
+	require.Equal(t, "member", body.OwnerName)
 	require.Equal(t, "member-service", body.Name)
 }
 
@@ -60,12 +60,12 @@ func setupPortsvcTestApp(t *testing.T) (*App, http.Handler) {
 	return app, app.newHTTPServer().Handler
 }
 
-func createTestSessionCookie(t *testing.T, app *App, username string) *http.Cookie {
+func createTestSessionCookie(t *testing.T, app *App, ownerName string) *http.Cookie {
 	t.Helper()
 
 	user, err := app.deps.auth.CreateExternalUser(context.Background(), auth.ExternalUserInput{
-		Username:    username,
-		DisplayName: username,
+		Username:    ownerName,
+		DisplayName: ownerName,
 	})
 	require.NoError(t, err)
 	session, err := app.deps.auth.CreateSession(auth.ContextWithRequest(context.Background(), testSessionRequest()), user.ID, testSessionRequest())

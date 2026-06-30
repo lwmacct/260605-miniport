@@ -39,7 +39,7 @@ func (h portsvcHandler) listServices(ctx context.Context, input *ServiceListInpu
 	if err != nil {
 		return nil, err
 	}
-	services, err := h.services.Portsvc.ListServices(ctx, service.ServiceListParams{Actor: actor, UserID: input.UserID, Query: input.Query, Sort: input.Sort, Status: input.Status, ProjectName: input.ProjectName})
+	services, err := h.services.Portsvc.ListServices(ctx, service.ServiceListParams{Actor: actor, OwnerSubject: input.OwnerSubject, Query: input.Query, Sort: input.Sort, Status: input.Status, ProjectName: input.ProjectName})
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
@@ -109,7 +109,7 @@ func (h portsvcHandler) listPortAllocations(ctx context.Context, input *PortAllo
 	if err != nil {
 		return nil, err
 	}
-	groups, err := h.services.Portsvc.ListPortAllocations(ctx, service.PortAllocationListParams{Actor: actor, UserID: input.UserID, Sort: input.Sort, Status: input.Status})
+	groups, err := h.services.Portsvc.ListPortAllocations(ctx, service.PortAllocationListParams{Actor: actor, OwnerSubject: input.OwnerSubject, Sort: input.Sort, Status: input.Status})
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
@@ -156,7 +156,7 @@ func (h portsvcHandler) exportServices(ctx context.Context, input *ServiceListIn
 	if err != nil {
 		return nil, err
 	}
-	body, err := h.services.Portsvc.ExportServicesCSV(ctx, service.ServiceListParams{Actor: actor, UserID: input.UserID, Query: input.Query, Sort: input.Sort, Status: input.Status, ProjectName: input.ProjectName})
+	body, err := h.services.Portsvc.ExportServicesCSV(ctx, service.ServiceListParams{Actor: actor, OwnerSubject: input.OwnerSubject, Query: input.Query, Sort: input.Sort, Status: input.Status, ProjectName: input.ProjectName})
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
@@ -183,7 +183,7 @@ func (h portsvcHandler) actor(ctx context.Context, sessionID string) (service.Po
 		return service.PortsvcActor{}, huma.Error401Unauthorized("unauthorized")
 	}
 	actor := ToPortsvcActor(principal)
-	if actor.UserID <= 0 {
+	if actor.OwnerSubject == "" {
 		return service.PortsvcActor{}, huma.Error401Unauthorized("unauthorized")
 	}
 	return actor, nil

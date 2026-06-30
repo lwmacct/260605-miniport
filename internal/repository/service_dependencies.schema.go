@@ -10,9 +10,9 @@ import (
 type ServiceDependenciesModel struct {
 	bun.BaseModel `bun:"table:service_dependencies,alias:dependency_link"`
 
-	ID           int64     `bun:"id,pk,autoincrement" json:"id"`
-	ServiceID    int64     `bun:"service_id,notnull" json:"serviceId"`
-	DependencyID int64     `bun:"dependency_id,notnull" json:"dependencyId"`
+	ID           string    `bun:"id,pk,type:uuid" json:"id"`
+	ServiceID    string    `bun:"service_id,type:uuid,notnull" json:"serviceId"`
+	DependencyID string    `bun:"dependency_id,type:uuid,notnull" json:"dependencyId"`
 	Role         string    `bun:"role" json:"role"`
 	Notes        string    `bun:"notes" json:"notes"`
 	CreatedAt    time.Time `bun:"created_at,notnull" json:"createdAt"`

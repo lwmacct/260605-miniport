@@ -48,7 +48,7 @@ export function OverviewSection({
                 <span className="group-range">{portRange(service.portAllocation)}</span>
                 <span className="group-main">
                   <strong>{service.name}</strong>
-                  <small>{service.projectName || service.dindIp || service.username}</small>
+                  <small>{service.projectName || service.dindIp || service.ownerName}</small>
                 </span>
                 <span>{statusTag(service.status)}</span>
                 <span>

@@ -8,7 +8,7 @@ Miniport 是一个端口服务资产管理应用，用来管理 IP 主机、固�
 - `github.com/lwmacct/260630-go-hsr-auth/pkg/auth`: 身份认证、用户、会话、管理员用户 API
 - `internal/handler`: portsvc 业务 HTTP API 协议适配、DTO 和响应转换
 - `internal/service`: portsvc 业务规则和应用服务
-- `internal/repository`: portsvc 数据访问、record 和 schema；只通过只读 SQL 查询引用 auth-owned `users`
+- `internal/repository`: portsvc 数据访问、record 和 schema；只保存业务表和稳定身份主体
 - `internal/infra/*`: portsvc schema 辅助和前端静态资源托管
 - `src/app|src/pages|src/domains|src/shared`: 前端应用壳、页面、领域和共享层
 
@@ -71,4 +71,4 @@ API_PROXY_TARGET=http://127.0.0.1:40240 npm run dev
 - `PUT /api/port-allocations/{id}`
 - `DELETE /api/port-allocations/{id}`
 
-端口分配必须正好包含 10 个端口。同一身份主体下端口起点不能重复。身份认证和 `users` 表由 auth 模块拥有，Miniport 只保留 `user_id` 作为业务归属语义。
+端口分配必须正好包含 10 个端口。同一身份主体下端口起点不能重复。身份认证和 `users` 表由 auth 模块拥有，Miniport 只保存稳定 UUID7 `owner_subject` 作为业务归属语义，并通过 shared `identity.Directory` 解析主体展示信息。

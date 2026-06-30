@@ -27,7 +27,7 @@ export async function loadPortsvc(query: PortsvcQuery): Promise<PortsvcSnapshot>
     q: query.serviceQuery,
     sort: query.serviceSort,
     status: query.status,
-    userId: query.userId,
+    ownerSubject: query.ownerSubject,
   });
   const portsPath = "/api/port-allocations";
 
@@ -62,7 +62,7 @@ export function saveService(service: ServiceForm, editingService?: ServiceItem |
     repositories: service.repositories ?? [],
     status: service.status ?? "planned",
     tags: service.tags ?? "",
-    userId: service.userId ?? 0,
+    ownerSubject: service.ownerSubject ?? "",
   };
   return apiSend<ServiceItem>(
     editingService ? `/api/services/${editingService.id}` : "/api/services",
@@ -82,7 +82,7 @@ export function savePortAllocation(port: PortAllocationForm, editingPort?: PortA
     notes: port.notes ?? "",
     portStart: port.portStart ?? 0,
     status: port.status ?? "available",
-    userId: port.userId ?? 0,
+    ownerSubject: port.ownerSubject ?? "",
   };
   return apiSend<PortAllocation>(
     editingPort ? `/api/port-allocations/${editingPort.id}` : "/api/port-allocations",
@@ -103,6 +103,6 @@ export function exportServicesURL(query: PortsvcQuery) {
     q: query.serviceQuery,
     sort: query.serviceSort,
     status: query.status,
-    userId: query.userId,
+    ownerSubject: query.ownerSubject,
   });
 }

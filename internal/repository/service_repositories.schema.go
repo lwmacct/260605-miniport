@@ -10,9 +10,9 @@ import (
 type ServiceRepositoriesModel struct {
 	bun.BaseModel `bun:"table:service_repositories,alias:source_link"`
 
-	ID           int64     `bun:"id,pk,autoincrement" json:"id"`
-	ServiceID    int64     `bun:"service_id,notnull" json:"serviceId"`
-	RepositoryID int64     `bun:"repository_id,notnull" json:"repositoryId"`
+	ID           string    `bun:"id,pk,type:uuid" json:"id"`
+	ServiceID    string    `bun:"service_id,type:uuid,notnull" json:"serviceId"`
+	RepositoryID string    `bun:"repository_id,type:uuid,notnull" json:"repositoryId"`
 	Role         string    `bun:"role" json:"role"`
 	CreatedAt    time.Time `bun:"created_at,notnull" json:"createdAt"`
 	UpdatedAt    time.Time `bun:"updated_at,notnull" json:"updatedAt"`

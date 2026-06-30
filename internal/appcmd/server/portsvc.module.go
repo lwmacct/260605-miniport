@@ -30,9 +30,10 @@ func NewPortsvcSpec() appmodule.Spec {
 		Schema:   applyPortsvcSchema,
 		Build: func(ctx *appmodule.Context) (appmodule.Module, error) {
 			store := repository.NewStore(ctx.DB())
+			authModule := appmodule.MustContextGet[*AuthModule](ctx, "auth")
 			return &PortsvcModule{
-				identity: appmodule.MustContextGet[*AuthModule](ctx, "auth"),
-				value:    service.NewPortsvcService(store),
+				identity: authModule,
+				value:    service.NewPortsvcService(store, authModule),
 			}, nil
 		},
 	}

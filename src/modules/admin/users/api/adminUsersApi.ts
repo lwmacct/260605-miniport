@@ -1,7 +1,7 @@
 import { apiGet } from "@/shared/api/client";
 
 export interface AdminUser {
-  id: number;
+  id: string;
   username: string;
   displayName: string;
   role: string;

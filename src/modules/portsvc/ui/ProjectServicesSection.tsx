@@ -18,7 +18,7 @@ export function ProjectServicesSection({ onSelectService, services }: ProjectSer
     { title: "端口组", width: 140, render: (_, item) => portRange(item.portAllocation) },
     { title: "DIND IP", dataIndex: "dindIp", width: 150 },
     { title: "容器", dataIndex: "dindContainer" },
-    { title: "用户", dataIndex: "username", width: 120 },
+    { title: "用户", dataIndex: "ownerName", width: 120 },
   ];
 
   return (

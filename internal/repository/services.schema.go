@@ -10,9 +10,9 @@ import (
 type ServicesModel struct {
 	bun.BaseModel `bun:"table:services,alias:service"`
 
-	ID               int64                 `bun:"id,pk,autoincrement" json:"id"`
-	UserID           int64                 `bun:"user_id,notnull" json:"userId"`
-	PortAllocationID int64                 `bun:"port_allocation_id,nullzero" json:"portAllocationId"`
+	ID               string                `bun:"id,pk,type:uuid" json:"id"`
+	OwnerSubject     string                `bun:"owner_subject,type:uuid,notnull" json:"ownerSubject"`
+	PortAllocationID string                `bun:"port_allocation_id,type:uuid,nullzero" json:"portAllocationId"`
 	PortAllocation   *PortAllocationsModel `bun:"rel:belongs-to,join:port_allocation_id=id" json:"portAllocation,omitempty"`
 	Name             string                `bun:"name,notnull" json:"name"`
 	ProjectName      string                `bun:"project_name" json:"projectName"`
@@ -31,14 +31,13 @@ func ServicesSchema() []any {
 }
 
 func (*ServicesModel) BeforeCreateTable(_ context.Context, query *bun.CreateTableQuery) error {
-	query.ForeignKey("(user_id) REFERENCES users (id) ON DELETE CASCADE")
 	query.ForeignKey("(port_allocation_id) REFERENCES port_allocations (id) ON DELETE SET NULL")
 	return nil
 }
 
 func ServicesIndexesSchema() []string {
 	return []string{
-		`CREATE INDEX IF NOT EXISTS idx_services_user ON services(user_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_services_owner ON services(owner_subject)`,
 		`CREATE UNIQUE INDEX IF NOT EXISTS idx_services_port_allocation ON services(port_allocation_id) WHERE port_allocation_id IS NOT NULL`,
 		`CREATE INDEX IF NOT EXISTS idx_services_project_name ON services(project_name)`,
 		`CREATE INDEX IF NOT EXISTS idx_services_status ON services(status)`,

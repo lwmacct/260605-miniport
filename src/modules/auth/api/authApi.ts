@@ -4,7 +4,7 @@ export interface AuthSession {
   authenticated: boolean;
   expiresAt?: string;
   user?: {
-    id: number;
+    id: string;
     username: string;
     displayName: string;
     status: string;

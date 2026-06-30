@@ -7,9 +7,9 @@ export type Meta = {
 };
 
 export type PortAllocation = {
-  id: number;
-  userId: number;
-  username: string;
+  id: string;
+  ownerSubject: string;
+  ownerName: string;
   portStart: number;
   portEnd: number;
   status: string;
@@ -17,8 +17,8 @@ export type PortAllocation = {
 };
 
 export type RepositoryItem = {
-  id?: number;
-  userId?: number;
+  id?: string;
+  ownerSubject?: string;
   name: string;
   url: string;
   kind: string;
@@ -27,8 +27,8 @@ export type RepositoryItem = {
 };
 
 export type DependencyItem = {
-  id?: number;
-  userId?: number;
+  id?: string;
+  ownerSubject?: string;
   name: string;
   type: string;
   url: string;
@@ -38,10 +38,10 @@ export type DependencyItem = {
 };
 
 export type ServiceItem = {
-  id: number;
-  userId: number;
-  username: string;
-  portAllocationId: number;
+  id: string;
+  ownerSubject: string;
+  ownerName: string;
+  portAllocationId: string;
   portAllocation?: PortAllocation;
   name: string;
   projectName: string;
@@ -55,7 +55,7 @@ export type ServiceItem = {
   dependencies: DependencyItem[];
 };
 
-export type ServiceForm = Partial<Omit<ServiceItem, "id" | "username" | "portAllocation">> & {
+export type ServiceForm = Partial<Omit<ServiceItem, "id" | "ownerName" | "portAllocation">> & {
   name?: string;
 };
 
@@ -74,7 +74,7 @@ export type PortsvcQuery = {
   serviceQuery?: string;
   serviceSort?: string;
   status?: string;
-  userId?: number;
+  ownerSubject?: string;
 };
 
 export type AppStats = {

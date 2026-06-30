@@ -30,26 +30,26 @@
 
 ## Services
 
-| Service          | Scope     | File                                  | Constructor         | Dependencies | Methods                                                                                                                                                                                                                                                                                           |
-| ---------------- | --------- | ------------------------------------- | ------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PortsvcService` | `portsvc` | `internal/service/portsvc.service.go` | `NewPortsvcService` |              | CreatePortAllocation, CreateService, DeletePortAllocation, DeleteService, DeleteServices, ExportServicesCSV, GetPortAllocation, GetService, ListPortAllocations, ListServices, UpdatePortAllocation, UpdateService, buildServiceViews, ensureDependency, ensureRepository, replaceServiceChildren |
+| Service          | Scope     | File                                  | Constructor         | Dependencies | Methods                                                                                                                                                                                                                                                                                                                                                                |
+| ---------------- | --------- | ------------------------------------- | ------------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PortsvcService` | `portsvc` | `internal/service/portsvc.service.go` | `NewPortsvcService` |              | CreatePortAllocation, CreateService, DeletePortAllocation, DeleteService, DeleteServices, ExportServicesCSV, GetPortAllocation, GetService, ListPortAllocations, ListServices, UpdatePortAllocation, UpdateService, attachPortAllocationOwnerNames, attachServiceOwnerNames, buildServiceViews, ensureDependency, ensureRepository, ownerNames, replaceServiceChildren |
 
 ## Stores
 
-| Scope     | File                                   | Methods                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| --------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `portsvc` | `internal/repository/portsvc.store.go` | AddPortsvcServiceDependencies, AddPortsvcServiceRepositories, CountPortsvcOverlappingPortAllocations, CountPortsvcPortAllocationsByIDs, CountPortsvcServicesByIDs, CreatePortsvcDependency, CreatePortsvcPortAllocation, CreatePortsvcRepository, CreatePortsvcService, DeletePortsvcPortAllocations, DeletePortsvcServices, FetchPortsvcDependencyByIdentity, FetchPortsvcPortAllocationByID, FetchPortsvcRepositoryByUserAndURL, FetchPortsvcServiceByID, ListPortsvcPortAllocationStartsByUser, ListPortsvcPortAllocations, ListPortsvcServiceChildrenByServiceIDs, ListPortsvcServices, ReplacePortsvcServiceChildren, UpdatePortsvcPortAllocation, UpdatePortsvcService |
+| Scope     | File                                   | Methods                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| --------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `portsvc` | `internal/repository/portsvc.store.go` | AddPortsvcServiceDependencies, AddPortsvcServiceRepositories, CountPortsvcOverlappingPortAllocations, CountPortsvcPortAllocationsByIDs, CountPortsvcServicesByIDs, CreatePortsvcDependency, CreatePortsvcPortAllocation, CreatePortsvcRepository, CreatePortsvcService, DeletePortsvcPortAllocations, DeletePortsvcServices, FetchPortsvcDependencyByIdentity, FetchPortsvcPortAllocationByID, FetchPortsvcRepositoryByOwnerAndURL, FetchPortsvcServiceByID, ListPortsvcPortAllocationStartsByOwner, ListPortsvcPortAllocations, ListPortsvcServiceChildrenByServiceIDs, ListPortsvcServices, ReplacePortsvcServiceChildren, UpdatePortsvcPortAllocation, UpdatePortsvcService |
 
 ## Tables
 
 | Table                  | Model                      | Scope                  | File                                                 | Alias             | Fields | Foreign Keys |
 | ---------------------- | -------------------------- | ---------------------- | ---------------------------------------------------- | ----------------- | ------ | ------------ |
-| `dependencies`         | `DependenciesModel`        | `dependencies`         | `internal/repository/dependencies.schema.go`         | `dependency`      | 9      | 1            |
-| `port_allocations`     | `PortAllocationsModel`     | `port_allocations`     | `internal/repository/port_allocations.schema.go`     | `allocation`      | 8      | 1            |
-| `repositories`         | `RepositoriesModel`        | `repositories`         | `internal/repository/repositories.schema.go`         | `repository_ref`  | 8      | 1            |
+| `dependencies`         | `DependenciesModel`        | `dependencies`         | `internal/repository/dependencies.schema.go`         | `dependency`      | 9      | 0            |
+| `port_allocations`     | `PortAllocationsModel`     | `port_allocations`     | `internal/repository/port_allocations.schema.go`     | `allocation`      | 8      | 0            |
+| `repositories`         | `RepositoriesModel`        | `repositories`         | `internal/repository/repositories.schema.go`         | `repository_ref`  | 8      | 0            |
 | `service_dependencies` | `ServiceDependenciesModel` | `service_dependencies` | `internal/repository/service_dependencies.schema.go` | `dependency_link` | 7      | 2            |
 | `service_repositories` | `ServiceRepositoriesModel` | `service_repositories` | `internal/repository/service_repositories.schema.go` | `source_link`     | 6      | 2            |
-| `services`             | `ServicesModel`            | `services`             | `internal/repository/services.schema.go`             | `service`         | 14     | 2            |
+| `services`             | `ServicesModel`            | `services`             | `internal/repository/services.schema.go`             | `service`         | 14     | 1            |
 
 ### `dependencies`
 
@@ -58,21 +58,17 @@
 - File: `internal/repository/dependencies.schema.go`
 - Alias: `dependency`
 
-| Field       | Column       | Go Type     | Attributes          |
-| ----------- | ------------ | ----------- | ------------------- |
-| `ID`        | `id`         | `int64`     | [pk, autoincrement] |
-| `UserID`    | `user_id`    | `int64`     | [notnull]           |
-| `Name`      | `name`       | `string`    | [notnull]           |
-| `Type`      | `type`       | `string`    | [notnull]           |
-| `URL`       | `url`        | `string`    |                     |
-| `Version`   | `version`    | `string`    |                     |
-| `Notes`     | `notes`      | `string`    |                     |
-| `CreatedAt` | `created_at` | `time.Time` | [notnull]           |
-| `UpdatedAt` | `updated_at` | `time.Time` | [notnull]           |
-
-Foreign keys:
-
-- `(user_id) REFERENCES users (id) ON DELETE CASCADE`
+| Field          | Column          | Go Type     | Attributes |
+| -------------- | --------------- | ----------- | ---------- |
+| `ID`           | `id`            | `string`    | [pk]       |
+| `OwnerSubject` | `owner_subject` | `string`    | [notnull]  |
+| `Name`         | `name`          | `string`    | [notnull]  |
+| `Type`         | `type`          | `string`    | [notnull]  |
+| `URL`          | `url`           | `string`    |            |
+| `Version`      | `version`       | `string`    |            |
+| `Notes`        | `notes`         | `string`    |            |
+| `CreatedAt`    | `created_at`    | `time.Time` | [notnull]  |
+| `UpdatedAt`    | `updated_at`    | `time.Time` | [notnull]  |
 
 ### `port_allocations`
 
@@ -81,20 +77,16 @@ Foreign keys:
 - File: `internal/repository/port_allocations.schema.go`
 - Alias: `allocation`
 
-| Field       | Column       | Go Type     | Attributes          |
-| ----------- | ------------ | ----------- | ------------------- |
-| `ID`        | `id`         | `int64`     | [pk, autoincrement] |
-| `UserID`    | `user_id`    | `int64`     | [notnull]           |
-| `PortStart` | `port_start` | `int`       | [notnull]           |
-| `PortEnd`   | `port_end`   | `int`       | [notnull]           |
-| `Status`    | `status`     | `string`    | [notnull]           |
-| `Notes`     | `notes`      | `string`    |                     |
-| `CreatedAt` | `created_at` | `time.Time` | [notnull]           |
-| `UpdatedAt` | `updated_at` | `time.Time` | [notnull]           |
-
-Foreign keys:
-
-- `(user_id) REFERENCES users (id) ON DELETE CASCADE`
+| Field          | Column          | Go Type     | Attributes |
+| -------------- | --------------- | ----------- | ---------- |
+| `ID`           | `id`            | `string`    | [pk]       |
+| `OwnerSubject` | `owner_subject` | `string`    | [notnull]  |
+| `PortStart`    | `port_start`    | `int`       | [notnull]  |
+| `PortEnd`      | `port_end`      | `int`       | [notnull]  |
+| `Status`       | `status`        | `string`    | [notnull]  |
+| `Notes`        | `notes`         | `string`    |            |
+| `CreatedAt`    | `created_at`    | `time.Time` | [notnull]  |
+| `UpdatedAt`    | `updated_at`    | `time.Time` | [notnull]  |
 
 ### `repositories`
 
@@ -103,20 +95,16 @@ Foreign keys:
 - File: `internal/repository/repositories.schema.go`
 - Alias: `repository_ref`
 
-| Field       | Column       | Go Type     | Attributes          |
-| ----------- | ------------ | ----------- | ------------------- |
-| `ID`        | `id`         | `int64`     | [pk, autoincrement] |
-| `UserID`    | `user_id`    | `int64`     | [notnull]           |
-| `Name`      | `name`       | `string`    | [notnull]           |
-| `URL`       | `url`        | `string`    | [notnull]           |
-| `Kind`      | `kind`       | `string`    | [notnull]           |
-| `Notes`     | `notes`      | `string`    |                     |
-| `CreatedAt` | `created_at` | `time.Time` | [notnull]           |
-| `UpdatedAt` | `updated_at` | `time.Time` | [notnull]           |
-
-Foreign keys:
-
-- `(user_id) REFERENCES users (id) ON DELETE CASCADE`
+| Field          | Column          | Go Type     | Attributes |
+| -------------- | --------------- | ----------- | ---------- |
+| `ID`           | `id`            | `string`    | [pk]       |
+| `OwnerSubject` | `owner_subject` | `string`    | [notnull]  |
+| `Name`         | `name`          | `string`    | [notnull]  |
+| `URL`          | `url`           | `string`    | [notnull]  |
+| `Kind`         | `kind`          | `string`    | [notnull]  |
+| `Notes`        | `notes`         | `string`    |            |
+| `CreatedAt`    | `created_at`    | `time.Time` | [notnull]  |
+| `UpdatedAt`    | `updated_at`    | `time.Time` | [notnull]  |
 
 ### `service_dependencies`
 
@@ -125,15 +113,15 @@ Foreign keys:
 - File: `internal/repository/service_dependencies.schema.go`
 - Alias: `dependency_link`
 
-| Field          | Column          | Go Type     | Attributes          |
-| -------------- | --------------- | ----------- | ------------------- |
-| `ID`           | `id`            | `int64`     | [pk, autoincrement] |
-| `ServiceID`    | `service_id`    | `int64`     | [notnull]           |
-| `DependencyID` | `dependency_id` | `int64`     | [notnull]           |
-| `Role`         | `role`          | `string`    |                     |
-| `Notes`        | `notes`         | `string`    |                     |
-| `CreatedAt`    | `created_at`    | `time.Time` | [notnull]           |
-| `UpdatedAt`    | `updated_at`    | `time.Time` | [notnull]           |
+| Field          | Column          | Go Type     | Attributes |
+| -------------- | --------------- | ----------- | ---------- |
+| `ID`           | `id`            | `string`    | [pk]       |
+| `ServiceID`    | `service_id`    | `string`    | [notnull]  |
+| `DependencyID` | `dependency_id` | `string`    | [notnull]  |
+| `Role`         | `role`          | `string`    |            |
+| `Notes`        | `notes`         | `string`    |            |
+| `CreatedAt`    | `created_at`    | `time.Time` | [notnull]  |
+| `UpdatedAt`    | `updated_at`    | `time.Time` | [notnull]  |
 
 Foreign keys:
 
@@ -147,14 +135,14 @@ Foreign keys:
 - File: `internal/repository/service_repositories.schema.go`
 - Alias: `source_link`
 
-| Field          | Column          | Go Type     | Attributes          |
-| -------------- | --------------- | ----------- | ------------------- |
-| `ID`           | `id`            | `int64`     | [pk, autoincrement] |
-| `ServiceID`    | `service_id`    | `int64`     | [notnull]           |
-| `RepositoryID` | `repository_id` | `int64`     | [notnull]           |
-| `Role`         | `role`          | `string`    |                     |
-| `CreatedAt`    | `created_at`    | `time.Time` | [notnull]           |
-| `UpdatedAt`    | `updated_at`    | `time.Time` | [notnull]           |
+| Field          | Column          | Go Type     | Attributes |
+| -------------- | --------------- | ----------- | ---------- |
+| `ID`           | `id`            | `string`    | [pk]       |
+| `ServiceID`    | `service_id`    | `string`    | [notnull]  |
+| `RepositoryID` | `repository_id` | `string`    | [notnull]  |
+| `Role`         | `role`          | `string`    |            |
+| `CreatedAt`    | `created_at`    | `time.Time` | [notnull]  |
+| `UpdatedAt`    | `updated_at`    | `time.Time` | [notnull]  |
 
 Foreign keys:
 
@@ -168,27 +156,26 @@ Foreign keys:
 - File: `internal/repository/services.schema.go`
 - Alias: `service`
 
-| Field              | Column               | Go Type                 | Attributes          |
-| ------------------ | -------------------- | ----------------------- | ------------------- |
-| `ID`               | `id`                 | `int64`                 | [pk, autoincrement] |
-| `UserID`           | `user_id`            | `int64`                 | [notnull]           |
-| `PortAllocationID` | `port_allocation_id` | `int64`                 | [nullable]          |
-| `PortAllocation`   | `port_allocation`    | `*PortAllocationsModel` |                     |
-| `Name`             | `name`               | `string`                | [notnull]           |
-| `ProjectName`      | `project_name`       | `string`                |                     |
-| `DindIP`           | `dind_ip`            | `string`                |                     |
-| `DindContainer`    | `dind_container`     | `string`                |                     |
-| `Status`           | `status`             | `string`                | [notnull]           |
-| `Owner`            | `owner`              | `string`                |                     |
-| `Tags`             | `tags`               | `string`                |                     |
-| `Notes`            | `notes`              | `string`                |                     |
-| `CreatedAt`        | `created_at`         | `time.Time`             | [notnull]           |
-| `UpdatedAt`        | `updated_at`         | `time.Time`             | [notnull]           |
+| Field              | Column               | Go Type                 | Attributes |
+| ------------------ | -------------------- | ----------------------- | ---------- |
+| `ID`               | `id`                 | `string`                | [pk]       |
+| `OwnerSubject`     | `owner_subject`      | `string`                | [notnull]  |
+| `PortAllocationID` | `port_allocation_id` | `string`                | [nullable] |
+| `PortAllocation`   | `port_allocation`    | `*PortAllocationsModel` |            |
+| `Name`             | `name`               | `string`                | [notnull]  |
+| `ProjectName`      | `project_name`       | `string`                |            |
+| `DindIP`           | `dind_ip`            | `string`                |            |
+| `DindContainer`    | `dind_container`     | `string`                |            |
+| `Status`           | `status`             | `string`                | [notnull]  |
+| `Owner`            | `owner`              | `string`                |            |
+| `Tags`             | `tags`               | `string`                |            |
+| `Notes`            | `notes`              | `string`                |            |
+| `CreatedAt`        | `created_at`         | `time.Time`             | [notnull]  |
+| `UpdatedAt`        | `updated_at`         | `time.Time`             | [notnull]  |
 
 Foreign keys:
 
 - `(port_allocation_id) REFERENCES port_allocations (id) ON DELETE SET NULL`
-- `(user_id) REFERENCES users (id) ON DELETE CASCADE`
 
 
 ## Projections

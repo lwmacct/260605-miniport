@@ -1,32 +1,31 @@
 package repository
 
 import (
-	"context"
 	"strings"
 	"time"
 )
 
 type PortsvcServiceListFilter struct {
-	UserID      int64
-	Admin       bool
-	Query       string
-	Sort        string
-	Status      string
-	ProjectName string
+	OwnerSubject string
+	Admin        bool
+	Query        string
+	Sort         string
+	Status       string
+	ProjectName  string
 }
 
 type PortsvcPortAllocationListFilter struct {
-	UserID int64
-	Admin  bool
-	Sort   string
-	Status string
+	OwnerSubject string
+	Admin        bool
+	Sort         string
+	Status       string
 }
 
 type PortsvcServiceRecord struct {
-	ID               int64
-	UserID           int64
-	Username         string
-	PortAllocationID int64
+	ID               string
+	OwnerSubject     string
+	OwnerName        string
+	PortAllocationID string
 	PortAllocation   *PortsvcPortAllocationRecord
 	Name             string
 	ProjectName      string
@@ -41,53 +40,53 @@ type PortsvcServiceRecord struct {
 }
 
 type PortsvcPortAllocationRecord struct {
-	ID        int64
-	UserID    int64
-	Username  string
-	PortStart int
-	PortEnd   int
-	Status    string
-	Notes     string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID           string
+	OwnerSubject string
+	OwnerName    string
+	PortStart    int
+	PortEnd      int
+	Status       string
+	Notes        string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 type PortsvcDependencyRecord struct {
-	ID        int64
-	UserID    int64
-	Name      string
-	Type      string
-	URL       string
-	Version   string
-	Notes     string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID           string
+	OwnerSubject string
+	Name         string
+	Type         string
+	URL          string
+	Version      string
+	Notes        string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 type PortsvcRepositoryRecord struct {
-	ID        int64
-	UserID    int64
-	Name      string
-	URL       string
-	Kind      string
-	Notes     string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID           string
+	OwnerSubject string
+	Name         string
+	URL          string
+	Kind         string
+	Notes        string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 type PortsvcServiceRepositoryRecord struct {
-	ID           int64
-	ServiceID    int64
-	RepositoryID int64
+	ID           string
+	ServiceID    string
+	RepositoryID string
 	Role         string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }
 
 type PortsvcServiceDependencyRecord struct {
-	ID           int64
-	ServiceID    int64
-	DependencyID int64
+	ID           string
+	ServiceID    string
+	DependencyID string
 	Role         string
 	Notes        string
 	CreatedAt    time.Time
@@ -95,7 +94,7 @@ type PortsvcServiceDependencyRecord struct {
 }
 
 type PortsvcServiceChildrenRecord struct {
-	ServiceID    int64
+	ServiceID    string
 	Repositories []PortsvcRepositoryRecord
 	Dependencies []PortsvcDependencyRecord
 }
@@ -106,7 +105,7 @@ func utilPortsvcServiceRecordFromModel(model *ServicesModel) *PortsvcServiceReco
 	}
 	out := &PortsvcServiceRecord{
 		ID:               model.ID,
-		UserID:           model.UserID,
+		OwnerSubject:     model.OwnerSubject,
 		PortAllocationID: model.PortAllocationID,
 		Name:             model.Name,
 		ProjectName:      model.ProjectName,
@@ -128,65 +127,16 @@ func utilPortsvcPortAllocationRecordFromModel(model *PortAllocationsModel) *Port
 		return nil
 	}
 	out := &PortsvcPortAllocationRecord{
-		ID:        model.ID,
-		UserID:    model.UserID,
-		PortStart: model.PortStart,
-		PortEnd:   model.PortEnd,
-		Status:    model.Status,
-		Notes:     model.Notes,
-		CreatedAt: model.CreatedAt,
-		UpdatedAt: model.UpdatedAt,
+		ID:           model.ID,
+		OwnerSubject: model.OwnerSubject,
+		PortStart:    model.PortStart,
+		PortEnd:      model.PortEnd,
+		Status:       model.Status,
+		Notes:        model.Notes,
+		CreatedAt:    model.CreatedAt,
+		UpdatedAt:    model.UpdatedAt,
 	}
 	return out
-}
-
-func (s *Store) attachServiceUsernames(ctx context.Context, records []PortsvcServiceRecord) error {
-	userIDs := make([]int64, 0, len(records))
-	for _, record := range records {
-		userIDs = append(userIDs, record.UserID)
-	}
-	usernames, err := s.identityUsernames(ctx, userIDs)
-	if err != nil {
-		return err
-	}
-	for idx := range records {
-		records[idx].Username = usernames[records[idx].UserID]
-	}
-	return nil
-}
-
-func (s *Store) attachServicePortAllocationUsernames(ctx context.Context, records []PortsvcServiceRecord) error {
-	userIDs := make([]int64, 0, len(records))
-	for _, record := range records {
-		if record.PortAllocation != nil {
-			userIDs = append(userIDs, record.PortAllocation.UserID)
-		}
-	}
-	usernames, err := s.identityUsernames(ctx, userIDs)
-	if err != nil {
-		return err
-	}
-	for idx := range records {
-		if records[idx].PortAllocation != nil {
-			records[idx].PortAllocation.Username = usernames[records[idx].PortAllocation.UserID]
-		}
-	}
-	return nil
-}
-
-func (s *Store) attachPortAllocationUsernames(ctx context.Context, records []PortsvcPortAllocationRecord) error {
-	userIDs := make([]int64, 0, len(records))
-	for _, record := range records {
-		userIDs = append(userIDs, record.UserID)
-	}
-	usernames, err := s.identityUsernames(ctx, userIDs)
-	if err != nil {
-		return err
-	}
-	for idx := range records {
-		records[idx].Username = usernames[records[idx].UserID]
-	}
-	return nil
 }
 
 func utilPortsvcDependencyRecordFromModel(model *DependenciesModel) *PortsvcDependencyRecord {
@@ -194,15 +144,15 @@ func utilPortsvcDependencyRecordFromModel(model *DependenciesModel) *PortsvcDepe
 		return nil
 	}
 	return &PortsvcDependencyRecord{
-		ID:        model.ID,
-		UserID:    model.UserID,
-		Name:      model.Name,
-		Type:      model.Type,
-		URL:       model.URL,
-		Version:   model.Version,
-		Notes:     model.Notes,
-		CreatedAt: model.CreatedAt,
-		UpdatedAt: model.UpdatedAt,
+		ID:           model.ID,
+		OwnerSubject: model.OwnerSubject,
+		Name:         model.Name,
+		Type:         model.Type,
+		URL:          model.URL,
+		Version:      model.Version,
+		Notes:        model.Notes,
+		CreatedAt:    model.CreatedAt,
+		UpdatedAt:    model.UpdatedAt,
 	}
 }
 
@@ -211,14 +161,14 @@ func utilPortsvcRepositoryRecordFromModel(model *RepositoriesModel) *PortsvcRepo
 		return nil
 	}
 	return &PortsvcRepositoryRecord{
-		ID:        model.ID,
-		UserID:    model.UserID,
-		Name:      model.Name,
-		URL:       model.URL,
-		Kind:      model.Kind,
-		Notes:     model.Notes,
-		CreatedAt: model.CreatedAt,
-		UpdatedAt: model.UpdatedAt,
+		ID:           model.ID,
+		OwnerSubject: model.OwnerSubject,
+		Name:         model.Name,
+		URL:          model.URL,
+		Kind:         model.Kind,
+		Notes:        model.Notes,
+		CreatedAt:    model.CreatedAt,
+		UpdatedAt:    model.UpdatedAt,
 	}
 }
 

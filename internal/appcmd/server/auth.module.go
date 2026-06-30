@@ -21,6 +21,7 @@ type AuthModule struct {
 
 var _ appmodule.Module = (*AuthModule)(nil)
 var _ identity.SessionResolver = (*AuthModule)(nil)
+var _ identity.Directory = (*AuthModule)(nil)
 
 func NewAuthSpec(cfg *config.Config) appmodule.Spec {
 	module := &AuthModule{cfg: cfg}
@@ -63,8 +64,16 @@ func (m *AuthModule) CreateExternalUser(ctx context.Context, input auth.External
 	return m.value.CreateExternalUser(ctx, input)
 }
 
-func (m *AuthModule) CreateSession(ctx context.Context, userID int64, request auth.SessionRequest) (*auth.Session, error) {
+func (m *AuthModule) CreateSession(ctx context.Context, userID string, request auth.SessionRequest) (*auth.Session, error) {
 	return m.value.CreateSession(ctx, userID, request)
+}
+
+func (m *AuthModule) Principal(ctx context.Context, subject string) (*identity.Principal, error) {
+	return m.value.Principal(ctx, subject)
+}
+
+func (m *AuthModule) Principals(ctx context.Context, subjects []string) (map[string]*identity.Principal, error) {
+	return m.value.Principals(ctx, subjects)
 }
 
 func (m *AuthModule) config() auth.Config {

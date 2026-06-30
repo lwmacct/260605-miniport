@@ -55,7 +55,7 @@ export function ServiceDetailDrawer({
               size="small"
               column={{ xs: 1, sm: 2 }}
               items={[
-                { key: "user", label: "用户", children: service.username || service.userId },
+                { key: "user", label: "用户", children: service.ownerName || service.ownerSubject },
                 { key: "project", label: "项目", children: service.projectName || "-" },
                 { key: "ports", label: "端口组", children: portRange(service.portAllocation) },
                 { key: "dindIp", label: "DIND IP", children: service.dindIp || "-" },

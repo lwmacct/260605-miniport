@@ -7,27 +7,32 @@ import (
 	"time"
 
 	"github.com/lwmacct/260605-miniport/internal/repository"
+	"github.com/lwmacct/260630-go-hsr-shared/pkg/identity"
 )
 
 type PortsvcService struct {
-	store *repository.Store
+	store     *repository.Store
+	directory identity.Directory
 }
 
-func NewPortsvcService(store *repository.Store) *PortsvcService {
+func NewPortsvcService(store *repository.Store, directory identity.Directory) *PortsvcService {
 	if store == nil {
 		panic("NewPortsvcService: store is nil")
 	}
-	return &PortsvcService{store: store}
+	if directory == nil {
+		panic("NewPortsvcService: directory is nil")
+	}
+	return &PortsvcService{store: store, directory: directory}
 }
 
 func (s *PortsvcService) ListServices(ctx context.Context, params ServiceListParams) ([]ServiceView, error) {
 	services, err := s.store.ListPortsvcServices(ctx, repository.PortsvcServiceListFilter{
-		UserID:      utilVisibleUserID(params.Actor, params.UserID),
-		Admin:       params.Actor.Admin,
-		Query:       params.Query,
-		Sort:        params.Sort,
-		Status:      params.Status,
-		ProjectName: params.ProjectName,
+		OwnerSubject: utilVisibleOwnerSubject(params.Actor, params.OwnerSubject),
+		Admin:        params.Actor.Admin,
+		Query:        params.Query,
+		Sort:         params.Sort,
+		Status:       params.Status,
+		ProjectName:  params.ProjectName,
 	})
 	if err != nil {
 		return nil, err
@@ -35,12 +40,12 @@ func (s *PortsvcService) ListServices(ctx context.Context, params ServiceListPar
 	return s.buildServiceViews(ctx, services)
 }
 
-func (s *PortsvcService) GetService(ctx context.Context, actor PortsvcActor, id int64) (*ServiceView, error) {
+func (s *PortsvcService) GetService(ctx context.Context, actor PortsvcActor, id string) (*ServiceView, error) {
 	service, err := s.store.FetchPortsvcServiceByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	if !actor.Admin && service.UserID != actor.UserID {
+	if !actor.Admin && service.OwnerSubject != actor.OwnerSubject {
 		return nil, utilPortsvcNotFound("service not found")
 	}
 	views, err := s.buildServiceViews(ctx, []PortsvcServiceRecord{*service})
@@ -51,68 +56,70 @@ func (s *PortsvcService) GetService(ctx context.Context, actor PortsvcActor, id 
 }
 
 func (s *PortsvcService) CreateService(ctx context.Context, actor PortsvcActor, payload ServicePayload) (*ServiceView, error) {
-	var out *ServiceView
-	err := s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
-		tx := NewPortsvcService(txStore)
-		service, serviceErr := utilNormalizeService(ctx, tx.store, actor, nil, payload)
-		if serviceErr != nil {
-			return serviceErr
-		}
-		now := utilNowUTC()
-		service.CreatedAt = now
-		service.UpdatedAt = now
+	service, err := utilNormalizeService(ctx, s.store, actor, nil, payload)
+	if err != nil {
+		return nil, err
+	}
+	if principalErr := utilResolveActivePrincipal(ctx, s.directory, service.OwnerSubject); principalErr != nil {
+		return nil, principalErr
+	}
+	var createdID string
+	now := utilNowUTC()
+	service.CreatedAt = now
+	service.UpdatedAt = now
+	err = s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
+		tx := &PortsvcService{store: txStore, directory: s.directory}
 		created, createErr := tx.store.CreatePortsvcService(ctx, service)
 		if createErr != nil {
 			return createErr
 		}
-		if childErr := tx.replaceServiceChildren(ctx, created.ID, created.UserID, payload, now); childErr != nil {
+		createdID = created.ID
+		if childErr := tx.replaceServiceChildren(ctx, created.ID, created.OwnerSubject, payload, now); childErr != nil {
 			return childErr
 		}
-		view, viewErr := tx.GetService(ctx, PortsvcActor{UserID: created.UserID, Admin: true}, created.ID)
-		if viewErr != nil {
-			return viewErr
-		}
-		out = view
 		return nil
 	})
-	return out, err
+	if err != nil {
+		return nil, err
+	}
+	return s.GetService(ctx, PortsvcActor{OwnerSubject: service.OwnerSubject, Admin: true}, createdID)
 }
 
-func (s *PortsvcService) UpdateService(ctx context.Context, actor PortsvcActor, id int64, payload ServicePayload) (*ServiceView, error) {
-	var out *ServiceView
-	err := s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
-		tx := NewPortsvcService(txStore)
-		current, err := tx.store.FetchPortsvcServiceByID(ctx, id)
-		if err != nil {
-			return err
-		}
-		if !actor.Admin && current.UserID != actor.UserID {
-			return utilPortsvcNotFound("service not found")
-		}
-		service, serviceErr := utilNormalizeService(ctx, tx.store, actor, current, payload)
-		if serviceErr != nil {
-			return serviceErr
-		}
-		service.UpdatedAt = utilNowUTC()
+func (s *PortsvcService) UpdateService(ctx context.Context, actor PortsvcActor, id string, payload ServicePayload) (*ServiceView, error) {
+	current, err := s.store.FetchPortsvcServiceByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if !actor.Admin && current.OwnerSubject != actor.OwnerSubject {
+		return nil, utilPortsvcNotFound("service not found")
+	}
+	service, err := utilNormalizeService(ctx, s.store, actor, current, payload)
+	if err != nil {
+		return nil, err
+	}
+	if principalErr := utilResolveActivePrincipal(ctx, s.directory, service.OwnerSubject); principalErr != nil {
+		return nil, principalErr
+	}
+	service.UpdatedAt = utilNowUTC()
+	err = s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
+		tx := &PortsvcService{store: txStore, directory: s.directory}
 		updated, updateErr := tx.store.UpdatePortsvcService(ctx, id, service)
 		if updateErr != nil {
 			return updateErr
 		}
-		if childErr := tx.replaceServiceChildren(ctx, id, updated.UserID, payload, service.UpdatedAt); childErr != nil {
+		if childErr := tx.replaceServiceChildren(ctx, id, updated.OwnerSubject, payload, service.UpdatedAt); childErr != nil {
 			return childErr
 		}
-		view, viewErr := tx.GetService(ctx, PortsvcActor{UserID: updated.UserID, Admin: true}, id)
-		if viewErr != nil {
-			return viewErr
-		}
-		out = view
 		return nil
 	})
-	return out, err
+	if err != nil {
+		return nil, err
+	}
+	return s.GetService(ctx, PortsvcActor{OwnerSubject: service.OwnerSubject, Admin: true}, id)
 }
 
-func (s *PortsvcService) DeleteService(ctx context.Context, actor PortsvcActor, id int64) error {
-	return s.DeleteServices(ctx, ServiceBatchDeleteInput{Actor: actor, IDs: []int64{id}})
+func (s *PortsvcService) DeleteService(ctx context.Context, actor PortsvcActor, id string) error {
+	return s.DeleteServices(ctx, ServiceBatchDeleteInput{Actor: actor, IDs: []string{id}})
 }
 
 func (s *PortsvcService) DeleteServices(ctx context.Context, input ServiceBatchDeleteInput) error {
@@ -121,44 +128,58 @@ func (s *PortsvcService) DeleteServices(ctx context.Context, input ServiceBatchD
 		return err
 	}
 	return s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
-		count, countErr := txStore.CountPortsvcServicesByIDs(ctx, ids, input.Actor.UserID, input.Actor.Admin)
+		count, countErr := txStore.CountPortsvcServicesByIDs(ctx, ids, input.Actor.OwnerSubject, input.Actor.Admin)
 		if countErr != nil {
 			return countErr
 		}
 		if count != len(ids) {
 			return utilPortsvcNotFound("one or more services were not found")
 		}
-		return txStore.DeletePortsvcServices(ctx, ids, input.Actor.UserID, input.Actor.Admin)
+		return txStore.DeletePortsvcServices(ctx, ids, input.Actor.OwnerSubject, input.Actor.Admin)
 	})
 }
 
 func (s *PortsvcService) ListPortAllocations(ctx context.Context, params PortAllocationListParams) ([]PortAllocation, error) {
-	return s.store.ListPortsvcPortAllocations(ctx, repository.PortsvcPortAllocationListFilter{
-		UserID: utilVisibleUserID(params.Actor, params.UserID),
-		Admin:  params.Actor.Admin,
-		Sort:   params.Sort,
-		Status: params.Status,
+	groups, err := s.store.ListPortsvcPortAllocations(ctx, repository.PortsvcPortAllocationListFilter{
+		OwnerSubject: utilVisibleOwnerSubject(params.Actor, params.OwnerSubject),
+		Admin:        params.Actor.Admin,
+		Sort:         params.Sort,
+		Status:       params.Status,
 	})
+	if err != nil {
+		return nil, err
+	}
+	if err := s.attachPortAllocationOwnerNames(ctx, groups); err != nil {
+		return nil, err
+	}
+	return groups, nil
 }
 
-func (s *PortsvcService) GetPortAllocation(ctx context.Context, actor PortsvcActor, id int64) (*PortAllocation, error) {
+func (s *PortsvcService) GetPortAllocation(ctx context.Context, actor PortsvcActor, id string) (*PortAllocation, error) {
 	group, err := s.store.FetchPortsvcPortAllocationByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	if !actor.Admin && group.UserID != actor.UserID {
+	if !actor.Admin && group.OwnerSubject != actor.OwnerSubject {
 		return nil, utilPortsvcNotFound("port allocation not found")
 	}
-	return group, nil
+	groups := []PortAllocation{*group}
+	if err := s.attachPortAllocationOwnerNames(ctx, groups); err != nil {
+		return nil, err
+	}
+	return &groups[0], nil
 }
 
 func (s *PortsvcService) CreatePortAllocation(ctx context.Context, actor PortsvcActor, payload PortAllocationPayload) (*PortAllocation, error) {
+	group, err := utilNormalizePortAllocation(ctx, s.store, actor, nil, payload)
+	if err != nil {
+		return nil, err
+	}
+	if principalErr := utilResolveActivePrincipal(ctx, s.directory, group.OwnerSubject); principalErr != nil {
+		return nil, principalErr
+	}
 	var out *PortAllocation
-	err := s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
-		group, groupErr := utilNormalizePortAllocation(ctx, txStore, actor, nil, payload)
-		if groupErr != nil {
-			return groupErr
-		}
+	err = s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
 		now := utilNowUTC()
 		group.CreatedAt = now
 		group.UpdatedAt = now
@@ -169,23 +190,33 @@ func (s *PortsvcService) CreatePortAllocation(ctx context.Context, actor Portsvc
 		out = created
 		return nil
 	})
-	return out, err
+	if err != nil {
+		return nil, err
+	}
+	groups := []PortAllocation{*out}
+	if err := s.attachPortAllocationOwnerNames(ctx, groups); err != nil {
+		return nil, err
+	}
+	return &groups[0], nil
 }
 
-func (s *PortsvcService) UpdatePortAllocation(ctx context.Context, actor PortsvcActor, id int64, payload PortAllocationPayload) (*PortAllocation, error) {
+func (s *PortsvcService) UpdatePortAllocation(ctx context.Context, actor PortsvcActor, id string, payload PortAllocationPayload) (*PortAllocation, error) {
+	current, err := s.store.FetchPortsvcPortAllocationByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if !actor.Admin && current.OwnerSubject != actor.OwnerSubject {
+		return nil, utilPortsvcNotFound("port allocation not found")
+	}
+	group, err := utilNormalizePortAllocation(ctx, s.store, actor, current, payload)
+	if err != nil {
+		return nil, err
+	}
+	if principalErr := utilResolveActivePrincipal(ctx, s.directory, group.OwnerSubject); principalErr != nil {
+		return nil, principalErr
+	}
 	var out *PortAllocation
-	err := s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
-		current, err := txStore.FetchPortsvcPortAllocationByID(ctx, id)
-		if err != nil {
-			return err
-		}
-		if !actor.Admin && current.UserID != actor.UserID {
-			return utilPortsvcNotFound("port allocation not found")
-		}
-		group, groupErr := utilNormalizePortAllocation(ctx, txStore, actor, current, payload)
-		if groupErr != nil {
-			return groupErr
-		}
+	err = s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
 		group.UpdatedAt = utilNowUTC()
 		updated, updateErr := txStore.UpdatePortsvcPortAllocation(ctx, id, group)
 		if updateErr != nil {
@@ -194,19 +225,26 @@ func (s *PortsvcService) UpdatePortAllocation(ctx context.Context, actor Portsvc
 		out = updated
 		return nil
 	})
-	return out, err
+	if err != nil {
+		return nil, err
+	}
+	groups := []PortAllocation{*out}
+	if err := s.attachPortAllocationOwnerNames(ctx, groups); err != nil {
+		return nil, err
+	}
+	return &groups[0], nil
 }
 
-func (s *PortsvcService) DeletePortAllocation(ctx context.Context, actor PortsvcActor, id int64) error {
+func (s *PortsvcService) DeletePortAllocation(ctx context.Context, actor PortsvcActor, id string) error {
 	return s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
-		count, err := txStore.CountPortsvcPortAllocationsByIDs(ctx, []int64{id}, actor.UserID, actor.Admin)
+		count, err := txStore.CountPortsvcPortAllocationsByIDs(ctx, []string{id}, actor.OwnerSubject, actor.Admin)
 		if err != nil {
 			return err
 		}
 		if count == 0 {
 			return utilPortsvcNotFound("port allocation not found")
 		}
-		return txStore.DeletePortsvcPortAllocations(ctx, []int64{id}, actor.UserID, actor.Admin)
+		return txStore.DeletePortsvcPortAllocations(ctx, []string{id}, actor.OwnerSubject, actor.Admin)
 	})
 }
 
@@ -216,12 +254,12 @@ func (s *PortsvcService) ExportServicesCSV(ctx context.Context, params ServiceLi
 		return nil, err
 	}
 	records := [][]string{{
-		"username", "name", "project_name", "status", "port_range", "dind_ip", "dind_container",
+		"ownerName", "name", "project_name", "status", "port_range", "dind_ip", "dind_container",
 		"owner", "tags", "repositories", "dependencies", "notes",
 	}}
 	for _, service := range services {
 		records = append(records, []string{
-			service.Username,
+			service.OwnerName,
 			service.Name,
 			service.ProjectName,
 			service.Status,
@@ -243,7 +281,7 @@ func (s *PortsvcService) buildServiceViews(ctx context.Context, services []Ports
 	if len(services) == 0 {
 		return views, nil
 	}
-	ids := make([]int64, len(services))
+	ids := make([]string, len(services))
 	for idx, service := range services {
 		ids[idx] = service.ID
 		views[idx] = ServiceView{PortsvcServiceRecord: service}
@@ -252,7 +290,7 @@ func (s *PortsvcService) buildServiceViews(ctx context.Context, services []Ports
 	if err != nil {
 		return nil, err
 	}
-	children := make(map[int64]repository.PortsvcServiceChildrenRecord, len(childrenList))
+	children := make(map[string]repository.PortsvcServiceChildrenRecord, len(childrenList))
 	for _, child := range childrenList {
 		children[child.ServiceID] = child
 	}
@@ -261,16 +299,19 @@ func (s *PortsvcService) buildServiceViews(ctx context.Context, services []Ports
 		views[idx].Repositories = child.Repositories
 		views[idx].Dependencies = child.Dependencies
 	}
+	if err := s.attachServiceOwnerNames(ctx, views); err != nil {
+		return nil, err
+	}
 	return views, nil
 }
 
-func (s *PortsvcService) replaceServiceChildren(ctx context.Context, serviceID int64, userID int64, payload ServicePayload, now time.Time) error {
+func (s *PortsvcService) replaceServiceChildren(ctx context.Context, serviceID string, ownerSubject string, payload ServicePayload, now time.Time) error {
 	if err := s.store.ReplacePortsvcServiceChildren(ctx, serviceID); err != nil {
 		return err
 	}
 	repositoryLinks := make([]repository.PortsvcServiceRepositoryRecord, 0, len(payload.Repositories))
 	for _, item := range payload.Repositories {
-		repo, ok, err := s.ensureRepository(ctx, userID, item, now)
+		repo, ok, err := s.ensureRepository(ctx, ownerSubject, item, now)
 		if err != nil {
 			return err
 		}
@@ -291,7 +332,7 @@ func (s *PortsvcService) replaceServiceChildren(ctx context.Context, serviceID i
 
 	dependencyLinks := make([]repository.PortsvcServiceDependencyRecord, 0, len(payload.Dependencies))
 	for _, item := range payload.Dependencies {
-		dependency, ok, err := s.ensureDependency(ctx, userID, item, now)
+		dependency, ok, err := s.ensureDependency(ctx, ownerSubject, item, now)
 		if err != nil {
 			return err
 		}
@@ -310,8 +351,8 @@ func (s *PortsvcService) replaceServiceChildren(ctx context.Context, serviceID i
 	return s.store.AddPortsvcServiceDependencies(ctx, dependencyLinks)
 }
 
-func (s *PortsvcService) ensureRepository(ctx context.Context, userID int64, payload RepositoryPayload, now time.Time) (*RepositoryRef, bool, error) {
-	if payload.ID > 0 {
+func (s *PortsvcService) ensureRepository(ctx context.Context, ownerSubject string, payload RepositoryPayload, now time.Time) (*RepositoryRef, bool, error) {
+	if payload.ID != "" {
 		return &RepositoryRef{ID: payload.ID}, true, nil
 	}
 	name := strings.TrimSpace(payload.Name)
@@ -320,7 +361,7 @@ func (s *PortsvcService) ensureRepository(ctx context.Context, userID int64, pay
 		return nil, false, nil
 	}
 	if url != "" {
-		existing, err := s.store.FetchPortsvcRepositoryByUserAndURL(ctx, userID, url)
+		existing, err := s.store.FetchPortsvcRepositoryByOwnerAndURL(ctx, ownerSubject, url)
 		if err == nil {
 			return existing, true, nil
 		}
@@ -333,13 +374,13 @@ func (s *PortsvcService) ensureRepository(ctx context.Context, userID int64, pay
 		kind = defaultRepositoryKind
 	}
 	created, err := s.store.CreatePortsvcRepository(ctx, &repository.PortsvcRepositoryRecord{
-		UserID:    userID,
-		Name:      name,
-		URL:       url,
-		Kind:      kind,
-		Notes:     strings.TrimSpace(payload.Notes),
-		CreatedAt: now,
-		UpdatedAt: now,
+		OwnerSubject: ownerSubject,
+		Name:         name,
+		URL:          url,
+		Kind:         kind,
+		Notes:        strings.TrimSpace(payload.Notes),
+		CreatedAt:    now,
+		UpdatedAt:    now,
 	})
 	if err != nil {
 		return nil, false, err
@@ -347,8 +388,77 @@ func (s *PortsvcService) ensureRepository(ctx context.Context, userID int64, pay
 	return created, true, nil
 }
 
-func (s *PortsvcService) ensureDependency(ctx context.Context, userID int64, payload DependencyPayload, now time.Time) (*Dependency, bool, error) {
-	if payload.ID > 0 {
+func (s *PortsvcService) attachServiceOwnerNames(ctx context.Context, views []ServiceView) error {
+	subjects := make([]string, 0, len(views)*2)
+	for _, view := range views {
+		subjects = append(subjects, view.OwnerSubject)
+		if view.PortAllocation != nil {
+			subjects = append(subjects, view.PortAllocation.OwnerSubject)
+		}
+	}
+	names, err := s.ownerNames(ctx, subjects)
+	if err != nil {
+		return err
+	}
+	for idx := range views {
+		views[idx].OwnerName = names[views[idx].OwnerSubject]
+		if views[idx].OwnerName == "" {
+			views[idx].OwnerName = views[idx].OwnerSubject
+		}
+		if views[idx].PortAllocation != nil {
+			views[idx].PortAllocation.OwnerName = names[views[idx].PortAllocation.OwnerSubject]
+			if views[idx].PortAllocation.OwnerName == "" {
+				views[idx].PortAllocation.OwnerName = views[idx].PortAllocation.OwnerSubject
+			}
+		}
+	}
+	return nil
+}
+
+func (s *PortsvcService) attachPortAllocationOwnerNames(ctx context.Context, groups []PortAllocation) error {
+	subjects := make([]string, 0, len(groups))
+	for _, group := range groups {
+		subjects = append(subjects, group.OwnerSubject)
+	}
+	names, err := s.ownerNames(ctx, subjects)
+	if err != nil {
+		return err
+	}
+	for idx := range groups {
+		groups[idx].OwnerName = names[groups[idx].OwnerSubject]
+		if groups[idx].OwnerName == "" {
+			groups[idx].OwnerName = groups[idx].OwnerSubject
+		}
+	}
+	return nil
+}
+
+func (s *PortsvcService) ownerNames(ctx context.Context, subjects []string) (map[string]string, error) {
+	out := make(map[string]string, len(subjects))
+	unique := make([]string, 0, len(subjects))
+	for _, subject := range subjects {
+		subject = strings.TrimSpace(subject)
+		if subject == "" {
+			continue
+		}
+		if _, ok := out[subject]; ok {
+			continue
+		}
+		out[subject] = subject
+		unique = append(unique, subject)
+	}
+	principals, err := s.directory.Principals(ctx, unique)
+	if err != nil {
+		return nil, err
+	}
+	for subject, principal := range principals {
+		out[subject] = utilPrincipalName(principal, subject)
+	}
+	return out, nil
+}
+
+func (s *PortsvcService) ensureDependency(ctx context.Context, ownerSubject string, payload DependencyPayload, now time.Time) (*Dependency, bool, error) {
+	if payload.ID != "" {
 		return &Dependency{ID: payload.ID}, true, nil
 	}
 	name := strings.TrimSpace(payload.Name)
@@ -360,7 +470,7 @@ func (s *PortsvcService) ensureDependency(ctx context.Context, userID int64, pay
 		itemType = defaultDependencyType
 	}
 	version := strings.TrimSpace(payload.Version)
-	existing, err := s.store.FetchPortsvcDependencyByIdentity(ctx, userID, name, itemType, version)
+	existing, err := s.store.FetchPortsvcDependencyByIdentity(ctx, ownerSubject, name, itemType, version)
 	if err == nil {
 		return existing, true, nil
 	}
@@ -368,14 +478,14 @@ func (s *PortsvcService) ensureDependency(ctx context.Context, userID int64, pay
 		return nil, false, err
 	}
 	created, err := s.store.CreatePortsvcDependency(ctx, &repository.PortsvcDependencyRecord{
-		UserID:    userID,
-		Name:      name,
-		Type:      itemType,
-		URL:       strings.TrimSpace(payload.URL),
-		Version:   version,
-		Notes:     strings.TrimSpace(payload.Notes),
-		CreatedAt: now,
-		UpdatedAt: now,
+		OwnerSubject: ownerSubject,
+		Name:         name,
+		Type:         itemType,
+		URL:          strings.TrimSpace(payload.URL),
+		Version:      version,
+		Notes:        strings.TrimSpace(payload.Notes),
+		CreatedAt:    now,
+		UpdatedAt:    now,
 	})
 	if err != nil {
 		return nil, false, err

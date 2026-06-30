@@ -10,8 +10,8 @@ require (
 	github.com/lwmacct/251219-go-pkg-logm v0.9.260413
 	github.com/lwmacct/260614-go-pkg-tlsreload v0.7.260626
 	github.com/lwmacct/260622-go-pkg-tddcheck v0.21.260630
-	github.com/lwmacct/260630-go-hsr-auth v0.7.260630
-	github.com/lwmacct/260630-go-hsr-shared v0.9.260630
+	github.com/lwmacct/260630-go-hsr-auth v0.8.260630
+	github.com/lwmacct/260630-go-hsr-shared v0.11.260630
 	github.com/stretchr/testify v1.11.1
 	github.com/uptrace/bun v1.2.18
 	github.com/uptrace/bun/dialect/sqlitedialect v1.2.18

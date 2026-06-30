@@ -11,15 +11,15 @@ func ToPortsvcActor(user *identity.Principal) service.PortsvcActor {
 	if user == nil {
 		return actor
 	}
-	actor.UserID = user.ID
-	actor.Username = user.Username
+	actor.OwnerSubject = user.Subject
+	actor.OwnerName = user.Username
 	actor.Admin = user.Admin
 	return actor
 }
 
 func ToServicePayload(input ServicePayloadDTO) service.ServicePayload {
 	out := service.ServicePayload{
-		UserID:           input.UserID,
+		OwnerSubject:     input.OwnerSubject,
 		PortAllocationID: input.PortAllocationID,
 		Name:             input.Name,
 		ProjectName:      input.ProjectName,
@@ -43,29 +43,29 @@ func ToServicePayload(input ServicePayloadDTO) service.ServicePayload {
 
 func ToPortAllocationPayload(input PortAllocationPayloadDTO) service.PortAllocationPayload {
 	return service.PortAllocationPayload{
-		UserID:    input.UserID,
-		PortStart: input.PortStart,
-		PortEnd:   input.PortEnd,
-		Status:    input.Status,
-		Notes:     input.Notes,
+		OwnerSubject: input.OwnerSubject,
+		PortStart:    input.PortStart,
+		PortEnd:      input.PortEnd,
+		Status:       input.Status,
+		Notes:        input.Notes,
 	}
 }
 
-func ToServiceBatchDeleteInput(actor service.PortsvcActor, ids []int64) service.ServiceBatchDeleteInput {
+func ToServiceBatchDeleteInput(actor service.PortsvcActor, ids []string) service.ServiceBatchDeleteInput {
 	return service.ServiceBatchDeleteInput{Actor: actor, IDs: ids}
 }
 
 func ToPortAllocationDTO(group service.PortAllocation) PortAllocationDTO {
 	return PortAllocationDTO{
-		ID:        group.ID,
-		UserID:    group.UserID,
-		Username:  group.Username,
-		PortStart: group.PortStart,
-		PortEnd:   group.PortEnd,
-		Status:    group.Status,
-		Notes:     group.Notes,
-		CreatedAt: utilHTTPTime(group.CreatedAt),
-		UpdatedAt: utilHTTPTime(group.UpdatedAt),
+		ID:           group.ID,
+		OwnerSubject: group.OwnerSubject,
+		OwnerName:    group.OwnerName,
+		PortStart:    group.PortStart,
+		PortEnd:      group.PortEnd,
+		Status:       group.Status,
+		Notes:        group.Notes,
+		CreatedAt:    utilHTTPTime(group.CreatedAt),
+		UpdatedAt:    utilHTTPTime(group.UpdatedAt),
 	}
 }
 
@@ -79,36 +79,36 @@ func ToPortAllocationDTOs(groups []service.PortAllocation) []PortAllocationDTO {
 
 func ToRepositoryDTO(repository service.RepositoryRef) RepositoryDTO {
 	return RepositoryDTO{
-		ID:        repository.ID,
-		UserID:    repository.UserID,
-		Name:      repository.Name,
-		URL:       repository.URL,
-		Kind:      repository.Kind,
-		Notes:     repository.Notes,
-		CreatedAt: utilHTTPTime(repository.CreatedAt),
-		UpdatedAt: utilHTTPTime(repository.UpdatedAt),
+		ID:           repository.ID,
+		OwnerSubject: repository.OwnerSubject,
+		Name:         repository.Name,
+		URL:          repository.URL,
+		Kind:         repository.Kind,
+		Notes:        repository.Notes,
+		CreatedAt:    utilHTTPTime(repository.CreatedAt),
+		UpdatedAt:    utilHTTPTime(repository.UpdatedAt),
 	}
 }
 
 func ToDependencyDTO(component service.Dependency) DependencyDTO {
 	return DependencyDTO{
-		ID:        component.ID,
-		UserID:    component.UserID,
-		Name:      component.Name,
-		Type:      component.Type,
-		URL:       component.URL,
-		Version:   component.Version,
-		Notes:     component.Notes,
-		CreatedAt: utilHTTPTime(component.CreatedAt),
-		UpdatedAt: utilHTTPTime(component.UpdatedAt),
+		ID:           component.ID,
+		OwnerSubject: component.OwnerSubject,
+		Name:         component.Name,
+		Type:         component.Type,
+		URL:          component.URL,
+		Version:      component.Version,
+		Notes:        component.Notes,
+		CreatedAt:    utilHTTPTime(component.CreatedAt),
+		UpdatedAt:    utilHTTPTime(component.UpdatedAt),
 	}
 }
 
 func ToServiceDTO(item service.ServiceView) ServiceDTO {
 	out := ServiceDTO{
 		ID:               item.ID,
-		UserID:           item.UserID,
-		Username:         item.Username,
+		OwnerSubject:     item.OwnerSubject,
+		OwnerName:        item.OwnerName,
 		PortAllocationID: item.PortAllocationID,
 		Name:             item.Name,
 		ProjectName:      item.ProjectName,
