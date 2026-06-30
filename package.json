@@ -1,14 +1,4 @@
 {
-  "name": "webapp-web",
-  "version": "0.22.260629",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "typecheck": "vite-workspace typecheck"
-  },
   "dependencies": {
     "@ant-design/icons": "^6.3.2",
     "@lwmacct/260627-antd-workbench": "^0.34.260629",
@@ -19,12 +9,21 @@
     "react-router-dom": "^7.18.0"
   },
   "devDependencies": {
-    "@lwmacct/260627-vite-workspace": "^0.11.260628",
     "@types/node": "^26.0.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "typescript": "^6.0.3",
     "vite": "^8.1.0"
-  }
+  },
+  "name": "webapp-web",
+  "private": true,
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "typecheck": "tsc -b"
+  },
+  "type": "module",
+  "version": "0.23.260630"
 }
