@@ -17,7 +17,7 @@ func main() {
 	logm.MustInit(logm.PresetAuto())
 
 	cmd := &cli.Command{
-		Name:            "miniport",
+		Name:            "app",
 		Usage:           "service inventory application",
 		Version:         version.AppVersion,
 		Flags:           []cli.Flag{cfgm.ConfigFlag()},
