@@ -56,13 +56,13 @@ export function ServiceDetailDrawer({
               column={{ xs: 1, sm: 2 }}
               items={[
                 { key: "user", label: "用户", children: group.ownerName || group.ownerSubject },
-                { key: "project", label: "项目", children: group.projectName || "-" },
+                { key: "project", label: "运行环境", children: group.projectName || "-" },
                 { key: "ports", label: "端口组", children: portRange(group) },
                 { key: "runtime", label: "运行模式", children: runtimeTag(group.runtimeMode) },
                 { key: "serviceIp", label: "服务 IP", children: group.serviceIp || "-" },
                 { key: "runtimeName", label: "运行标识", children: group.runtimeName || "-" },
                 { key: "host", label: "宿主机", children: group.host?.name || group.host?.ip || "-" },
-                { key: "owner", label: "项目负责人", children: group.projectOwner || "-" },
+                { key: "owner", label: "负责人", children: group.projectOwner || "-" },
                 {
                   key: "status",
                   label: "状态",

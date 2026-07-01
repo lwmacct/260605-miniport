@@ -62,6 +62,23 @@ type PortGroupPayloadDTO struct {
 	AssetLinks   []PortGroupAssetLinkPayloadDTO `json:"assetLinks,omitempty"`
 }
 
+type ServiceGroupPortGroupPayloadDTO struct {
+	ID          string `json:"id,omitempty"`
+	PortGroupID string `json:"portGroupId,omitempty"`
+	Role        string `json:"role,omitempty"`
+	Notes       string `json:"notes,omitempty"`
+}
+
+type ServiceGroupPayloadDTO struct {
+	OwnerSubject string                            `json:"ownerSubject,omitempty"`
+	Name         string                            `json:"name,omitempty"`
+	Kind         string                            `json:"kind,omitempty"`
+	Status       string                            `json:"status,omitempty"`
+	Description  string                            `json:"description,omitempty"`
+	Notes        string                            `json:"notes,omitempty"`
+	PortGroups   []ServiceGroupPortGroupPayloadDTO `json:"portGroups,omitempty"`
+}
+
 type HostDTO struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
@@ -107,6 +124,31 @@ type PortGroupDTO struct {
 	UpdatedAt    string                  `json:"updatedAt"`
 	Slots        []PortSlotDTO           `json:"slots"`
 	AssetLinks   []PortGroupAssetLinkDTO `json:"assetLinks"`
+}
+
+type ServiceGroupPortGroupDTO struct {
+	ID             string        `json:"id"`
+	ServiceGroupID string        `json:"serviceGroupId"`
+	PortGroupID    string        `json:"portGroupId"`
+	PortGroup      *PortGroupDTO `json:"portGroup,omitempty"`
+	Role           string        `json:"role"`
+	Notes          string        `json:"notes"`
+	CreatedAt      string        `json:"createdAt"`
+	UpdatedAt      string        `json:"updatedAt"`
+}
+
+type ServiceGroupDTO struct {
+	ID           string                     `json:"id"`
+	OwnerSubject string                     `json:"ownerSubject"`
+	OwnerName    string                     `json:"ownerName"`
+	Name         string                     `json:"name"`
+	Kind         string                     `json:"kind"`
+	Status       string                     `json:"status"`
+	Description  string                     `json:"description"`
+	Notes        string                     `json:"notes"`
+	CreatedAt    string                     `json:"createdAt"`
+	UpdatedAt    string                     `json:"updatedAt"`
+	PortGroups   []ServiceGroupPortGroupDTO `json:"portGroups"`
 }
 
 type DependencyAssetDTO struct {
@@ -174,6 +216,13 @@ type PortGroupListInputDTO struct {
 	Status       string `query:"status" example:"running"`
 }
 
+type ServiceGroupListInputDTO struct {
+	Session      string `cookie:"web_session"`
+	OwnerSubject string `query:"ownerSubject" example:"018f2f9c-1111-7000-8000-000000000001"`
+	Query        string `query:"q" example:"etcd"`
+	Status       string `query:"status" example:"active"`
+}
+
 type DependencyAssetListInputDTO struct {
 	Session      string `cookie:"web_session"`
 	OwnerSubject string `query:"ownerSubject" example:"018f2f9c-1111-7000-8000-000000000001"`
@@ -214,6 +263,22 @@ type PortGroupUpdateInputDTO struct {
 	Session string `cookie:"web_session"`
 	ID      string `path:"id" example:"018f2f9c-1111-7000-8000-000000000002"`
 	Body    PortGroupPayloadDTO
+}
+
+type ServiceGroupInputDTO struct {
+	Session string `cookie:"web_session"`
+	ID      string `path:"id" example:"018f2f9c-1111-7000-8000-000000000005"`
+}
+
+type ServiceGroupBodyInputDTO struct {
+	Session string `cookie:"web_session"`
+	Body    ServiceGroupPayloadDTO
+}
+
+type ServiceGroupUpdateInputDTO struct {
+	Session string `cookie:"web_session"`
+	ID      string `path:"id" example:"018f2f9c-1111-7000-8000-000000000005"`
+	Body    ServiceGroupPayloadDTO
 }
 
 type PortSlotBodyInputDTO struct {

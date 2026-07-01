@@ -6,6 +6,19 @@ export const statusOptions = [
   { value: "stopped", label: "停用" },
 ];
 
+export const serviceGroupStatusOptions = [
+  { value: "active", label: "运行中" },
+  { value: "planned", label: "规划中" },
+  { value: "stopped", label: "停用" },
+];
+
+export const serviceGroupKindOptions = [
+  { value: "service", label: "服务" },
+  { value: "cluster", label: "集群" },
+  { value: "stack", label: "服务栈" },
+  { value: "other", label: "其他" },
+];
+
 export const runtimeModeOptions = [
   { value: "dind", label: "DIND" },
   { value: "host", label: "宿主机直跑" },

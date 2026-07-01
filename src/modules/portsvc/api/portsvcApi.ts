@@ -6,6 +6,8 @@ import type {
   Meta,
   PortGroupForm,
   PortGroupItem,
+  ServiceGroupForm,
+  ServiceGroupItem,
   PortsvcQuery,
   PortsvcSnapshot,
 } from "../model/portsvcTypes";
@@ -29,12 +31,18 @@ export async function loadPortsvc(query: PortsvcQuery): Promise<PortsvcSnapshot>
     status: query.status,
     ownerSubject: query.ownerSubject,
   });
+  const serviceGroupsPath = "/api/service-groups" + buildQueryString({
+    q: query.query,
+    status: query.status,
+    ownerSubject: query.ownerSubject,
+  });
 
-  const [meta, hosts, portGroups, dependencyAssets] = await Promise.all([
+  const [meta, hosts, portGroups, dependencyAssets, serviceGroups] = await Promise.all([
     apiGet<Meta>("/api/meta"),
     apiGet<HostItem[]>("/api/hosts"),
     apiGet<PortGroupItem[]>(groupsPath),
     apiGet<DependencyAssetItem[]>("/api/dependency-assets"),
+    apiGet<ServiceGroupItem[]>(serviceGroupsPath),
   ]);
 
   return {
@@ -46,6 +54,10 @@ export async function loadPortsvc(query: PortsvcQuery): Promise<PortsvcSnapshot>
       assetLinks: item.assetLinks ?? [],
       slots: item.slots ?? [],
       tags: item.tags ?? "",
+    })),
+    serviceGroups: (serviceGroups ?? []).map((item) => ({
+      ...item,
+      portGroups: item.portGroups ?? [],
     })),
   };
 }
@@ -77,6 +89,29 @@ export function savePortGroup(group: PortGroupForm, editingGroup?: PortGroupItem
 
 export function removePortGroup(group: PortGroupItem) {
   return apiSend<{ deleted: boolean }>(`/api/port-groups/${group.id}`, { method: "DELETE" });
+}
+
+export function saveServiceGroup(group: ServiceGroupForm, editingGroup?: ServiceGroupItem | null) {
+  const payload = {
+    description: group.description ?? "",
+    kind: group.kind ?? "service",
+    name: group.name ?? "",
+    notes: group.notes ?? "",
+    ownerSubject: group.ownerSubject ?? "",
+    portGroups: group.portGroups ?? [],
+    status: group.status ?? "active",
+  };
+  return apiSend<ServiceGroupItem>(
+    editingGroup?.id ? `/api/service-groups/${editingGroup.id}` : "/api/service-groups",
+    {
+      method: editingGroup?.id ? "PUT" : "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export function removeServiceGroup(group: ServiceGroupItem) {
+  return apiSend<{ deleted: boolean }>(`/api/service-groups/${group.id}`, { method: "DELETE" });
 }
 
 export function saveHost(host: HostForm, editingHost?: HostItem | null) {

@@ -4,34 +4,51 @@ import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useAuthStateQuery } from "@/modules/auth";
-import { usePortsvcQuery, portsvcKeys } from "../model/portsvcQueries";
+import { usePortsvcQuery } from "../model/portsvcQueries";
 import {
   exportPortGroupsURL,
   removeDependencyAsset,
   removeHost,
   removePortGroup,
+  removeServiceGroup,
   saveDependencyAsset,
   saveHost,
   savePortGroup,
+  saveServiceGroup,
 } from "../api/portsvcApi";
 import {
   assetKindOptions,
   assetProviderOptions,
   assetTypeOptions,
   controllabilityOptions,
+  serviceGroupKindOptions,
+  serviceGroupStatusOptions,
   statusOptions,
   visibilityOptions,
 } from "../model/portsvcConstants";
-import type { DependencyAssetItem, HostForm, HostItem, PortGroupForm, PortGroupItem, PortsvcQuery } from "../model/portsvcTypes";
+import type {
+  DependencyAssetItem,
+  HostForm,
+  HostItem,
+  PortGroupForm,
+  PortGroupItem,
+  PortsvcQuery,
+  ServiceGroupForm,
+  ServiceGroupItem,
+} from "../model/portsvcTypes";
 import { buildStats } from "../model/portsvcUtils";
 import { OverviewSection } from "./OverviewSection";
-import { ServicesSection } from "./ServicesSection";
 import { ProjectServicesSection } from "./ProjectServicesSection";
 import { DependenciesSection } from "./DependenciesSection";
+import { HostsSection } from "./HostsSection";
+import { PortGroupsUsageSection } from "./PortGroupsUsageSection";
+import { ServiceGroupsSection } from "./ServiceGroupsSection";
 import { ServiceDetailDrawer } from "./ServiceDetailDrawer";
 import { ServiceDrawer } from "./ServiceDrawer";
 
-type PortsvcView = "dependencies" | "projects" | "overview" | "services";
+type PortsvcView = "dependencies" | "hosts" | "overview" | "portGroups" | "projects" | "serviceGroups";
+
+const portSegmentOptions = [10000, 20000, 30000, 40000, 50000] as const;
 
 type PortsvcWorkspaceProps = {
   description: string;
@@ -45,6 +62,7 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>();
   const [sort, setSort] = useState<string>("port");
+  const [portSegment, setPortSegment] = useState<number>();
   const [saving, setSaving] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<PortGroupItem | null>(null);
   const [editingGroup, setEditingGroup] = useState<PortGroupItem | null>(null);
@@ -53,33 +71,68 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
   const [editingHost, setEditingHost] = useState<HostItem | null>(null);
   const [assetModalOpen, setAssetModalOpen] = useState(false);
   const [editingAsset, setEditingAsset] = useState<DependencyAssetItem | null>(null);
+  const [serviceGroupModalOpen, setServiceGroupModalOpen] = useState(false);
+  const [editingServiceGroup, setEditingServiceGroup] = useState<ServiceGroupItem | null>(null);
   const [groupForm] = Form.useForm<PortGroupForm>();
   const [hostForm] = Form.useForm<HostForm>();
   const [assetForm] = Form.useForm<Partial<DependencyAssetItem>>();
+  const [serviceGroupForm] = Form.useForm<ServiceGroupForm>();
 
   const query = useMemo<PortsvcQuery>(() => {
+    if (view === "hosts" || view === "overview" || view === "portGroups" || view === "serviceGroups") {
+      return { sort: "port" };
+    }
+
     return {
       query: search.trim(),
       sort,
       status,
     };
-  }, [search, sort, status]);
+  }, [search, sort, status, view]);
 
   const portsvcQuery = usePortsvcQuery(query);
   const snapshot = portsvcQuery.data;
   const groups: PortGroupItem[] = snapshot?.portGroups ?? [];
   const hosts: HostItem[] = snapshot?.hosts ?? [];
   const dependencyAssets: DependencyAssetItem[] = snapshot?.dependencyAssets ?? [];
+  const serviceGroups: ServiceGroupItem[] = snapshot?.serviceGroups ?? [];
   const meta = snapshot?.meta;
   const canManage = Boolean(authState.data?.session.authenticated);
-  const stats = useMemo(() => buildStats(groups, hosts, dependencyAssets), [dependencyAssets, groups, hosts]);
+  const stats = useMemo(
+    () => buildStats(groups, hosts, dependencyAssets, serviceGroups),
+    [dependencyAssets, groups, hosts, serviceGroups],
+  );
+  const projectGroups = useMemo(() => {
+    if (view !== "projects" || !portSegment) {
+      return groups;
+    }
+
+    const segmentEnd = portSegment + 9999;
+    return groups.filter((group) => group.portStart >= portSegment && group.portStart <= segmentEnd);
+  }, [groups, portSegment, view]);
+  const filteredServiceGroups = useMemo(() => {
+    if (view !== "serviceGroups") {
+      return serviceGroups;
+    }
+    const keyword = search.trim().toLowerCase();
+    return serviceGroups.filter((group) => {
+      if (status && group.status !== status) {
+        return false;
+      }
+      if (!keyword) {
+        return true;
+      }
+      return [group.name, group.kind, group.description, group.notes]
+        .some((value) => value.toLowerCase().includes(keyword));
+    });
+  }, [search, serviceGroups, status, view]);
 
   useEffect(() => {
     setSelectedGroup(null);
   }, [query]);
 
   async function refresh() {
-    await queryClient.invalidateQueries({ queryKey: portsvcKeys.snapshot(query) });
+    await queryClient.invalidateQueries({ queryKey: ["portsvc", "snapshot"] });
   }
 
   function openCreateGroup() {
@@ -200,10 +253,52 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
     await refresh();
   }
 
+  function openCreateServiceGroup() {
+    setEditingServiceGroup(null);
+    serviceGroupForm.resetFields();
+    serviceGroupForm.setFieldsValue({
+      kind: "service",
+      portGroups: [],
+      status: "active",
+    });
+    setServiceGroupModalOpen(true);
+  }
+
+  function openEditServiceGroup(group: ServiceGroupItem) {
+    setEditingServiceGroup(group);
+    serviceGroupForm.setFieldsValue({
+      ...group,
+      portGroups: group.portGroups,
+    });
+    setServiceGroupModalOpen(true);
+  }
+
+  async function handleSaveServiceGroup(values: ServiceGroupForm) {
+    setSaving(true);
+    try {
+      await saveServiceGroup(values, editingServiceGroup);
+      message.success("服务组已保存");
+      setServiceGroupModalOpen(false);
+      await refresh();
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : "保存失败");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDeleteServiceGroup(group: ServiceGroupItem) {
+    await removeServiceGroup(group);
+    message.success("服务组已删除");
+    setServiceGroupModalOpen(false);
+    await refresh();
+  }
+
   const exportURL = exportPortGroupsURL(query);
+  const showProjectFilters = view === "projects" || view === "dependencies" || view === "serviceGroups";
   const sortOptions = [
     { label: "端口", value: "port" },
-    { label: "项目", value: "project" },
+    { label: "运行环境", value: "project" },
     { label: "状态", value: "status" },
     { label: "最近更新", value: "updated_desc" },
   ];
@@ -219,19 +314,38 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
     content = <Alert showIcon type="error" message="加载数据失败" description={portsvcQuery.error.message} />;
   } else {
     switch (view) {
-      case "services":
+      case "hosts":
         content = (
-          <ServicesSection
+          <HostsSection
             canManage={canManage}
             groups={groups}
+            hosts={hosts}
+            onEditHost={openEditHost}
+          />
+        );
+        break;
+      case "portGroups":
+        content = <PortGroupsUsageSection canManage={canManage} groups={groups} onCreateGroup={openCreateGroup} />;
+        break;
+      case "projects":
+        content = (
+          <ProjectServicesSection
+            canManage={canManage}
+            groups={projectGroups}
             onDeleteGroup={(group) => void handleDeleteGroup(group)}
             onEditGroup={openEditGroup}
             onSelectGroup={setSelectedGroup}
           />
         );
         break;
-      case "projects":
-        content = <ProjectServicesSection groups={groups} onSelectGroup={setSelectedGroup} />;
+      case "serviceGroups":
+        content = (
+          <ServiceGroupsSection
+            canManage={canManage}
+            onEditServiceGroup={openEditServiceGroup}
+            serviceGroups={filteredServiceGroups}
+          />
+        );
         break;
       case "dependencies":
         content = (
@@ -272,37 +386,67 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
             ) : null}
           </div>
           <Space wrap>
-            <Input
-              prefix={<SearchOutlined />}
-              className="page-search"
-              placeholder="搜索项目、服务 IP、宿主机、仓库"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-            <Select
-              allowClear
-              placeholder="状态"
-              style={{ width: 140 }}
-              value={status}
-              options={statusOptions}
-              onChange={setStatus}
-            />
-            <Select style={{ width: 150 }} value={sort} options={sortOptions} onChange={setSort} />
+            {showProjectFilters ? (
+              <>
+                <Input
+                  prefix={<SearchOutlined />}
+                  className="page-search"
+                  placeholder={view === "serviceGroups" ? "搜索服务组" : "搜索运行环境、服务 IP、宿主机、仓库"}
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                />
+                <Select
+                  allowClear
+                  placeholder="状态"
+                  style={{ width: 140 }}
+                  value={status}
+                  options={view === "serviceGroups" ? serviceGroupStatusOptions : statusOptions}
+                  onChange={setStatus}
+                />
+                {view !== "serviceGroups" ? (
+                  <Select style={{ width: 150 }} value={sort} options={sortOptions} onChange={setSort} />
+                ) : null}
+                {view === "projects" ? (
+                  <Space.Compact>
+                    {portSegmentOptions.map((segment) => (
+                      <Button
+                        key={segment}
+                        type={portSegment === segment ? "primary" : "default"}
+                        onClick={() => setPortSegment((current) => (current === segment ? undefined : segment))}
+                      >
+                        {segment}
+                      </Button>
+                    ))}
+                  </Space.Compact>
+                ) : null}
+              </>
+            ) : null}
             <Button icon={<ReloadOutlined />} onClick={() => void refresh()} loading={portsvcQuery.isFetching}>
               刷新
             </Button>
             <Button icon={<DownloadOutlined />} href={exportURL} target="_blank">
               导出 CSV
             </Button>
-            <Button icon={<PlusOutlined />} onClick={openCreateHost} disabled={!canManage}>
-              宿主机
-            </Button>
-            <Button icon={<PlusOutlined />} onClick={openCreateAsset} disabled={!canManage}>
-              依赖资产
-            </Button>
-            <Button type="primary" icon={<PlusOutlined />} onClick={openCreateGroup} disabled={!canManage}>
-              端口组
-            </Button>
+            {view === "hosts" ? (
+              <Button type="primary" icon={<PlusOutlined />} onClick={openCreateHost} disabled={!canManage}>
+                宿主机
+              </Button>
+            ) : null}
+            {view === "dependencies" ? (
+              <Button type="primary" icon={<PlusOutlined />} onClick={openCreateAsset} disabled={!canManage}>
+                依赖资产
+              </Button>
+            ) : null}
+            {view === "projects" ? (
+              <Button type="primary" icon={<PlusOutlined />} onClick={openCreateGroup} disabled={!canManage}>
+                运行环境
+              </Button>
+            ) : null}
+            {view === "serviceGroups" ? (
+              <Button type="primary" icon={<PlusOutlined />} onClick={openCreateServiceGroup} disabled={!canManage}>
+                服务组
+              </Button>
+            ) : null}
           </Space>
         </Flex>
       </section>
@@ -374,6 +518,72 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
           {editingAsset ? (
             <Button danger onClick={() => void handleDeleteAsset(editingAsset)}>
               删除依赖资产
+            </Button>
+          ) : null}
+        </Form>
+      </Modal>
+      <Modal
+        title={editingServiceGroup ? "编辑服务组" : "新建服务组"}
+        open={serviceGroupModalOpen}
+        onCancel={() => setServiceGroupModalOpen(false)}
+        onOk={() => serviceGroupForm.submit()}
+        confirmLoading={saving}
+        width={860}
+      >
+        <Form form={serviceGroupForm} layout="vertical" onFinish={(values) => void handleSaveServiceGroup(values)}>
+          <Form.Item name="name" label="名称" rules={[{ required: true, message: "请填写服务组名称" }]}>
+            <Input placeholder="etcd 集群 / kafka 集群" />
+          </Form.Item>
+          <Space.Compact block>
+            <Form.Item name="kind" label="类型" rules={[{ required: true }]} style={{ width: "50%" }}>
+              <Select options={serviceGroupKindOptions} />
+            </Form.Item>
+            <Form.Item name="status" label="状态" rules={[{ required: true }]} style={{ width: "50%" }}>
+              <Select options={serviceGroupStatusOptions} />
+            </Form.Item>
+          </Space.Compact>
+          <Form.Item name="description" label="说明">
+            <Input.TextArea rows={2} />
+          </Form.Item>
+          <Form.List name="portGroups">
+            {(fields, { add, remove }) => (
+              <Space direction="vertical" className="content-stack">
+                <Button icon={<PlusOutlined />} onClick={() => add({ role: "" })}>
+                  添加运行环境
+                </Button>
+                {fields.map((field) => (
+                  <Space.Compact key={field.key} block>
+                    <Form.Item name={[field.name, "portGroupId"]} rules={[{ required: true }]} style={{ width: "48%" }}>
+                      <Select
+                        showSearch
+                        placeholder="选择运行环境"
+                        optionFilterProp="label"
+                        options={groups.map((group) => ({
+                          value: group.id,
+                          label: `${group.portStart} · ${group.projectName || group.serviceIp || group.runtimeMode}`,
+                        }))}
+                      />
+                    </Form.Item>
+                    <Form.Item name={[field.name, "role"]} style={{ width: "22%" }}>
+                      <Input placeholder="角色" />
+                    </Form.Item>
+                    <Form.Item name={[field.name, "notes"]} style={{ width: "22%" }}>
+                      <Input placeholder="备注" />
+                    </Form.Item>
+                    <Button danger onClick={() => remove(field.name)}>
+                      删除
+                    </Button>
+                  </Space.Compact>
+                ))}
+              </Space>
+            )}
+          </Form.List>
+          <Form.Item name="notes" label="备注" style={{ marginTop: 16 }}>
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          {editingServiceGroup ? (
+            <Button danger onClick={() => void handleDeleteServiceGroup(editingServiceGroup)}>
+              删除服务组
             </Button>
           ) : null}
         </Form>

@@ -13,25 +13,27 @@ import (
 )
 
 const (
-	allocationPortMin      = 10000
-	allocationPortMax      = 59999
-	allocationPortMaxStart = 59990
-	allocationGroupSize    = 10
-	defaultHostStatus      = "active"
-	defaultPortGroupStatus = "available"
-	defaultRuntimeMode     = "dind"
-	defaultSlotKind        = "app"
-	defaultSlotProtocol    = "tcp"
-	defaultSlotStatus      = "planned"
-	defaultAssetKind       = "component"
-	defaultAssetType       = "middleware"
-	defaultAssetProvider   = "manual"
-	defaultAssetVisibility = "unknown"
-	defaultControllability = "unknown"
-	defaultAssetStatus     = "active"
-	defaultRelationType    = "runtime"
-	runtimeModeDind        = "dind"
-	runtimeModeHost        = "host"
+	allocationPortMin         = 10000
+	allocationPortMax         = 59999
+	allocationPortMaxStart    = 59990
+	allocationGroupSize       = 10
+	defaultHostStatus         = "active"
+	defaultPortGroupStatus    = "available"
+	defaultRuntimeMode        = "dind"
+	defaultSlotKind           = "app"
+	defaultSlotProtocol       = "tcp"
+	defaultSlotStatus         = "planned"
+	defaultAssetKind          = "component"
+	defaultAssetType          = "middleware"
+	defaultAssetProvider      = "manual"
+	defaultAssetVisibility    = "unknown"
+	defaultControllability    = "unknown"
+	defaultAssetStatus        = "active"
+	defaultRelationType       = "runtime"
+	defaultServiceGroupKind   = "service"
+	defaultServiceGroupStatus = "active"
+	runtimeModeDind           = "dind"
+	runtimeModeHost           = "host"
 )
 
 type Host = repository.PortsvcHostRecord
@@ -39,6 +41,8 @@ type PortGroup = repository.PortsvcPortGroupRecord
 type PortSlot = repository.PortsvcPortSlotRecord
 type DependencyAsset = repository.PortsvcDependencyAssetRecord
 type PortGroupAssetLink = repository.PortsvcPortGroupAssetLinkRecord
+type ServiceGroup = repository.PortsvcServiceGroupRecord
+type ServiceGroupPortGroup = repository.PortsvcServiceGroupPortGroupRecord
 
 type PortsvcActor struct {
 	OwnerSubject string
@@ -108,11 +112,34 @@ type PortGroupPayload struct {
 	AssetLinks   []PortGroupAssetLinkPayload
 }
 
+type ServiceGroupPortGroupPayload struct {
+	ID          string
+	PortGroupID string
+	Role        string
+	Notes       string
+}
+
+type ServiceGroupPayload struct {
+	OwnerSubject string
+	Name         string
+	Kind         string
+	Status       string
+	Description  string
+	Notes        string
+	PortGroups   []ServiceGroupPortGroupPayload
+}
+
 type PortGroupView struct {
 	PortGroup
 
 	Slots      []PortSlot
 	AssetLinks []PortGroupAssetLink
+}
+
+type ServiceGroupView struct {
+	ServiceGroup
+
+	PortGroups []ServiceGroupPortGroup
 }
 
 type HostListParams struct {
@@ -135,6 +162,13 @@ type DependencyAssetListParams struct {
 	AssetKind    string
 	AssetType    string
 	Provider     string
+	Status       string
+}
+
+type ServiceGroupListParams struct {
+	Actor        PortsvcActor
+	OwnerSubject string
+	Query        string
 	Status       string
 }
 
@@ -298,6 +332,38 @@ func utilNormalizePortGroup(ctx context.Context, store *repository.Store, actor 
 	return group, nil
 }
 
+func utilNormalizeServiceGroup(actor PortsvcActor, current *ServiceGroup, payload ServiceGroupPayload) (*ServiceGroup, error) {
+	ownerSubject := strings.TrimSpace(actor.OwnerSubject)
+	if actor.Admin {
+		if subject := strings.TrimSpace(payload.OwnerSubject); subject != "" {
+			ownerSubject = subject
+		} else if current != nil {
+			ownerSubject = current.OwnerSubject
+		}
+	}
+	if ownerSubject == "" {
+		return nil, utilBadPortsvcRequest("ownerSubject is required")
+	}
+	group := &ServiceGroup{
+		OwnerSubject: ownerSubject,
+		Name:         strings.TrimSpace(payload.Name),
+		Kind:         strings.TrimSpace(payload.Kind),
+		Status:       strings.TrimSpace(payload.Status),
+		Description:  strings.TrimSpace(payload.Description),
+		Notes:        strings.TrimSpace(payload.Notes),
+	}
+	if group.Name == "" {
+		return nil, utilBadPortsvcRequest("service group name is required")
+	}
+	if group.Kind == "" {
+		group.Kind = defaultServiceGroupKind
+	}
+	if group.Status == "" {
+		group.Status = defaultServiceGroupStatus
+	}
+	return group, nil
+}
+
 func utilCurrentPortGroupID(group *PortGroup) string {
 	if group == nil {
 		return ""
@@ -441,6 +507,35 @@ func utilNormalizeAssetLinks(ctx context.Context, store *repository.Store, group
 			RelationType: relationType,
 			Required:     payload.Required,
 			Notes:        strings.TrimSpace(payload.Notes),
+		})
+	}
+	return out, nil
+}
+
+func utilNormalizeServiceGroupPortGroups(ctx context.Context, store *repository.Store, group ServiceGroup, payloads []ServiceGroupPortGroupPayload) ([]ServiceGroupPortGroup, error) {
+	out := make([]ServiceGroupPortGroup, 0, len(payloads))
+	seen := map[string]struct{}{}
+	for _, payload := range payloads {
+		portGroupID := strings.TrimSpace(payload.PortGroupID)
+		if portGroupID == "" {
+			continue
+		}
+		portGroup, err := store.FetchPortsvcPortGroupByID(ctx, portGroupID)
+		if err != nil {
+			return nil, err
+		}
+		if portGroup.OwnerSubject != group.OwnerSubject {
+			return nil, utilBadPortsvcRequest("port group must belong to the service group owner")
+		}
+		if _, exists := seen[portGroupID]; exists {
+			return nil, utilBadPortsvcRequest("port groups must be unique inside a service group")
+		}
+		seen[portGroupID] = struct{}{}
+		out = append(out, ServiceGroupPortGroup{
+			ServiceGroupID: group.ID,
+			PortGroupID:    portGroupID,
+			Role:           strings.TrimSpace(payload.Role),
+			Notes:          strings.TrimSpace(payload.Notes),
 		})
 	}
 	return out, nil

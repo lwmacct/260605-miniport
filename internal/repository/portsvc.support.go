@@ -28,6 +28,13 @@ type PortsvcDependencyAssetListFilter struct {
 	Status       string
 }
 
+type PortsvcServiceGroupListFilter struct {
+	OwnerSubject string
+	Admin        bool
+	Query        string
+	Status       string
+}
+
 type PortsvcHostRecord struct {
 	ID        string
 	Name      string
@@ -106,6 +113,35 @@ type PortsvcPortGroupAssetLinkRecord struct {
 	Notes        string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
+}
+
+type PortsvcServiceGroupRecord struct {
+	ID           string
+	OwnerSubject string
+	OwnerName    string
+	Name         string
+	Kind         string
+	Status       string
+	Description  string
+	Notes        string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
+type PortsvcServiceGroupPortGroupRecord struct {
+	ID             string
+	ServiceGroupID string
+	PortGroupID    string
+	PortGroup      *PortsvcPortGroupRecord
+	Role           string
+	Notes          string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
+
+type PortsvcServiceGroupChildrenRecord struct {
+	ServiceGroupID string
+	PortGroups     []PortsvcServiceGroupPortGroupRecord
 }
 
 type PortsvcPortGroupChildrenRecord struct {
@@ -216,6 +252,40 @@ func utilPortsvcPortGroupAssetLinkRecordFromModel(model *PortGroupAssetLinksMode
 		UpdatedAt:    model.UpdatedAt,
 	}
 	out.Asset = utilPortsvcDependencyAssetRecordFromModel(model.Asset)
+	return out
+}
+
+func utilPortsvcServiceGroupRecordFromModel(model *ServiceGroupsModel) *PortsvcServiceGroupRecord {
+	if model == nil {
+		return nil
+	}
+	return &PortsvcServiceGroupRecord{
+		ID:           model.ID,
+		OwnerSubject: model.OwnerSubject,
+		Name:         model.Name,
+		Kind:         model.Kind,
+		Status:       model.Status,
+		Description:  model.Description,
+		Notes:        model.Notes,
+		CreatedAt:    model.CreatedAt,
+		UpdatedAt:    model.UpdatedAt,
+	}
+}
+
+func utilPortsvcServiceGroupPortGroupRecordFromModel(model *ServiceGroupsPortGroupsModel) *PortsvcServiceGroupPortGroupRecord {
+	if model == nil {
+		return nil
+	}
+	out := &PortsvcServiceGroupPortGroupRecord{
+		ID:             model.ID,
+		ServiceGroupID: model.ServiceGroupID,
+		PortGroupID:    model.PortGroupID,
+		Role:           model.Role,
+		Notes:          model.Notes,
+		CreatedAt:      model.CreatedAt,
+		UpdatedAt:      model.UpdatedAt,
+	}
+	out.PortGroup = utilPortsvcPortGroupRecordFromModel(model.PortGroup)
 	return out
 }
 

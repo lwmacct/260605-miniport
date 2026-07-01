@@ -31,6 +31,12 @@ func RegisterPortsvc(api huma.API, config Config, services Services) {
 	huma.Register(api, huma.Operation{OperationID: "update-dependency-asset", Method: http.MethodPut, Path: "/dependency-assets/{id}", Summary: "Update dependency asset", Tags: []string{"dependency-assets"}}, handler.updateDependencyAsset)
 	huma.Register(api, huma.Operation{OperationID: "delete-dependency-asset", Method: http.MethodDelete, Path: "/dependency-assets/{id}", Summary: "Delete dependency asset", Tags: []string{"dependency-assets"}}, handler.deleteDependencyAsset)
 
+	huma.Register(api, huma.Operation{OperationID: "list-service-groups", Method: http.MethodGet, Path: "/service-groups", Summary: "List service groups", Tags: []string{"service-groups"}}, handler.listServiceGroups)
+	huma.Register(api, huma.Operation{OperationID: "get-service-group", Method: http.MethodGet, Path: "/service-groups/{id}", Summary: "Get service group", Tags: []string{"service-groups"}}, handler.getServiceGroup)
+	huma.Register(api, huma.Operation{OperationID: "create-service-group", Method: http.MethodPost, Path: "/service-groups", Summary: "Create service group", Tags: []string{"service-groups"}}, handler.createServiceGroup)
+	huma.Register(api, huma.Operation{OperationID: "update-service-group", Method: http.MethodPut, Path: "/service-groups/{id}", Summary: "Update service group", Tags: []string{"service-groups"}}, handler.updateServiceGroup)
+	huma.Register(api, huma.Operation{OperationID: "delete-service-group", Method: http.MethodDelete, Path: "/service-groups/{id}", Summary: "Delete service group", Tags: []string{"service-groups"}}, handler.deleteServiceGroup)
+
 	huma.Register(api, huma.Operation{OperationID: "list-port-groups", Method: http.MethodGet, Path: "/port-groups", Summary: "List port groups", Tags: []string{"port-groups"}}, handler.listPortGroups)
 	huma.Register(api, huma.Operation{OperationID: "get-port-group", Method: http.MethodGet, Path: "/port-groups/{id}", Summary: "Get port group", Tags: []string{"port-groups"}}, handler.getPortGroup)
 	huma.Register(api, huma.Operation{OperationID: "create-port-group", Method: http.MethodPost, Path: "/port-groups", Summary: "Create port group", Tags: []string{"port-groups"}}, handler.createPortGroup)
@@ -138,6 +144,70 @@ func (h portsvcHandler) deleteDependencyAsset(ctx context.Context, input *Depend
 		return nil, err
 	}
 	if err := h.services.Portsvc.DeleteDependencyAsset(ctx, actor, input.ID); err != nil {
+		return nil, utilPortsvcAPIError(err)
+	}
+	return &BodyDTO[DeleteDTO]{Body: DeleteDTO{Deleted: true}}, nil
+}
+
+func (h portsvcHandler) listServiceGroups(ctx context.Context, input *ServiceGroupListInputDTO) (*BodyDTO[[]ServiceGroupDTO], error) {
+	actor, err := h.actor(ctx, input.Session)
+	if err != nil {
+		return nil, err
+	}
+	groups, err := h.services.Portsvc.ListServiceGroups(ctx, service.ServiceGroupListParams{
+		Actor:        actor,
+		OwnerSubject: input.OwnerSubject,
+		Query:        input.Query,
+		Status:       input.Status,
+	})
+	if err != nil {
+		return nil, utilPortsvcAPIError(err)
+	}
+	return &BodyDTO[[]ServiceGroupDTO]{Body: ToServiceGroupDTOs(groups)}, nil
+}
+
+func (h portsvcHandler) getServiceGroup(ctx context.Context, input *ServiceGroupInputDTO) (*BodyDTO[ServiceGroupDTO], error) {
+	actor, err := h.actor(ctx, input.Session)
+	if err != nil {
+		return nil, err
+	}
+	group, err := h.services.Portsvc.GetServiceGroup(ctx, actor, input.ID)
+	if err != nil {
+		return nil, utilPortsvcAPIError(err)
+	}
+	return &BodyDTO[ServiceGroupDTO]{Body: ToServiceGroupDTO(*group)}, nil
+}
+
+func (h portsvcHandler) createServiceGroup(ctx context.Context, input *ServiceGroupBodyInputDTO) (*BodyDTO[ServiceGroupDTO], error) {
+	actor, err := h.actor(ctx, input.Session)
+	if err != nil {
+		return nil, err
+	}
+	group, err := h.services.Portsvc.CreateServiceGroup(ctx, actor, ToServiceGroupPayload(input.Body))
+	if err != nil {
+		return nil, utilPortsvcAPIError(err)
+	}
+	return &BodyDTO[ServiceGroupDTO]{Body: ToServiceGroupDTO(*group)}, nil
+}
+
+func (h portsvcHandler) updateServiceGroup(ctx context.Context, input *ServiceGroupUpdateInputDTO) (*BodyDTO[ServiceGroupDTO], error) {
+	actor, err := h.actor(ctx, input.Session)
+	if err != nil {
+		return nil, err
+	}
+	group, err := h.services.Portsvc.UpdateServiceGroup(ctx, actor, input.ID, ToServiceGroupPayload(input.Body))
+	if err != nil {
+		return nil, utilPortsvcAPIError(err)
+	}
+	return &BodyDTO[ServiceGroupDTO]{Body: ToServiceGroupDTO(*group)}, nil
+}
+
+func (h portsvcHandler) deleteServiceGroup(ctx context.Context, input *ServiceGroupInputDTO) (*BodyDTO[DeleteDTO], error) {
+	actor, err := h.actor(ctx, input.Session)
+	if err != nil {
+		return nil, err
+	}
+	if err := h.services.Portsvc.DeleteServiceGroup(ctx, actor, input.ID); err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
 	return &BodyDTO[DeleteDTO]{Body: DeleteDTO{Deleted: true}}, nil

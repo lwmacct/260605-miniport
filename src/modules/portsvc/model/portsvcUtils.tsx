@@ -1,6 +1,6 @@
 import { Tag } from "antd";
 import { statusOptions } from "./portsvcConstants";
-import type { DependencyAssetItem, PortGroupItem } from "./portsvcTypes";
+import type { DependencyAssetItem, PortGroupItem, ServiceGroupItem } from "./portsvcTypes";
 
 export function statusTag(status: string) {
   const colorMap: Record<string, string> = {
@@ -11,7 +11,10 @@ export function statusTag(status: string) {
     running: "green",
     stopped: "default",
   };
-  const label = status === "available" ? "可用" : (statusOptions.find((item) => item.value === status)?.label ?? status);
+  const labelMap: Record<string, string> = {
+    active: "运行中",
+  };
+  const label = labelMap[status] ?? (statusOptions.find((item) => item.value === status)?.label ?? status);
   return <Tag color={colorMap[status] ?? "default"}>{label}</Tag>;
 }
 
@@ -30,7 +33,7 @@ export function portRange(group?: Pick<PortGroupItem, "portStart" | "portEnd"> |
   return group ? `${group.portStart}-${group.portEnd}` : "-";
 }
 
-export function buildStats(groups: PortGroupItem[], hosts: unknown[], assets: DependencyAssetItem[]) {
+export function buildStats(groups: PortGroupItem[], hosts: unknown[], assets: DependencyAssetItem[], serviceGroups: ServiceGroupItem[] = []) {
   return {
     groups: groups.length,
     hosts: hosts.length,
@@ -39,5 +42,6 @@ export function buildStats(groups: PortGroupItem[], hosts: unknown[], assets: De
     slots: groups.reduce((sum, item) => sum + item.slots.length, 0),
     dependencyAssets: assets.length,
     assetLinks: groups.reduce((sum, item) => sum + item.assetLinks.length, 0),
+    serviceGroups: serviceGroups.length,
   };
 }

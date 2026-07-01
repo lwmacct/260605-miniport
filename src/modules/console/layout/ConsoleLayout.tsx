@@ -2,24 +2,40 @@ import {
   ApiOutlined,
   AppstoreOutlined,
   ClusterOutlined,
+  CloudServerOutlined,
   PartitionOutlined,
+  ShareAltOutlined,
 } from "@ant-design/icons";
 import { WorkbenchSectionLayout } from "@lwmacct/260627-antd-workbench";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
-type ConsoleSectionKey = "dependencies" | "overview" | "projects" | "services";
+type ConsoleSectionKey = "dependencies" | "hosts" | "overview" | "port-groups" | "projects" | "service-groups";
 
-const sectionItems = [
-  { key: "overview", label: "端口总览", icon: <AppstoreOutlined /> },
-  { key: "services", label: "端口分配", icon: <PartitionOutlined /> },
-  { key: "projects", label: "项目服务", icon: <ClusterOutlined /> },
-  { key: "dependencies", label: "依赖与仓库", icon: <ApiOutlined /> },
+const overviewItems = [
+  { key: "overview", label: "资源总览", icon: <AppstoreOutlined /> },
 ] as const;
 
-const sectionKeys = new Set<ConsoleSectionKey>(sectionItems.map((item) => item.key));
+const resourceItems = [
+  { key: "hosts", label: "宿主机", icon: <CloudServerOutlined /> },
+  { key: "port-groups", label: "端口组", icon: <PartitionOutlined /> },
+  { key: "projects", label: "运行环境", icon: <ClusterOutlined /> },
+  { key: "service-groups", label: "服务组", icon: <ShareAltOutlined /> },
+] as const;
+
+const dependencyItems = [
+  { key: "dependencies", label: "依赖资产", icon: <ApiOutlined /> },
+] as const;
+
+const sectionKeys = new Set<ConsoleSectionKey>(
+  [...overviewItems, ...resourceItems, ...dependencyItems].map((item) => item.key),
+);
 
 function activeSection(pathname: string): ConsoleSectionKey {
   const key = pathname.split("/")[2];
+
+  if (key === "services") {
+    return "projects";
+  }
 
   if (sectionKeys.has(key as ConsoleSectionKey)) {
     return key as ConsoleSectionKey;
@@ -38,9 +54,21 @@ export function ConsoleLayout() {
       nav={[
         {
           type: "group",
-          key: "operations",
-          label: "Console",
-          children: [...sectionItems],
+          key: "overview-group",
+          label: "总览",
+          children: [...overviewItems],
+        },
+        {
+          type: "group",
+          key: "resource-management",
+          label: "资源管理",
+          children: [...resourceItems],
+        },
+        {
+          type: "group",
+          key: "dependency-management",
+          label: "依赖管理",
+          children: [...dependencyItems],
         },
       ]}
       onSelect={(key) => navigate(`/console/${key}`)}

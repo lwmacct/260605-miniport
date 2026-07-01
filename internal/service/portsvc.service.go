@@ -134,6 +134,104 @@ func (s *PortsvcService) DeleteDependencyAsset(ctx context.Context, actor Portsv
 	return nil
 }
 
+func (s *PortsvcService) ListServiceGroups(ctx context.Context, params ServiceGroupListParams) ([]ServiceGroupView, error) {
+	groups, err := s.store.ListPortsvcServiceGroups(ctx, repository.PortsvcServiceGroupListFilter{
+		OwnerSubject: utilVisibleOwnerSubject(params.Actor, params.OwnerSubject),
+		Admin:        params.Actor.Admin,
+		Query:        params.Query,
+		Status:       params.Status,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return s.buildServiceGroupViews(ctx, groups)
+}
+
+func (s *PortsvcService) GetServiceGroup(ctx context.Context, actor PortsvcActor, id string) (*ServiceGroupView, error) {
+	group, err := s.store.FetchPortsvcServiceGroupByID(ctx, id)
+	if err != nil {
+		return nil, utilWrapNotFound(err, "service group not found")
+	}
+	if !actor.Admin && group.OwnerSubject != actor.OwnerSubject {
+		return nil, utilPortsvcNotFound("service group not found")
+	}
+	views, err := s.buildServiceGroupViews(ctx, []ServiceGroup{*group})
+	if err != nil {
+		return nil, err
+	}
+	return &views[0], nil
+}
+
+func (s *PortsvcService) CreateServiceGroup(ctx context.Context, actor PortsvcActor, payload ServiceGroupPayload) (*ServiceGroupView, error) {
+	group, err := utilNormalizeServiceGroup(actor, nil, payload)
+	if err != nil {
+		return nil, err
+	}
+	if principalErr := utilResolveActivePrincipal(ctx, s.directory, group.OwnerSubject); principalErr != nil {
+		return nil, principalErr
+	}
+	var createdID string
+	now := utilNowUTC()
+	group.CreatedAt = now
+	group.UpdatedAt = now
+	err = s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
+		tx := &PortsvcService{store: txStore, directory: s.directory}
+		created, createErr := tx.store.CreatePortsvcServiceGroup(ctx, group)
+		if createErr != nil {
+			return createErr
+		}
+		createdID = created.ID
+		if childErr := tx.replaceServiceGroupPortGroups(ctx, *created, payload, now); childErr != nil {
+			return childErr
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return s.GetServiceGroup(ctx, PortsvcActor{OwnerSubject: group.OwnerSubject, Admin: true}, createdID)
+}
+
+func (s *PortsvcService) UpdateServiceGroup(ctx context.Context, actor PortsvcActor, id string, payload ServiceGroupPayload) (*ServiceGroupView, error) {
+	current, err := s.store.FetchPortsvcServiceGroupByID(ctx, id)
+	if err != nil {
+		return nil, utilWrapNotFound(err, "service group not found")
+	}
+	if !actor.Admin && current.OwnerSubject != actor.OwnerSubject {
+		return nil, utilPortsvcNotFound("service group not found")
+	}
+	group, err := utilNormalizeServiceGroup(actor, current, payload)
+	if err != nil {
+		return nil, err
+	}
+	if principalErr := utilResolveActivePrincipal(ctx, s.directory, group.OwnerSubject); principalErr != nil {
+		return nil, principalErr
+	}
+	group.UpdatedAt = utilNowUTC()
+	err = s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
+		tx := &PortsvcService{store: txStore, directory: s.directory}
+		updated, updateErr := tx.store.UpdatePortsvcServiceGroup(ctx, id, group)
+		if updateErr != nil {
+			return updateErr
+		}
+		if childErr := tx.replaceServiceGroupPortGroups(ctx, *updated, payload, group.UpdatedAt); childErr != nil {
+			return childErr
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return s.GetServiceGroup(ctx, PortsvcActor{OwnerSubject: group.OwnerSubject, Admin: true}, id)
+}
+
+func (s *PortsvcService) DeleteServiceGroup(ctx context.Context, actor PortsvcActor, id string) error {
+	if err := s.store.DeletePortsvcServiceGroup(ctx, id, actor.OwnerSubject, actor.Admin); err != nil {
+		return utilWrapNotFound(err, "service group not found")
+	}
+	return nil
+}
+
 func (s *PortsvcService) ListPortGroups(ctx context.Context, params PortGroupListParams) ([]PortGroupView, error) {
 	groups, err := s.store.ListPortsvcPortGroups(ctx, repository.PortsvcPortGroupListFilter{
 		OwnerSubject: utilVisibleOwnerSubject(params.Actor, params.OwnerSubject),
@@ -332,6 +430,49 @@ func (s *PortsvcService) ExportPortGroupsCSV(ctx context.Context, params PortGro
 	return utilCSVBytes(records)
 }
 
+func (s *PortsvcService) buildServiceGroupViews(ctx context.Context, groups []ServiceGroup) ([]ServiceGroupView, error) {
+	views := make([]ServiceGroupView, len(groups))
+	if len(groups) == 0 {
+		return views, nil
+	}
+	ids := make([]string, len(groups))
+	for idx, group := range groups {
+		ids[idx] = group.ID
+		views[idx] = ServiceGroupView{ServiceGroup: group}
+	}
+	childrenList, err := s.store.ListPortsvcServiceGroupChildrenByGroupIDs(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+	children := make(map[string]repository.PortsvcServiceGroupChildrenRecord, len(childrenList))
+	for _, child := range childrenList {
+		children[child.ServiceGroupID] = child
+	}
+	for idx := range views {
+		child := children[views[idx].ID]
+		views[idx].PortGroups = child.PortGroups
+	}
+	if err := s.attachServiceGroupOwnerNames(ctx, views); err != nil {
+		return nil, err
+	}
+	return views, nil
+}
+
+func (s *PortsvcService) replaceServiceGroupPortGroups(ctx context.Context, group ServiceGroup, payload ServiceGroupPayload, now time.Time) error {
+	portGroups, err := utilNormalizeServiceGroupPortGroups(ctx, s.store, group, payload.PortGroups)
+	if err != nil {
+		return err
+	}
+	if err := s.store.ReplacePortsvcServiceGroupPortGroups(ctx, group.ID); err != nil {
+		return err
+	}
+	for idx := range portGroups {
+		portGroups[idx].CreatedAt = now
+		portGroups[idx].UpdatedAt = now
+	}
+	return s.store.AddPortsvcServiceGroupPortGroups(ctx, portGroups)
+}
+
 func (s *PortsvcService) buildPortGroupViews(ctx context.Context, groups []PortGroup) ([]PortGroupView, error) {
 	views := make([]PortGroupView, len(groups))
 	if len(groups) == 0 {
@@ -388,6 +529,24 @@ func (s *PortsvcService) replacePortGroupChildren(ctx context.Context, group Por
 }
 
 func (s *PortsvcService) attachPortGroupOwnerNames(ctx context.Context, views []PortGroupView) error {
+	subjects := make([]string, 0, len(views))
+	for _, view := range views {
+		subjects = append(subjects, view.OwnerSubject)
+	}
+	names, err := s.ownerNames(ctx, subjects)
+	if err != nil {
+		return err
+	}
+	for idx := range views {
+		views[idx].OwnerName = names[views[idx].OwnerSubject]
+		if views[idx].OwnerName == "" {
+			views[idx].OwnerName = views[idx].OwnerSubject
+		}
+	}
+	return nil
+}
+
+func (s *PortsvcService) attachServiceGroupOwnerNames(ctx context.Context, views []ServiceGroupView) error {
 	subjects := make([]string, 0, len(views))
 	for _, view := range views {
 		subjects = append(subjects, view.OwnerSubject)

@@ -37,16 +37,10 @@ export function OverviewSection({
           <Card><Statistic title="依赖资产" value={stats.dependencyAssets} /></Card>
         </Col>
         <Col xs={24} sm={12} xl={6}>
-          <Card><Statistic title="资产关系" value={stats.assetLinks} /></Card>
+          <Card><Statistic title="服务组" value={stats.serviceGroups} /></Card>
         </Col>
         <Col xs={24} sm={12} xl={6}>
-          <Card>
-            <Statistic
-              title="端口占用"
-              value={stats.slots}
-              suffix={`/ ${stats.groups * 10}`}
-            />
-          </Card>
+          <Card><Statistic title="资产关系" value={stats.assetLinks} /></Card>
         </Col>
       </Row>
       {stats.groups === 0 ? (

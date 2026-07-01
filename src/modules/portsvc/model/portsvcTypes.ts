@@ -57,6 +57,27 @@ export type PortGroupAssetLinkItem = {
   notes: string;
 };
 
+export type ServiceGroupPortGroupItem = {
+  id?: string;
+  serviceGroupId?: string;
+  portGroupId: string;
+  portGroup?: PortGroupItem;
+  role: string;
+  notes: string;
+};
+
+export type ServiceGroupItem = {
+  id?: string;
+  ownerSubject?: string;
+  ownerName?: string;
+  name: string;
+  kind: string;
+  status: string;
+  description: string;
+  notes: string;
+  portGroups: ServiceGroupPortGroupItem[];
+};
+
 export type PortGroupItem = {
   id: string;
   ownerSubject: string;
@@ -85,11 +106,16 @@ export type HostForm = Partial<HostItem> & {
   name?: string;
 };
 
+export type ServiceGroupForm = Partial<ServiceGroupItem> & {
+  name?: string;
+};
+
 export type PortsvcSnapshot = {
   meta: Meta;
   hosts: HostItem[];
   portGroups: PortGroupItem[];
   dependencyAssets: DependencyAssetItem[];
+  serviceGroups: ServiceGroupItem[];
 };
 
 export type PortsvcQuery = {
@@ -107,4 +133,5 @@ export type AppStats = {
   slots: number;
   dependencyAssets: number;
   assetLinks: number;
+  serviceGroups: number;
 };

@@ -238,6 +238,123 @@ func (s *Store) DeletePortsvcDependencyAsset(ctx context.Context, id string, own
 	return nil
 }
 
+func (s *Store) ListPortsvcServiceGroups(ctx context.Context, params PortsvcServiceGroupListFilter) ([]PortsvcServiceGroupRecord, error) {
+	var rows []ServiceGroupsModel
+	query := s.db.NewSelect().Model(&rows)
+	if !params.Admin {
+		query = query.Where("service_group.owner_subject = ?", params.OwnerSubject)
+	} else if params.OwnerSubject != "" {
+		query = query.Where("service_group.owner_subject = ?", params.OwnerSubject)
+	}
+	if status := utilCompactString(params.Status); status != "" {
+		query = query.Where("service_group.status = ?", status)
+	}
+	if keyword := utilCompactString(params.Query); keyword != "" {
+		pattern := utilSearchPattern(keyword)
+		query = query.Where(
+			utilJoinSearchClauses([]string{
+				"service_group.name",
+				"service_group.kind",
+				"service_group.description",
+				"service_group.notes",
+			}),
+			utilJoinSearchArgs(pattern, 4)...,
+		)
+	}
+	query = query.Order("service_group.name ASC", "service_group.id ASC")
+	if err := query.Scan(ctx); err != nil {
+		return nil, err
+	}
+	out := make([]PortsvcServiceGroupRecord, 0, len(rows))
+	for idx := range rows {
+		out = append(out, *utilPortsvcServiceGroupRecordFromModel(&rows[idx]))
+	}
+	return out, nil
+}
+
+func (s *Store) FetchPortsvcServiceGroupByID(ctx context.Context, id string) (*PortsvcServiceGroupRecord, error) {
+	row := new(ServiceGroupsModel)
+	err := s.db.NewSelect().Model(row).Where("service_group.id = ?", id).Scan(ctx)
+	if err != nil {
+		return nil, WrapNotFound(err)
+	}
+	return utilPortsvcServiceGroupRecordFromModel(row), nil
+}
+
+func (s *Store) CreatePortsvcServiceGroup(ctx context.Context, group *PortsvcServiceGroupRecord) (*PortsvcServiceGroupRecord, error) {
+	row := &ServiceGroupsModel{
+		ID:           idgen.NewUUID7(),
+		OwnerSubject: group.OwnerSubject,
+		Name:         group.Name,
+		Kind:         group.Kind,
+		Status:       group.Status,
+		Description:  group.Description,
+		Notes:        group.Notes,
+		CreatedAt:    group.CreatedAt,
+		UpdatedAt:    group.UpdatedAt,
+	}
+	if _, err := s.db.NewInsert().Model(row).Exec(ctx); err != nil {
+		return nil, err
+	}
+	return utilPortsvcServiceGroupRecordFromModel(row), nil
+}
+
+func (s *Store) UpdatePortsvcServiceGroup(ctx context.Context, id string, group *PortsvcServiceGroupRecord) (*PortsvcServiceGroupRecord, error) {
+	row := &ServiceGroupsModel{
+		ID:           id,
+		OwnerSubject: group.OwnerSubject,
+		Name:         group.Name,
+		Kind:         group.Kind,
+		Status:       group.Status,
+		Description:  group.Description,
+		Notes:        group.Notes,
+		UpdatedAt:    group.UpdatedAt,
+	}
+	res, err := s.db.NewUpdate().
+		Model(row).
+		Column("owner_subject", "name", "kind", "status", "description", "notes", "updated_at").
+		Where("id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return nil, err
+	}
+	if rows == 0 {
+		return nil, ErrNotFound
+	}
+	return s.FetchPortsvcServiceGroupByID(ctx, id)
+}
+
+func (s *Store) DeletePortsvcServiceGroup(ctx context.Context, id string, ownerSubject string, admin bool) error {
+	query := s.db.NewDelete().Model((*ServiceGroupsModel)(nil)).Where("id = ?", id)
+	if !admin {
+		query = query.Where("owner_subject = ?", ownerSubject)
+	}
+	res, err := query.Exec(ctx)
+	if err != nil {
+		return err
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+func (s *Store) CountPortsvcServiceGroupsByIDs(ctx context.Context, ids []string, ownerSubject string, admin bool) (int, error) {
+	query := s.db.NewSelect().Model((*ServiceGroupsModel)(nil)).Where("id IN (?)", bun.List(ids))
+	if !admin {
+		query = query.Where("owner_subject = ?", ownerSubject)
+	}
+	return query.Count(ctx)
+}
+
 func (s *Store) ListPortsvcPortGroups(ctx context.Context, params PortsvcPortGroupListFilter) ([]PortsvcPortGroupRecord, error) {
 	var rows []PortAllocationsModel
 	query := s.db.NewSelect().Model(&rows).Relation("Host")
@@ -395,6 +512,61 @@ func (s *Store) ListPortsvcPortGroupStartsByOwner(ctx context.Context, ownerSubj
 		out = append(out, row.PortStart)
 	}
 	return out, nil
+}
+
+func (s *Store) ListPortsvcServiceGroupChildrenByGroupIDs(ctx context.Context, ids []string) ([]PortsvcServiceGroupChildrenRecord, error) {
+	children := make(map[string]PortsvcServiceGroupChildrenRecord, len(ids))
+	for _, id := range ids {
+		children[id] = PortsvcServiceGroupChildrenRecord{ServiceGroupID: id}
+	}
+
+	var rows []ServiceGroupsPortGroupsModel
+	if err := s.db.NewSelect().
+		Model(&rows).
+		Relation("PortGroup").
+		Relation("PortGroup.Host").
+		Where("service_group_port_group.service_group_id IN (?)", bun.List(ids)).
+		Order("port_group.port_start ASC").
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+	for idx := range rows {
+		record := *utilPortsvcServiceGroupPortGroupRecordFromModel(&rows[idx])
+		child := children[record.ServiceGroupID]
+		child.PortGroups = append(child.PortGroups, record)
+		children[record.ServiceGroupID] = child
+	}
+
+	out := make([]PortsvcServiceGroupChildrenRecord, 0, len(children))
+	for _, id := range ids {
+		out = append(out, children[id])
+	}
+	return out, nil
+}
+
+func (s *Store) ReplacePortsvcServiceGroupPortGroups(ctx context.Context, serviceGroupID string) error {
+	_, err := s.db.NewDelete().Model((*ServiceGroupsPortGroupsModel)(nil)).Where("service_group_id = ?", serviceGroupID).Exec(ctx)
+	return err
+}
+
+func (s *Store) AddPortsvcServiceGroupPortGroups(ctx context.Context, groups []PortsvcServiceGroupPortGroupRecord) error {
+	if len(groups) == 0 {
+		return nil
+	}
+	rows := make([]ServiceGroupsPortGroupsModel, 0, len(groups))
+	for _, group := range groups {
+		rows = append(rows, ServiceGroupsPortGroupsModel{
+			ID:             idgen.NewUUID7(),
+			ServiceGroupID: group.ServiceGroupID,
+			PortGroupID:    group.PortGroupID,
+			Role:           group.Role,
+			Notes:          group.Notes,
+			CreatedAt:      group.CreatedAt,
+			UpdatedAt:      group.UpdatedAt,
+		})
+	}
+	_, err := s.db.NewInsert().Model(&rows).Exec(ctx)
+	return err
 }
 
 func (s *Store) FetchPortsvcPortSlotByID(ctx context.Context, id string) (*PortsvcPortSlotRecord, error) {

@@ -55,6 +55,22 @@ func ToPortGroupPayload(input PortGroupPayloadDTO) service.PortGroupPayload {
 	return out
 }
 
+func ToServiceGroupPayload(input ServiceGroupPayloadDTO) service.ServiceGroupPayload {
+	out := service.ServiceGroupPayload{
+		OwnerSubject: input.OwnerSubject,
+		Name:         input.Name,
+		Kind:         input.Kind,
+		Status:       input.Status,
+		Description:  input.Description,
+		Notes:        input.Notes,
+		PortGroups:   make([]service.ServiceGroupPortGroupPayload, 0, len(input.PortGroups)),
+	}
+	for _, portGroup := range input.PortGroups {
+		out.PortGroups = append(out.PortGroups, service.ServiceGroupPortGroupPayload(portGroup))
+	}
+	return out
+}
+
 func ToHostDTO(host service.Host) HostDTO {
 	return HostDTO{
 		ID:        host.ID,
@@ -191,6 +207,55 @@ func ToPortGroupDTOs(groups []service.PortGroupView) []PortGroupDTO {
 	out := make([]PortGroupDTO, 0, len(groups))
 	for _, group := range groups {
 		out = append(out, ToPortGroupDTO(group))
+	}
+	return out
+}
+
+func ToServiceGroupPortGroupDTO(group service.ServiceGroupPortGroup) ServiceGroupPortGroupDTO {
+	out := ServiceGroupPortGroupDTO{
+		ID:             group.ID,
+		ServiceGroupID: group.ServiceGroupID,
+		PortGroupID:    group.PortGroupID,
+		Role:           group.Role,
+		Notes:          group.Notes,
+		CreatedAt:      utilHTTPTime(group.CreatedAt),
+		UpdatedAt:      utilHTTPTime(group.UpdatedAt),
+	}
+	if group.PortGroup != nil {
+		portGroup := ToPortGroupDTO(service.PortGroupView{PortGroup: *group.PortGroup})
+		out.PortGroup = &portGroup
+	}
+	return out
+}
+
+func ToServiceGroupPortGroupDTOs(groups []service.ServiceGroupPortGroup) []ServiceGroupPortGroupDTO {
+	out := make([]ServiceGroupPortGroupDTO, 0, len(groups))
+	for _, group := range groups {
+		out = append(out, ToServiceGroupPortGroupDTO(group))
+	}
+	return out
+}
+
+func ToServiceGroupDTO(group service.ServiceGroupView) ServiceGroupDTO {
+	return ServiceGroupDTO{
+		ID:           group.ID,
+		OwnerSubject: group.OwnerSubject,
+		OwnerName:    group.OwnerName,
+		Name:         group.Name,
+		Kind:         group.Kind,
+		Status:       group.Status,
+		Description:  group.Description,
+		Notes:        group.Notes,
+		CreatedAt:    utilHTTPTime(group.CreatedAt),
+		UpdatedAt:    utilHTTPTime(group.UpdatedAt),
+		PortGroups:   ToServiceGroupPortGroupDTOs(group.PortGroups),
+	}
+}
+
+func ToServiceGroupDTOs(groups []service.ServiceGroupView) []ServiceGroupDTO {
+	out := make([]ServiceGroupDTO, 0, len(groups))
+	for _, group := range groups {
+		out = append(out, ToServiceGroupDTO(group))
 	}
 	return out
 }
