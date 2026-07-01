@@ -6,14 +6,14 @@ import type { ReactNode } from "react";
 import { useAuthStateQuery } from "@/modules/auth";
 import { usePortsvcQuery, portsvcKeys } from "../model/portsvcQueries";
 import {
-  exportServicesURL,
-  removePortAllocation,
-  removeService,
-  savePortAllocation,
-  saveService,
+  exportPortGroupsURL,
+  removeHost,
+  removePortGroup,
+  saveHost,
+  savePortGroup,
 } from "../api/portsvcApi";
 import { statusOptions } from "../model/portsvcConstants";
-import type { PortsvcQuery, PortAllocation, PortAllocationForm, ServiceForm, ServiceItem } from "../model/portsvcTypes";
+import type { HostForm, HostItem, PortGroupForm, PortGroupItem, PortsvcQuery } from "../model/portsvcTypes";
 import { buildStats } from "../model/portsvcUtils";
 import { OverviewSection } from "./OverviewSection";
 import { ServicesSection } from "./ServicesSection";
@@ -35,101 +35,70 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
   const authState = useAuthStateQuery();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>();
-  const [sort, setSort] = useState<string>("name");
+  const [sort, setSort] = useState<string>("port");
   const [saving, setSaving] = useState(false);
-  const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
-  const [editingService, setEditingService] = useState<ServiceItem | null>(null);
-  const [serviceDrawerOpen, setServiceDrawerOpen] = useState(false);
-  const [portModalOpen, setPortModalOpen] = useState(false);
-  const [editingPort, setEditingPort] = useState<PortAllocation | null>(null);
-  const [serviceForm] = Form.useForm<ServiceForm>();
-  const [portForm] = Form.useForm<PortAllocationForm>();
+  const [selectedGroup, setSelectedGroup] = useState<PortGroupItem | null>(null);
+  const [editingGroup, setEditingGroup] = useState<PortGroupItem | null>(null);
+  const [groupDrawerOpen, setGroupDrawerOpen] = useState(false);
+  const [hostModalOpen, setHostModalOpen] = useState(false);
+  const [editingHost, setEditingHost] = useState<HostItem | null>(null);
+  const [groupForm] = Form.useForm<PortGroupForm>();
+  const [hostForm] = Form.useForm<HostForm>();
 
   const query = useMemo<PortsvcQuery>(() => {
     return {
-      serviceQuery: search.trim(),
-      serviceSort: sort,
+      query: search.trim(),
+      sort,
       status,
     };
   }, [search, sort, status]);
 
   const portsvcQuery = usePortsvcQuery(query);
   const snapshot = portsvcQuery.data;
-  const services: ServiceItem[] = snapshot?.services ?? [];
-  const ports: PortAllocation[] = snapshot?.ports ?? [];
+  const groups: PortGroupItem[] = snapshot?.portGroups ?? [];
+  const hosts: HostItem[] = snapshot?.hosts ?? [];
   const meta = snapshot?.meta;
   const canManage = Boolean(authState.data?.session.authenticated);
-  const stats = useMemo(() => buildStats(services, ports), [ports, services]);
+  const stats = useMemo(() => buildStats(groups, hosts), [groups, hosts]);
 
   useEffect(() => {
-    setSelectedService(null);
+    setSelectedGroup(null);
   }, [query]);
 
   async function refresh() {
     await queryClient.invalidateQueries({ queryKey: portsvcKeys.snapshot(query) });
   }
 
-  function openCreateService() {
-    setEditingService(null);
-    serviceForm.resetFields();
-    serviceForm.setFieldsValue({
-      status: "planned",
+  function openCreateGroup() {
+    setEditingGroup(null);
+    groupForm.resetFields();
+    groupForm.setFieldsValue({
+      runtimeMode: "dind",
+      status: "available",
+      slots: [],
       repositories: [],
       dependencies: [],
     });
-    setServiceDrawerOpen(true);
+    setGroupDrawerOpen(true);
   }
 
-  function openEditService(service: ServiceItem) {
-    setEditingService(service);
-    serviceForm.setFieldsValue({
-      ...service,
-      dependencies: service.dependencies,
-      repositories: service.repositories,
+  function openEditGroup(group: PortGroupItem) {
+    setEditingGroup(group);
+    groupForm.setFieldsValue({
+      ...group,
+      dependencies: group.dependencies,
+      repositories: group.repositories,
+      slots: group.slots,
     });
-    setServiceDrawerOpen(true);
+    setGroupDrawerOpen(true);
   }
 
-  async function handleSaveService(values: ServiceForm) {
+  async function handleSaveGroup(values: PortGroupForm) {
     setSaving(true);
     try {
-      await saveService(values, editingService);
-      message.success("服务已保存");
-      setServiceDrawerOpen(false);
-      await refresh();
-    } catch (error) {
-      message.error(error instanceof Error ? error.message : "保存失败");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleDeleteService(service: ServiceItem) {
-    await removeService(service);
-    message.success("服务已删除");
-    setSelectedService(null);
-    await refresh();
-  }
-
-  function openCreatePort() {
-    setEditingPort(null);
-    portForm.resetFields();
-    portForm.setFieldsValue({ status: "available" });
-    setPortModalOpen(true);
-  }
-
-  function openEditPort(port: PortAllocation) {
-    setEditingPort(port);
-    portForm.setFieldsValue(port);
-    setPortModalOpen(true);
-  }
-
-  async function handleSavePort(values: PortAllocationForm) {
-    setSaving(true);
-    try {
-      await savePortAllocation(values, editingPort);
+      await savePortGroup(values, editingGroup);
       message.success("端口组已保存");
-      setPortModalOpen(false);
+      setGroupDrawerOpen(false);
       await refresh();
     } catch (error) {
       message.error(error instanceof Error ? error.message : "保存失败");
@@ -138,15 +107,50 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
     }
   }
 
-  async function handleDeletePort(port: PortAllocation) {
-    await removePortAllocation(port);
+  async function handleDeleteGroup(group: PortGroupItem) {
+    await removePortGroup(group);
     message.success("端口组已删除");
+    setSelectedGroup(null);
     await refresh();
   }
 
-  const exportURL = exportServicesURL(query);
+  function openCreateHost() {
+    setEditingHost(null);
+    hostForm.resetFields();
+    hostForm.setFieldsValue({ status: "active" });
+    setHostModalOpen(true);
+  }
+
+  function openEditHost(host: HostItem) {
+    setEditingHost(host);
+    hostForm.setFieldsValue(host);
+    setHostModalOpen(true);
+  }
+
+  async function handleSaveHost(values: HostForm) {
+    setSaving(true);
+    try {
+      await saveHost(values, editingHost);
+      message.success("宿主机已保存");
+      setHostModalOpen(false);
+      await refresh();
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : "保存失败");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDeleteHost(host: HostItem) {
+    await removeHost(host);
+    message.success("宿主机已删除");
+    setHostModalOpen(false);
+    await refresh();
+  }
+
+  const exportURL = exportPortGroupsURL(query);
   const sortOptions = [
-    { label: "名称", value: "name" },
+    { label: "端口", value: "port" },
     { label: "项目", value: "project" },
     { label: "状态", value: "status" },
     { label: "最近更新", value: "updated_desc" },
@@ -167,28 +171,27 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
         content = (
           <ServicesSection
             canManage={canManage}
-            onDeleteService={(service) => void handleDeleteService(service)}
-            onEditService={openEditService}
-            onSelectService={setSelectedService}
-            services={services}
+            groups={groups}
+            onDeleteGroup={(group) => void handleDeleteGroup(group)}
+            onEditGroup={openEditGroup}
+            onSelectGroup={setSelectedGroup}
           />
         );
         break;
       case "projects":
-        content = <ProjectServicesSection onSelectService={setSelectedService} services={services} />;
+        content = <ProjectServicesSection groups={groups} onSelectGroup={setSelectedGroup} />;
         break;
       case "dependencies":
-        content = <DependenciesSection services={services} stats={stats} />;
+        content = <DependenciesSection groups={groups} stats={stats} />;
         break;
       default:
         content = (
           <OverviewSection
             canManage={canManage}
-            onCreateService={openCreateService}
-            onEditPort={openEditPort}
-            onSelectService={setSelectedService}
-            ports={ports}
-            services={services}
+            groups={groups}
+            onCreateGroup={openCreateGroup}
+            onEditGroup={openEditGroup}
+            onSelectGroup={setSelectedGroup}
             stats={stats}
           />
         );
@@ -215,7 +218,7 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
             <Input
               prefix={<SearchOutlined />}
               className="page-search"
-              placeholder="搜索服务、项目、DIND IP、仓库"
+              placeholder="搜索项目、服务 IP、宿主机、仓库"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
@@ -234,11 +237,11 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
             <Button icon={<DownloadOutlined />} href={exportURL} target="_blank">
               导出 CSV
             </Button>
-            <Button icon={<PlusOutlined />} onClick={openCreatePort} disabled={!canManage}>
-              端口组
+            <Button icon={<PlusOutlined />} onClick={openCreateHost} disabled={!canManage}>
+              宿主机
             </Button>
-            <Button type="primary" icon={<PlusOutlined />} onClick={openCreateService} disabled={!canManage}>
-              服务
+            <Button type="primary" icon={<PlusOutlined />} onClick={openCreateGroup} disabled={!canManage}>
+              端口组
             </Button>
           </Space>
         </Flex>
@@ -248,44 +251,57 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
 
       <ServiceDetailDrawer
         canManage={canManage}
-        service={selectedService}
-        onClose={() => setSelectedService(null)}
-        onDelete={handleDeleteService}
-        onEdit={(service) => {
-          setSelectedService(null);
-          openEditService(service);
+        group={selectedGroup}
+        onClose={() => setSelectedGroup(null)}
+        onDelete={handleDeleteGroup}
+        onEdit={(group) => {
+          setSelectedGroup(null);
+          openEditGroup(group);
         }}
       />
       <ServiceDrawer
-        editingService={editingService}
-        form={serviceForm}
-        onClose={() => setServiceDrawerOpen(false)}
-        onSave={(values) => void handleSaveService(values)}
-        open={serviceDrawerOpen}
-        ports={ports}
+        editingGroup={editingGroup}
+        form={groupForm}
+        hosts={hosts}
+        onClose={() => setGroupDrawerOpen(false)}
+        onSave={(values) => void handleSaveGroup(values)}
+        open={groupDrawerOpen}
         saving={saving}
       />
       <Modal
-        title={editingPort ? "编辑端口组" : "新建端口组"}
-        open={portModalOpen}
-        onCancel={() => setPortModalOpen(false)}
-        onOk={() => portForm.submit()}
+        title={editingHost ? "编辑宿主机" : "新建宿主机"}
+        open={hostModalOpen}
+        onCancel={() => setHostModalOpen(false)}
+        onOk={() => hostForm.submit()}
         confirmLoading={saving}
       >
-        <Form form={portForm} layout="vertical" onFinish={(values) => void handleSavePort(values)}>
-          <Form.Item name="portStart" label="起始端口">
-            <InputNumber min={10000} max={59990} step={10} style={{ width: "100%" }} placeholder="自动分配" />
+        <Form form={hostForm} layout="vertical" onFinish={(values) => void handleSaveHost(values)}>
+          <Form.Item name="name" label="名称" rules={[{ required: true, message: "请填写宿主机名称" }]}>
+            <Input placeholder="miniport-host-01" />
+          </Form.Item>
+          <Form.Item name="ip" label="IP">
+            <Input placeholder="10.0.0.12" />
+          </Form.Item>
+          <Form.Item name="spec" label="规格">
+            <Input placeholder="4h4g" />
           </Form.Item>
           <Form.Item name="status" label="状态" rules={[{ required: true }]}>
-            <Select options={[{ value: "available", label: "可用" }, ...statusOptions]} />
+            <Select options={[{ value: "active", label: "运行中" }, { value: "stopped", label: "停用" }]} />
           </Form.Item>
           <Form.Item name="notes" label="备注">
             <Input.TextArea rows={3} />
           </Form.Item>
-          {editingPort ? (
-            <Button danger onClick={() => void handleDeletePort(editingPort)}>
-              删除端口组
-            </Button>
+          {editingHost ? (
+            <Space>
+              <Button danger onClick={() => void handleDeleteHost(editingHost)}>
+                删除宿主机
+              </Button>
+              {hosts.length > 1 ? (
+                <Button onClick={() => openEditHost(hosts[(hosts.findIndex((item) => item.id === editingHost.id) + 1) % hosts.length])}>
+                  下一个
+                </Button>
+              ) : null}
+            </Space>
           ) : null}
         </Form>
       </Modal>

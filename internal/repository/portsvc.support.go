@@ -5,55 +5,68 @@ import (
 	"time"
 )
 
-type PortsvcServiceListFilter struct {
+type PortsvcHostListFilter struct {
+	Query  string
+	Status string
+}
+
+type PortsvcPortGroupListFilter struct {
 	OwnerSubject string
 	Admin        bool
 	Query        string
 	Sort         string
 	Status       string
-	ProjectName  string
 }
 
-type PortsvcPortAllocationListFilter struct {
-	OwnerSubject string
-	Admin        bool
-	Sort         string
-	Status       string
+type PortsvcHostRecord struct {
+	ID        string
+	Name      string
+	IP        string
+	Spec      string
+	Status    string
+	Notes     string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
-type PortsvcServiceRecord struct {
-	ID               string
-	OwnerSubject     string
-	OwnerName        string
-	PortAllocationID string
-	PortAllocation   *PortsvcPortAllocationRecord
-	Name             string
-	ProjectName      string
-	DindIP           string
-	DindContainer    string
-	Status           string
-	Owner            string
-	Tags             string
-	Notes            string
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
-}
-
-type PortsvcPortAllocationRecord struct {
+type PortsvcPortGroupRecord struct {
 	ID           string
 	OwnerSubject string
 	OwnerName    string
+	HostID       string
+	Host         *PortsvcHostRecord
 	PortStart    int
 	PortEnd      int
+	ProjectName  string
+	ProjectOwner string
+	RuntimeMode  string
+	RuntimeName  string
+	ServiceIP    string
 	Status       string
+	Tags         string
 	Notes        string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }
 
+type PortsvcPortSlotRecord struct {
+	ID            string
+	PortGroupID   string
+	Port          int
+	Name          string
+	Kind          string
+	Protocol      string
+	ContainerName string
+	Status        string
+	Notes         string
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+}
+
 type PortsvcDependencyRecord struct {
 	ID           string
 	OwnerSubject string
+	PortGroupID  string
 	Name         string
 	Type         string
 	URL          string
@@ -66,6 +79,7 @@ type PortsvcDependencyRecord struct {
 type PortsvcRepositoryRecord struct {
 	ID           string
 	OwnerSubject string
+	PortGroupID  string
 	Name         string
 	URL          string
 	Kind         string
@@ -74,69 +88,71 @@ type PortsvcRepositoryRecord struct {
 	UpdatedAt    time.Time
 }
 
-type PortsvcServiceRepositoryRecord struct {
-	ID           string
-	ServiceID    string
-	RepositoryID string
-	Role         string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-}
-
-type PortsvcServiceDependencyRecord struct {
-	ID           string
-	ServiceID    string
-	DependencyID string
-	Role         string
-	Notes        string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-}
-
-type PortsvcServiceChildrenRecord struct {
-	ServiceID    string
+type PortsvcPortGroupChildrenRecord struct {
+	PortGroupID  string
+	Slots        []PortsvcPortSlotRecord
 	Repositories []PortsvcRepositoryRecord
 	Dependencies []PortsvcDependencyRecord
 }
 
-func utilPortsvcServiceRecordFromModel(model *ServicesModel) *PortsvcServiceRecord {
+func utilPortsvcHostRecordFromModel(model *HostsModel) *PortsvcHostRecord {
 	if model == nil {
 		return nil
 	}
-	out := &PortsvcServiceRecord{
-		ID:               model.ID,
-		OwnerSubject:     model.OwnerSubject,
-		PortAllocationID: model.PortAllocationID,
-		Name:             model.Name,
-		ProjectName:      model.ProjectName,
-		DindIP:           model.DindIP,
-		DindContainer:    model.DindContainer,
-		Status:           model.Status,
-		Owner:            model.Owner,
-		Tags:             model.Tags,
-		Notes:            model.Notes,
-		CreatedAt:        model.CreatedAt,
-		UpdatedAt:        model.UpdatedAt,
+	return &PortsvcHostRecord{
+		ID:        model.ID,
+		Name:      model.Name,
+		IP:        model.IP,
+		Spec:      model.Spec,
+		Status:    model.Status,
+		Notes:     model.Notes,
+		CreatedAt: model.CreatedAt,
+		UpdatedAt: model.UpdatedAt,
 	}
-	out.PortAllocation = utilPortsvcPortAllocationRecordFromModel(model.PortAllocation)
-	return out
 }
 
-func utilPortsvcPortAllocationRecordFromModel(model *PortAllocationsModel) *PortsvcPortAllocationRecord {
+func utilPortsvcPortGroupRecordFromModel(model *PortAllocationsModel) *PortsvcPortGroupRecord {
 	if model == nil {
 		return nil
 	}
-	out := &PortsvcPortAllocationRecord{
+	out := &PortsvcPortGroupRecord{
 		ID:           model.ID,
 		OwnerSubject: model.OwnerSubject,
+		HostID:       model.HostID,
 		PortStart:    model.PortStart,
 		PortEnd:      model.PortEnd,
+		ProjectName:  model.ProjectName,
+		ProjectOwner: model.ProjectOwner,
+		RuntimeMode:  model.RuntimeMode,
+		RuntimeName:  model.RuntimeName,
+		ServiceIP:    model.ServiceIP,
 		Status:       model.Status,
+		Tags:         model.Tags,
 		Notes:        model.Notes,
 		CreatedAt:    model.CreatedAt,
 		UpdatedAt:    model.UpdatedAt,
 	}
+	out.Host = utilPortsvcHostRecordFromModel(model.Host)
 	return out
+}
+
+func utilPortsvcPortSlotRecordFromModel(model *ServicesModel) *PortsvcPortSlotRecord {
+	if model == nil {
+		return nil
+	}
+	return &PortsvcPortSlotRecord{
+		ID:            model.ID,
+		PortGroupID:   model.PortGroupID,
+		Port:          model.Port,
+		Name:          model.Name,
+		Kind:          model.Kind,
+		Protocol:      model.Protocol,
+		ContainerName: model.ContainerName,
+		Status:        model.Status,
+		Notes:         model.Notes,
+		CreatedAt:     model.CreatedAt,
+		UpdatedAt:     model.UpdatedAt,
+	}
 }
 
 func utilPortsvcDependencyRecordFromModel(model *DependenciesModel) *PortsvcDependencyRecord {
@@ -146,6 +162,7 @@ func utilPortsvcDependencyRecordFromModel(model *DependenciesModel) *PortsvcDepe
 	return &PortsvcDependencyRecord{
 		ID:           model.ID,
 		OwnerSubject: model.OwnerSubject,
+		PortGroupID:  model.PortGroupID,
 		Name:         model.Name,
 		Type:         model.Type,
 		URL:          model.URL,
@@ -163,6 +180,7 @@ func utilPortsvcRepositoryRecordFromModel(model *RepositoriesModel) *PortsvcRepo
 	return &PortsvcRepositoryRecord{
 		ID:           model.ID,
 		OwnerSubject: model.OwnerSubject,
+		PortGroupID:  model.PortGroupID,
 		Name:         model.Name,
 		URL:          model.URL,
 		Kind:         model.Kind,

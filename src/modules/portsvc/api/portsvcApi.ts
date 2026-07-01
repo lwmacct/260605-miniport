@@ -1,12 +1,12 @@
 import { apiGet, apiSend } from "@/shared/api/client";
 import type {
+  HostForm,
+  HostItem,
+  Meta,
+  PortGroupForm,
+  PortGroupItem,
   PortsvcQuery,
   PortsvcSnapshot,
-  Meta,
-  PortAllocation,
-  PortAllocationForm,
-  ServiceForm,
-  ServiceItem,
 } from "../model/portsvcTypes";
 
 function buildQueryString(params: Record<string, string | number | undefined>) {
@@ -22,86 +22,84 @@ function buildQueryString(params: Record<string, string | number | undefined>) {
 }
 
 export async function loadPortsvc(query: PortsvcQuery): Promise<PortsvcSnapshot> {
-  const servicesPath = "/api/services" + buildQueryString({
-    projectName: query.projectName,
-    q: query.serviceQuery,
-    sort: query.serviceSort,
+  const groupsPath = "/api/port-groups" + buildQueryString({
+    q: query.query,
+    sort: query.sort,
     status: query.status,
     ownerSubject: query.ownerSubject,
   });
-  const portsPath = "/api/port-allocations";
 
-  const [meta, services, ports] = await Promise.all([
+  const [meta, hosts, portGroups] = await Promise.all([
     apiGet<Meta>("/api/meta"),
-    apiGet<ServiceItem[]>(servicesPath),
-    apiGet<PortAllocation[]>(portsPath),
+    apiGet<HostItem[]>("/api/hosts"),
+    apiGet<PortGroupItem[]>(groupsPath),
   ]);
 
   return {
     meta,
-    ports: ports ?? [],
-    services: (services ?? []).map((item) => ({
+    hosts: hosts ?? [],
+    portGroups: (portGroups ?? []).map((item) => ({
       ...item,
       dependencies: item.dependencies ?? [],
       repositories: item.repositories ?? [],
+      slots: item.slots ?? [],
       tags: item.tags ?? "",
     })),
   };
 }
 
-export function saveService(service: ServiceForm, editingService?: ServiceItem | null) {
+export function savePortGroup(group: PortGroupForm, editingGroup?: PortGroupItem | null) {
   const payload = {
-    dependencies: service.dependencies ?? [],
-    dindContainer: service.dindContainer ?? "",
-    dindIp: service.dindIp ?? "",
-    name: service.name ?? "",
-    notes: service.notes ?? "",
-    owner: service.owner ?? "",
-    portAllocationId: service.portAllocationId ?? 0,
-    projectName: service.projectName ?? "",
-    repositories: service.repositories ?? [],
-    status: service.status ?? "planned",
-    tags: service.tags ?? "",
-    ownerSubject: service.ownerSubject ?? "",
+    dependencies: group.dependencies ?? [],
+    hostId: group.hostId ?? "",
+    notes: group.notes ?? "",
+    ownerSubject: group.ownerSubject ?? "",
+    portStart: group.portStart ?? 0,
+    projectName: group.projectName ?? "",
+    projectOwner: group.projectOwner ?? "",
+    repositories: group.repositories ?? [],
+    runtimeMode: group.runtimeMode ?? "dind",
+    runtimeName: group.runtimeName ?? "",
+    serviceIp: group.serviceIp ?? "",
+    slots: group.slots ?? [],
+    status: group.status ?? "available",
+    tags: group.tags ?? "",
   };
-  return apiSend<ServiceItem>(
-    editingService ? `/api/services/${editingService.id}` : "/api/services",
+  return apiSend<PortGroupItem>(
+    editingGroup ? `/api/port-groups/${editingGroup.id}` : "/api/port-groups",
     {
-      method: editingService ? "PUT" : "POST",
+      method: editingGroup ? "PUT" : "POST",
       body: JSON.stringify(payload),
     },
   );
 }
 
-export function removeService(service: ServiceItem) {
-  return apiSend<{ deleted: boolean }>(`/api/services/${service.id}`, { method: "DELETE" });
+export function removePortGroup(group: PortGroupItem) {
+  return apiSend<{ deleted: boolean }>(`/api/port-groups/${group.id}`, { method: "DELETE" });
 }
 
-export function savePortAllocation(port: PortAllocationForm, editingPort?: PortAllocation | null) {
+export function saveHost(host: HostForm, editingHost?: HostItem | null) {
   const payload = {
-    notes: port.notes ?? "",
-    portStart: port.portStart ?? 0,
-    status: port.status ?? "available",
-    ownerSubject: port.ownerSubject ?? "",
+    ip: host.ip ?? "",
+    name: host.name ?? "",
+    notes: host.notes ?? "",
+    spec: host.spec ?? "",
+    status: host.status ?? "active",
   };
-  return apiSend<PortAllocation>(
-    editingPort ? `/api/port-allocations/${editingPort.id}` : "/api/port-allocations",
-    {
-      method: editingPort ? "PUT" : "POST",
-      body: JSON.stringify(payload),
-    },
-  );
+  return apiSend<HostItem>(editingHost ? `/api/hosts/${editingHost.id}` : "/api/hosts", {
+    method: editingHost ? "PUT" : "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
-export function removePortAllocation(port: PortAllocation) {
-  return apiSend<{ deleted: boolean }>(`/api/port-allocations/${port.id}`, { method: "DELETE" });
+export function removeHost(host: HostItem) {
+  return apiSend<{ deleted: boolean }>(`/api/hosts/${host.id}`, { method: "DELETE" });
 }
 
-export function exportServicesURL(query: PortsvcQuery) {
-  return "/api/services/export.csv" + buildQueryString({
-    projectName: query.projectName,
-    q: query.serviceQuery,
-    sort: query.serviceSort,
+export function exportPortGroupsURL(query: PortsvcQuery) {
+  return "/api/port-groups/export.csv" + buildQueryString({
+    q: query.query,
+    sort: query.sort,
     status: query.status,
     ownerSubject: query.ownerSubject,
   });

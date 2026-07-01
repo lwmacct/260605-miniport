@@ -8,106 +8,69 @@ import (
 	"github.com/uptrace/bun"
 )
 
-func (s *Store) ListPortsvcServices(ctx context.Context, params PortsvcServiceListFilter) ([]PortsvcServiceRecord, error) {
-	var rows []ServicesModel
-	query := s.db.NewSelect().Model(&rows).Relation("PortAllocation")
-	if !params.Admin {
-		query = query.Where("service.owner_subject = ?", params.OwnerSubject)
-	} else if params.OwnerSubject != "" {
-		query = query.Where("service.owner_subject = ?", params.OwnerSubject)
-	}
+func (s *Store) ListPortsvcHosts(ctx context.Context, params PortsvcHostListFilter) ([]PortsvcHostRecord, error) {
+	var rows []HostsModel
+	query := s.db.NewSelect().Model(&rows)
 	if status := utilCompactString(params.Status); status != "" {
-		query = query.Where("service.status = ?", status)
-	}
-	if projectName := utilCompactString(params.ProjectName); projectName != "" {
-		query = query.Where("LOWER(service.project_name) LIKE ?", utilSearchPattern(projectName))
+		query = query.Where("host.status = ?", status)
 	}
 	if keyword := utilCompactString(params.Query); keyword != "" {
 		pattern := utilSearchPattern(keyword)
 		query = query.Where(
-			utilJoinSearchClauses([]string{
-				"service.name",
-				"service.project_name",
-				"service.dind_ip",
-				"service.dind_container",
-				"service.owner",
-				"service.tags",
-				"service.notes",
-			}),
-			utilJoinSearchArgs(pattern, 7)...,
+			utilJoinSearchClauses([]string{"host.name", "host.ip", "host.spec", "host.notes"}),
+			utilJoinSearchArgs(pattern, 4)...,
 		)
 	}
-	switch strings.ToLower(params.Sort) {
-	case "name":
-		query = query.Order("service.name ASC", "service.id ASC")
-	case "status":
-		query = query.Order("service.status ASC", "service.name ASC")
-	case "project":
-		query = query.Order("service.project_name ASC", "service.name ASC")
-	case "updated_desc":
-		query = query.Order("service.updated_at DESC", "service.name ASC")
-	default:
-		query = query.Order("service.name ASC", "service.id ASC")
-	}
+	query = query.Order("host.name ASC", "host.id ASC")
 	if err := query.Scan(ctx); err != nil {
 		return nil, err
 	}
-	out := make([]PortsvcServiceRecord, 0, len(rows))
+	out := make([]PortsvcHostRecord, 0, len(rows))
 	for idx := range rows {
-		out = append(out, *utilPortsvcServiceRecordFromModel(&rows[idx]))
+		out = append(out, *utilPortsvcHostRecordFromModel(&rows[idx]))
 	}
 	return out, nil
 }
 
-func (s *Store) FetchPortsvcServiceByID(ctx context.Context, id string) (*PortsvcServiceRecord, error) {
-	row := new(ServicesModel)
-	err := s.db.NewSelect().Model(row).Relation("PortAllocation").Where("service.id = ?", id).Scan(ctx)
+func (s *Store) FetchPortsvcHostByID(ctx context.Context, id string) (*PortsvcHostRecord, error) {
+	row := new(HostsModel)
+	err := s.db.NewSelect().Model(row).Where("host.id = ?", id).Scan(ctx)
 	if err != nil {
 		return nil, WrapNotFound(err)
 	}
-	return utilPortsvcServiceRecordFromModel(row), nil
+	return utilPortsvcHostRecordFromModel(row), nil
 }
 
-func (s *Store) CreatePortsvcService(ctx context.Context, service *PortsvcServiceRecord) (*PortsvcServiceRecord, error) {
-	row := &ServicesModel{
-		ID:               idgen.NewUUID7(),
-		OwnerSubject:     service.OwnerSubject,
-		PortAllocationID: service.PortAllocationID,
-		Name:             service.Name,
-		ProjectName:      service.ProjectName,
-		DindIP:           service.DindIP,
-		DindContainer:    service.DindContainer,
-		Status:           service.Status,
-		Owner:            service.Owner,
-		Tags:             service.Tags,
-		Notes:            service.Notes,
-		CreatedAt:        service.CreatedAt,
-		UpdatedAt:        service.UpdatedAt,
+func (s *Store) CreatePortsvcHost(ctx context.Context, host *PortsvcHostRecord) (*PortsvcHostRecord, error) {
+	row := &HostsModel{
+		ID:        idgen.NewUUID7(),
+		Name:      host.Name,
+		IP:        host.IP,
+		Spec:      host.Spec,
+		Status:    host.Status,
+		Notes:     host.Notes,
+		CreatedAt: host.CreatedAt,
+		UpdatedAt: host.UpdatedAt,
 	}
 	if _, err := s.db.NewInsert().Model(row).Exec(ctx); err != nil {
 		return nil, err
 	}
-	return s.FetchPortsvcServiceByID(ctx, row.ID)
+	return utilPortsvcHostRecordFromModel(row), nil
 }
 
-func (s *Store) UpdatePortsvcService(ctx context.Context, id string, service *PortsvcServiceRecord) (*PortsvcServiceRecord, error) {
-	row := &ServicesModel{
-		ID:               id,
-		OwnerSubject:     service.OwnerSubject,
-		PortAllocationID: service.PortAllocationID,
-		Name:             service.Name,
-		ProjectName:      service.ProjectName,
-		DindIP:           service.DindIP,
-		DindContainer:    service.DindContainer,
-		Status:           service.Status,
-		Owner:            service.Owner,
-		Tags:             service.Tags,
-		Notes:            service.Notes,
-		UpdatedAt:        service.UpdatedAt,
+func (s *Store) UpdatePortsvcHost(ctx context.Context, id string, host *PortsvcHostRecord) (*PortsvcHostRecord, error) {
+	row := &HostsModel{
+		ID:        id,
+		Name:      host.Name,
+		IP:        host.IP,
+		Spec:      host.Spec,
+		Status:    host.Status,
+		Notes:     host.Notes,
+		UpdatedAt: host.UpdatedAt,
 	}
 	res, err := s.db.NewUpdate().
 		Model(row).
-		Column("owner_subject", "port_allocation_id", "name", "project_name", "dind_ip", "dind_container", "status", "owner", "tags", "notes", "updated_at").
+		Column("name", "ip", "spec", "status", "notes", "updated_at").
 		Where("id = ?", id).
 		Exec(ctx)
 	if err != nil {
@@ -120,140 +83,92 @@ func (s *Store) UpdatePortsvcService(ctx context.Context, id string, service *Po
 	if rows == 0 {
 		return nil, ErrNotFound
 	}
-	return s.FetchPortsvcServiceByID(ctx, id)
+	return s.FetchPortsvcHostByID(ctx, id)
 }
 
-func (s *Store) DeletePortsvcServices(ctx context.Context, ids []string, ownerSubject string, admin bool) error {
-	query := s.db.NewDelete().Model((*ServicesModel)(nil)).Where("id IN (?)", bun.List(ids))
-	if !admin {
-		query = query.Where("owner_subject = ?", ownerSubject)
-	}
-	_, err := query.Exec(ctx)
-	return err
-}
-
-func (s *Store) CountPortsvcServicesByIDs(ctx context.Context, ids []string, ownerSubject string, admin bool) (int, error) {
-	query := s.db.NewSelect().Model((*ServicesModel)(nil)).Where("id IN (?)", bun.List(ids))
-	if !admin {
-		query = query.Where("owner_subject = ?", ownerSubject)
-	}
-	return query.Count(ctx)
-}
-
-func (s *Store) ListPortsvcServiceChildrenByServiceIDs(ctx context.Context, ids []string) ([]PortsvcServiceChildrenRecord, error) {
-	children := make(map[string]PortsvcServiceChildrenRecord, len(ids))
-	for _, id := range ids {
-		children[id] = PortsvcServiceChildrenRecord{ServiceID: id}
-	}
-
-	var repoRows []struct {
-		bun.BaseModel `bun:"table:service_repositories,alias:sr"`
-		RepositoriesModel
-
-		ServiceID string `bun:"service_id"`
-	}
-	if err := s.db.NewSelect().
-		Model(&repoRows).
-		Column("sr.service_id").
-		ColumnExpr("repository_ref.*").
-		Join("JOIN repositories AS repository_ref ON repository_ref.id = sr.repository_id").
-		Where("sr.service_id IN (?)", bun.List(ids)).
-		Order("repository_ref.name ASC").
-		Scan(ctx); err != nil {
-		return nil, err
-	}
-	for idx := range repoRows {
-		record := *utilPortsvcRepositoryRecordFromModel(&repoRows[idx].RepositoriesModel)
-		child := children[repoRows[idx].ServiceID]
-		child.Repositories = append(child.Repositories, record)
-		children[repoRows[idx].ServiceID] = child
-	}
-
-	var depRows []struct {
-		bun.BaseModel `bun:"table:service_dependencies,alias:sd"`
-		DependenciesModel
-
-		ServiceID string `bun:"service_id"`
-	}
-	if err := s.db.NewSelect().
-		Model(&depRows).
-		Column("sd.service_id").
-		ColumnExpr("dependency.*").
-		Join("JOIN dependencies AS dependency ON dependency.id = sd.dependency_id").
-		Where("sd.service_id IN (?)", bun.List(ids)).
-		Order("dependency.name ASC").
-		Scan(ctx); err != nil {
-		return nil, err
-	}
-	for idx := range depRows {
-		record := *utilPortsvcDependencyRecordFromModel(&depRows[idx].DependenciesModel)
-		child := children[depRows[idx].ServiceID]
-		child.Dependencies = append(child.Dependencies, record)
-		children[depRows[idx].ServiceID] = child
-	}
-
-	out := make([]PortsvcServiceChildrenRecord, 0, len(children))
-	for _, id := range ids {
-		out = append(out, children[id])
-	}
-	return out, nil
-}
-
-func (s *Store) ReplacePortsvcServiceChildren(ctx context.Context, serviceID string) error {
-	if _, err := s.db.NewDelete().Model((*ServiceRepositoriesModel)(nil)).Where("service_id = ?", serviceID).Exec(ctx); err != nil {
+func (s *Store) DeletePortsvcHost(ctx context.Context, id string) error {
+	res, err := s.db.NewDelete().Model((*HostsModel)(nil)).Where("id = ?", id).Exec(ctx)
+	if err != nil {
 		return err
 	}
-	if _, err := s.db.NewDelete().Model((*ServiceDependenciesModel)(nil)).Where("service_id = ?", serviceID).Exec(ctx); err != nil {
+	rows, err := res.RowsAffected()
+	if err != nil {
 		return err
+	}
+	if rows == 0 {
+		return ErrNotFound
 	}
 	return nil
 }
 
-func (s *Store) ListPortsvcPortAllocations(ctx context.Context, params PortsvcPortAllocationListFilter) ([]PortsvcPortAllocationRecord, error) {
+func (s *Store) ListPortsvcPortGroups(ctx context.Context, params PortsvcPortGroupListFilter) ([]PortsvcPortGroupRecord, error) {
 	var rows []PortAllocationsModel
-	query := s.db.NewSelect().Model(&rows)
+	query := s.db.NewSelect().Model(&rows).Relation("Host")
 	if !params.Admin {
-		query = query.Where("allocation.owner_subject = ?", params.OwnerSubject)
+		query = query.Where("port_group.owner_subject = ?", params.OwnerSubject)
 	} else if params.OwnerSubject != "" {
-		query = query.Where("allocation.owner_subject = ?", params.OwnerSubject)
+		query = query.Where("port_group.owner_subject = ?", params.OwnerSubject)
 	}
 	if status := utilCompactString(params.Status); status != "" {
-		query = query.Where("allocation.status = ?", status)
+		query = query.Where("port_group.status = ?", status)
+	}
+	if keyword := utilCompactString(params.Query); keyword != "" {
+		pattern := utilSearchPattern(keyword)
+		query = query.Where(
+			utilJoinSearchClauses([]string{
+				"port_group.project_name",
+				"port_group.project_owner",
+				"port_group.runtime_name",
+				"port_group.service_ip",
+				"port_group.tags",
+				"port_group.notes",
+			}),
+			utilJoinSearchArgs(pattern, 6)...,
+		)
 	}
 	switch strings.ToLower(params.Sort) {
+	case "project":
+		query = query.Order("port_group.project_name ASC", "port_group.port_start ASC")
 	case "status":
-		query = query.Order("allocation.status ASC", "allocation.port_start ASC")
+		query = query.Order("port_group.status ASC", "port_group.port_start ASC")
 	case "updated_desc":
-		query = query.Order("allocation.updated_at DESC", "allocation.port_start ASC")
+		query = query.Order("port_group.updated_at DESC", "port_group.port_start ASC")
 	default:
-		query = query.Order("allocation.port_start ASC")
+		query = query.Order("port_group.port_start ASC")
 	}
 	if err := query.Scan(ctx); err != nil {
 		return nil, err
 	}
-	out := make([]PortsvcPortAllocationRecord, 0, len(rows))
+	out := make([]PortsvcPortGroupRecord, 0, len(rows))
 	for idx := range rows {
-		out = append(out, *utilPortsvcPortAllocationRecordFromModel(&rows[idx]))
+		out = append(out, *utilPortsvcPortGroupRecordFromModel(&rows[idx]))
 	}
 	return out, nil
 }
 
-func (s *Store) FetchPortsvcPortAllocationByID(ctx context.Context, id string) (*PortsvcPortAllocationRecord, error) {
+func (s *Store) FetchPortsvcPortGroupByID(ctx context.Context, id string) (*PortsvcPortGroupRecord, error) {
 	row := new(PortAllocationsModel)
-	err := s.db.NewSelect().Model(row).Where("allocation.id = ?", id).Scan(ctx)
+	err := s.db.NewSelect().Model(row).Relation("Host").Where("port_group.id = ?", id).Scan(ctx)
 	if err != nil {
 		return nil, WrapNotFound(err)
 	}
-	return utilPortsvcPortAllocationRecordFromModel(row), nil
+	return utilPortsvcPortGroupRecordFromModel(row), nil
 }
 
-func (s *Store) CreatePortsvcPortAllocation(ctx context.Context, group *PortsvcPortAllocationRecord) (*PortsvcPortAllocationRecord, error) {
+func (s *Store) CreatePortsvcPortGroup(ctx context.Context, group *PortsvcPortGroupRecord) (*PortsvcPortGroupRecord, error) {
 	row := &PortAllocationsModel{
 		ID:           idgen.NewUUID7(),
 		OwnerSubject: group.OwnerSubject,
+		HostID:       group.HostID,
 		PortStart:    group.PortStart,
 		PortEnd:      group.PortEnd,
+		ProjectName:  group.ProjectName,
+		ProjectOwner: group.ProjectOwner,
+		RuntimeMode:  group.RuntimeMode,
+		RuntimeName:  group.RuntimeName,
+		ServiceIP:    group.ServiceIP,
 		Status:       group.Status,
+		Tags:         group.Tags,
 		Notes:        group.Notes,
 		CreatedAt:    group.CreatedAt,
 		UpdatedAt:    group.UpdatedAt,
@@ -261,22 +176,29 @@ func (s *Store) CreatePortsvcPortAllocation(ctx context.Context, group *PortsvcP
 	if _, err := s.db.NewInsert().Model(row).Exec(ctx); err != nil {
 		return nil, err
 	}
-	return s.FetchPortsvcPortAllocationByID(ctx, row.ID)
+	return s.FetchPortsvcPortGroupByID(ctx, row.ID)
 }
 
-func (s *Store) UpdatePortsvcPortAllocation(ctx context.Context, id string, group *PortsvcPortAllocationRecord) (*PortsvcPortAllocationRecord, error) {
+func (s *Store) UpdatePortsvcPortGroup(ctx context.Context, id string, group *PortsvcPortGroupRecord) (*PortsvcPortGroupRecord, error) {
 	row := &PortAllocationsModel{
 		ID:           id,
 		OwnerSubject: group.OwnerSubject,
+		HostID:       group.HostID,
 		PortStart:    group.PortStart,
 		PortEnd:      group.PortEnd,
+		ProjectName:  group.ProjectName,
+		ProjectOwner: group.ProjectOwner,
+		RuntimeMode:  group.RuntimeMode,
+		RuntimeName:  group.RuntimeName,
+		ServiceIP:    group.ServiceIP,
 		Status:       group.Status,
+		Tags:         group.Tags,
 		Notes:        group.Notes,
 		UpdatedAt:    group.UpdatedAt,
 	}
 	res, err := s.db.NewUpdate().
 		Model(row).
-		Column("owner_subject", "port_start", "port_end", "status", "notes", "updated_at").
+		Column("owner_subject", "host_id", "port_start", "port_end", "project_name", "project_owner", "runtime_mode", "runtime_name", "service_ip", "status", "tags", "notes", "updated_at").
 		Where("id = ?", id).
 		Exec(ctx)
 	if err != nil {
@@ -289,10 +211,10 @@ func (s *Store) UpdatePortsvcPortAllocation(ctx context.Context, id string, grou
 	if rows == 0 {
 		return nil, ErrNotFound
 	}
-	return s.FetchPortsvcPortAllocationByID(ctx, id)
+	return s.FetchPortsvcPortGroupByID(ctx, id)
 }
 
-func (s *Store) DeletePortsvcPortAllocations(ctx context.Context, ids []string, ownerSubject string, admin bool) error {
+func (s *Store) DeletePortsvcPortGroups(ctx context.Context, ids []string, ownerSubject string, admin bool) error {
 	query := s.db.NewDelete().Model((*PortAllocationsModel)(nil)).Where("id IN (?)", bun.List(ids))
 	if !admin {
 		query = query.Where("owner_subject = ?", ownerSubject)
@@ -301,7 +223,7 @@ func (s *Store) DeletePortsvcPortAllocations(ctx context.Context, ids []string, 
 	return err
 }
 
-func (s *Store) CountPortsvcPortAllocationsByIDs(ctx context.Context, ids []string, ownerSubject string, admin bool) (int, error) {
+func (s *Store) CountPortsvcPortGroupsByIDs(ctx context.Context, ids []string, ownerSubject string, admin bool) (int, error) {
 	query := s.db.NewSelect().Model((*PortAllocationsModel)(nil)).Where("id IN (?)", bun.List(ids))
 	if !admin {
 		query = query.Where("owner_subject = ?", ownerSubject)
@@ -309,7 +231,7 @@ func (s *Store) CountPortsvcPortAllocationsByIDs(ctx context.Context, ids []stri
 	return query.Count(ctx)
 }
 
-func (s *Store) CountPortsvcOverlappingPortAllocations(ctx context.Context, currentID string, group *PortsvcPortAllocationRecord) (int, error) {
+func (s *Store) CountPortsvcOverlappingPortGroups(ctx context.Context, currentID string, group *PortsvcPortGroupRecord) (int, error) {
 	query := s.db.NewSelect().
 		Model((*PortAllocationsModel)(nil)).
 		Where("owner_subject = ?", group.OwnerSubject).
@@ -320,7 +242,7 @@ func (s *Store) CountPortsvcOverlappingPortAllocations(ctx context.Context, curr
 	return query.Count(ctx)
 }
 
-func (s *Store) ListPortsvcPortAllocationStartsByOwner(ctx context.Context, ownerSubject string, excludeID string) ([]int, error) {
+func (s *Store) ListPortsvcPortGroupStartsByOwner(ctx context.Context, ownerSubject string, excludeID string) ([]int, error) {
 	var rows []struct {
 		PortStart int `bun:"port_start"`
 	}
@@ -338,97 +260,215 @@ func (s *Store) ListPortsvcPortAllocationStartsByOwner(ctx context.Context, owne
 	return out, nil
 }
 
-func (s *Store) FetchPortsvcRepositoryByOwnerAndURL(ctx context.Context, ownerSubject string, url string) (*PortsvcRepositoryRecord, error) {
-	row := new(RepositoriesModel)
-	err := s.db.NewSelect().Model(row).Where("owner_subject = ?", ownerSubject).Where("url = ?", strings.TrimSpace(url)).Scan(ctx)
+func (s *Store) FetchPortsvcPortSlotByID(ctx context.Context, id string) (*PortsvcPortSlotRecord, error) {
+	row := new(ServicesModel)
+	err := s.db.NewSelect().Model(row).Where("slot.id = ?", id).Scan(ctx)
 	if err != nil {
 		return nil, WrapNotFound(err)
 	}
-	return utilPortsvcRepositoryRecordFromModel(row), nil
+	return utilPortsvcPortSlotRecordFromModel(row), nil
 }
 
-func (s *Store) CreatePortsvcRepository(ctx context.Context, repo *PortsvcRepositoryRecord) (*PortsvcRepositoryRecord, error) {
-	row := &RepositoriesModel{
-		ID:           idgen.NewUUID7(),
-		OwnerSubject: repo.OwnerSubject,
-		Name:         repo.Name,
-		URL:          repo.URL,
-		Kind:         repo.Kind,
-		Notes:        repo.Notes,
-		CreatedAt:    repo.CreatedAt,
-		UpdatedAt:    repo.UpdatedAt,
+func (s *Store) CreatePortsvcPortSlot(ctx context.Context, slot *PortsvcPortSlotRecord) (*PortsvcPortSlotRecord, error) {
+	row := &ServicesModel{
+		ID:            idgen.NewUUID7(),
+		PortGroupID:   slot.PortGroupID,
+		Port:          slot.Port,
+		Name:          slot.Name,
+		Kind:          slot.Kind,
+		Protocol:      slot.Protocol,
+		ContainerName: slot.ContainerName,
+		Status:        slot.Status,
+		Notes:         slot.Notes,
+		CreatedAt:     slot.CreatedAt,
+		UpdatedAt:     slot.UpdatedAt,
 	}
 	if _, err := s.db.NewInsert().Model(row).Exec(ctx); err != nil {
 		return nil, err
 	}
-	return utilPortsvcRepositoryRecordFromModel(row), nil
+	return utilPortsvcPortSlotRecordFromModel(row), nil
 }
 
-func (s *Store) FetchPortsvcDependencyByIdentity(ctx context.Context, ownerSubject string, name string, itemType string, version string) (*PortsvcDependencyRecord, error) {
-	row := new(DependenciesModel)
-	err := s.db.NewSelect().Model(row).
-		Where("owner_subject = ?", ownerSubject).
-		Where("name = ?", strings.TrimSpace(name)).
-		Where("type = ?", strings.TrimSpace(itemType)).
-		Where("version = ?", strings.TrimSpace(version)).
-		Scan(ctx)
+func (s *Store) UpdatePortsvcPortSlot(ctx context.Context, id string, slot *PortsvcPortSlotRecord) (*PortsvcPortSlotRecord, error) {
+	row := &ServicesModel{
+		ID:            id,
+		PortGroupID:   slot.PortGroupID,
+		Port:          slot.Port,
+		Name:          slot.Name,
+		Kind:          slot.Kind,
+		Protocol:      slot.Protocol,
+		ContainerName: slot.ContainerName,
+		Status:        slot.Status,
+		Notes:         slot.Notes,
+		UpdatedAt:     slot.UpdatedAt,
+	}
+	res, err := s.db.NewUpdate().
+		Model(row).
+		Column("port_group_id", "port", "name", "kind", "protocol", "container_name", "status", "notes", "updated_at").
+		Where("id = ?", id).
+		Exec(ctx)
 	if err != nil {
-		return nil, WrapNotFound(err)
-	}
-	return utilPortsvcDependencyRecordFromModel(row), nil
-}
-
-func (s *Store) CreatePortsvcDependency(ctx context.Context, component *PortsvcDependencyRecord) (*PortsvcDependencyRecord, error) {
-	row := &DependenciesModel{
-		ID:           idgen.NewUUID7(),
-		OwnerSubject: component.OwnerSubject,
-		Name:         component.Name,
-		Type:         component.Type,
-		URL:          component.URL,
-		Version:      component.Version,
-		Notes:        component.Notes,
-		CreatedAt:    component.CreatedAt,
-		UpdatedAt:    component.UpdatedAt,
-	}
-	if _, err := s.db.NewInsert().Model(row).Exec(ctx); err != nil {
 		return nil, err
 	}
-	return utilPortsvcDependencyRecordFromModel(row), nil
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return nil, err
+	}
+	if rows == 0 {
+		return nil, ErrNotFound
+	}
+	return s.FetchPortsvcPortSlotByID(ctx, id)
 }
 
-func (s *Store) AddPortsvcServiceRepositories(ctx context.Context, links []PortsvcServiceRepositoryRecord) error {
-	if len(links) == 0 {
+func (s *Store) DeletePortsvcPortSlot(ctx context.Context, id string) error {
+	res, err := s.db.NewDelete().Model((*ServicesModel)(nil)).Where("id = ?", id).Exec(ctx)
+	if err != nil {
+		return err
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+func (s *Store) ListPortsvcPortGroupChildrenByGroupIDs(ctx context.Context, ids []string) ([]PortsvcPortGroupChildrenRecord, error) {
+	children := make(map[string]PortsvcPortGroupChildrenRecord, len(ids))
+	for _, id := range ids {
+		children[id] = PortsvcPortGroupChildrenRecord{PortGroupID: id}
+	}
+
+	var slotRows []ServicesModel
+	if err := s.db.NewSelect().
+		Model(&slotRows).
+		Where("slot.port_group_id IN (?)", bun.List(ids)).
+		Order("slot.port ASC").
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+	for idx := range slotRows {
+		record := *utilPortsvcPortSlotRecordFromModel(&slotRows[idx])
+		child := children[record.PortGroupID]
+		child.Slots = append(child.Slots, record)
+		children[record.PortGroupID] = child
+	}
+
+	var repoRows []RepositoriesModel
+	if err := s.db.NewSelect().
+		Model(&repoRows).
+		Where("repository_ref.port_group_id IN (?)", bun.List(ids)).
+		Order("repository_ref.name ASC").
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+	for idx := range repoRows {
+		record := *utilPortsvcRepositoryRecordFromModel(&repoRows[idx])
+		child := children[record.PortGroupID]
+		child.Repositories = append(child.Repositories, record)
+		children[record.PortGroupID] = child
+	}
+
+	var depRows []DependenciesModel
+	if err := s.db.NewSelect().
+		Model(&depRows).
+		Where("dependency.port_group_id IN (?)", bun.List(ids)).
+		Order("dependency.name ASC").
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+	for idx := range depRows {
+		record := *utilPortsvcDependencyRecordFromModel(&depRows[idx])
+		child := children[record.PortGroupID]
+		child.Dependencies = append(child.Dependencies, record)
+		children[record.PortGroupID] = child
+	}
+
+	out := make([]PortsvcPortGroupChildrenRecord, 0, len(children))
+	for _, id := range ids {
+		out = append(out, children[id])
+	}
+	return out, nil
+}
+
+func (s *Store) ReplacePortsvcPortGroupChildren(ctx context.Context, portGroupID string) error {
+	if _, err := s.db.NewDelete().Model((*ServicesModel)(nil)).Where("port_group_id = ?", portGroupID).Exec(ctx); err != nil {
+		return err
+	}
+	if _, err := s.db.NewDelete().Model((*RepositoriesModel)(nil)).Where("port_group_id = ?", portGroupID).Exec(ctx); err != nil {
+		return err
+	}
+	if _, err := s.db.NewDelete().Model((*DependenciesModel)(nil)).Where("port_group_id = ?", portGroupID).Exec(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Store) AddPortsvcPortSlots(ctx context.Context, slots []PortsvcPortSlotRecord) error {
+	if len(slots) == 0 {
 		return nil
 	}
-	rows := make([]ServiceRepositoriesModel, 0, len(links))
-	for _, link := range links {
-		rows = append(rows, ServiceRepositoriesModel{
-			ID:           idgen.NewUUID7(),
-			ServiceID:    link.ServiceID,
-			RepositoryID: link.RepositoryID,
-			Role:         link.Role,
-			CreatedAt:    link.CreatedAt,
-			UpdatedAt:    link.UpdatedAt,
+	rows := make([]ServicesModel, 0, len(slots))
+	for _, slot := range slots {
+		rows = append(rows, ServicesModel{
+			ID:            idgen.NewUUID7(),
+			PortGroupID:   slot.PortGroupID,
+			Port:          slot.Port,
+			Name:          slot.Name,
+			Kind:          slot.Kind,
+			Protocol:      slot.Protocol,
+			ContainerName: slot.ContainerName,
+			Status:        slot.Status,
+			Notes:         slot.Notes,
+			CreatedAt:     slot.CreatedAt,
+			UpdatedAt:     slot.UpdatedAt,
 		})
 	}
 	_, err := s.db.NewInsert().Model(&rows).Exec(ctx)
 	return err
 }
 
-func (s *Store) AddPortsvcServiceDependencies(ctx context.Context, links []PortsvcServiceDependencyRecord) error {
-	if len(links) == 0 {
+func (s *Store) AddPortsvcRepositories(ctx context.Context, repos []PortsvcRepositoryRecord) error {
+	if len(repos) == 0 {
 		return nil
 	}
-	rows := make([]ServiceDependenciesModel, 0, len(links))
-	for _, link := range links {
-		rows = append(rows, ServiceDependenciesModel{
+	rows := make([]RepositoriesModel, 0, len(repos))
+	for _, repo := range repos {
+		rows = append(rows, RepositoriesModel{
 			ID:           idgen.NewUUID7(),
-			ServiceID:    link.ServiceID,
-			DependencyID: link.DependencyID,
-			Role:         link.Role,
-			Notes:        link.Notes,
-			CreatedAt:    link.CreatedAt,
-			UpdatedAt:    link.UpdatedAt,
+			OwnerSubject: repo.OwnerSubject,
+			PortGroupID:  repo.PortGroupID,
+			Name:         repo.Name,
+			URL:          repo.URL,
+			Kind:         repo.Kind,
+			Notes:        repo.Notes,
+			CreatedAt:    repo.CreatedAt,
+			UpdatedAt:    repo.UpdatedAt,
+		})
+	}
+	_, err := s.db.NewInsert().Model(&rows).Exec(ctx)
+	return err
+}
+
+func (s *Store) AddPortsvcDependencies(ctx context.Context, dependencies []PortsvcDependencyRecord) error {
+	if len(dependencies) == 0 {
+		return nil
+	}
+	rows := make([]DependenciesModel, 0, len(dependencies))
+	for _, dependency := range dependencies {
+		rows = append(rows, DependenciesModel{
+			ID:           idgen.NewUUID7(),
+			OwnerSubject: dependency.OwnerSubject,
+			PortGroupID:  dependency.PortGroupID,
+			Name:         dependency.Name,
+			Type:         dependency.Type,
+			URL:          dependency.URL,
+			Version:      dependency.Version,
+			Notes:        dependency.Notes,
+			CreatedAt:    dependency.CreatedAt,
+			UpdatedAt:    dependency.UpdatedAt,
 		})
 	}
 	_, err := s.db.NewInsert().Model(&rows).Exec(ctx)

@@ -21,148 +21,174 @@ func RegisterPortsvc(api huma.API, config Config, services Services) {
 		config:   config,
 		services: services,
 	}
-	huma.Register(api, huma.Operation{OperationID: "list-services", Method: http.MethodGet, Path: "/services", Summary: "List services", Tags: []string{"services"}}, handler.listServices)
-	huma.Register(api, huma.Operation{OperationID: "get-service", Method: http.MethodGet, Path: "/services/{id}", Summary: "Get service", Tags: []string{"services"}}, handler.getService)
-	huma.Register(api, huma.Operation{OperationID: "create-service", Method: http.MethodPost, Path: "/services", Summary: "Create service", Tags: []string{"services"}}, handler.createService)
-	huma.Register(api, huma.Operation{OperationID: "update-service", Method: http.MethodPut, Path: "/services/{id}", Summary: "Update service", Tags: []string{"services"}}, handler.updateService)
-	huma.Register(api, huma.Operation{OperationID: "delete-service", Method: http.MethodDelete, Path: "/services/{id}", Summary: "Delete service", Tags: []string{"services"}}, handler.deleteService)
-	huma.Register(api, huma.Operation{OperationID: "batch-delete-services", Method: http.MethodPost, Path: "/services/batch-delete", Summary: "Batch delete services", Tags: []string{"services"}}, handler.batchDeleteServices)
-	huma.Register(api, huma.Operation{OperationID: "list-port-allocations", Method: http.MethodGet, Path: "/port-allocations", Summary: "List port allocations", Tags: []string{"port-allocations"}}, handler.listPortAllocations)
-	huma.Register(api, huma.Operation{OperationID: "create-port-allocation", Method: http.MethodPost, Path: "/port-allocations", Summary: "Create port allocation", Tags: []string{"port-allocations"}}, handler.createPortAllocation)
-	huma.Register(api, huma.Operation{OperationID: "update-port-allocation", Method: http.MethodPut, Path: "/port-allocations/{id}", Summary: "Update port allocation", Tags: []string{"port-allocations"}}, handler.updatePortAllocation)
-	huma.Register(api, huma.Operation{OperationID: "delete-port-allocation", Method: http.MethodDelete, Path: "/port-allocations/{id}", Summary: "Delete port allocation", Tags: []string{"port-allocations"}}, handler.deletePortAllocation)
-	huma.Register(api, huma.Operation{OperationID: "export-services", Method: http.MethodGet, Path: "/services/export.csv", Summary: "Export services", Tags: []string{"services"}}, handler.exportServices)
+	huma.Register(api, huma.Operation{OperationID: "list-hosts", Method: http.MethodGet, Path: "/hosts", Summary: "List hosts", Tags: []string{"hosts"}}, handler.listHosts)
+	huma.Register(api, huma.Operation{OperationID: "create-host", Method: http.MethodPost, Path: "/hosts", Summary: "Create host", Tags: []string{"hosts"}}, handler.createHost)
+	huma.Register(api, huma.Operation{OperationID: "update-host", Method: http.MethodPut, Path: "/hosts/{id}", Summary: "Update host", Tags: []string{"hosts"}}, handler.updateHost)
+	huma.Register(api, huma.Operation{OperationID: "delete-host", Method: http.MethodDelete, Path: "/hosts/{id}", Summary: "Delete host", Tags: []string{"hosts"}}, handler.deleteHost)
+
+	huma.Register(api, huma.Operation{OperationID: "list-port-groups", Method: http.MethodGet, Path: "/port-groups", Summary: "List port groups", Tags: []string{"port-groups"}}, handler.listPortGroups)
+	huma.Register(api, huma.Operation{OperationID: "get-port-group", Method: http.MethodGet, Path: "/port-groups/{id}", Summary: "Get port group", Tags: []string{"port-groups"}}, handler.getPortGroup)
+	huma.Register(api, huma.Operation{OperationID: "create-port-group", Method: http.MethodPost, Path: "/port-groups", Summary: "Create port group", Tags: []string{"port-groups"}}, handler.createPortGroup)
+	huma.Register(api, huma.Operation{OperationID: "update-port-group", Method: http.MethodPut, Path: "/port-groups/{id}", Summary: "Update port group", Tags: []string{"port-groups"}}, handler.updatePortGroup)
+	huma.Register(api, huma.Operation{OperationID: "delete-port-group", Method: http.MethodDelete, Path: "/port-groups/{id}", Summary: "Delete port group", Tags: []string{"port-groups"}}, handler.deletePortGroup)
+	huma.Register(api, huma.Operation{OperationID: "create-port-slot", Method: http.MethodPost, Path: "/port-groups/{id}/slots", Summary: "Create port slot", Tags: []string{"port-slots"}}, handler.createPortSlot)
+	huma.Register(api, huma.Operation{OperationID: "update-port-slot", Method: http.MethodPut, Path: "/port-slots/{id}", Summary: "Update port slot", Tags: []string{"port-slots"}}, handler.updatePortSlot)
+	huma.Register(api, huma.Operation{OperationID: "delete-port-slot", Method: http.MethodDelete, Path: "/port-slots/{id}", Summary: "Delete port slot", Tags: []string{"port-slots"}}, handler.deletePortSlot)
+	huma.Register(api, huma.Operation{OperationID: "export-port-groups", Method: http.MethodGet, Path: "/port-groups/export.csv", Summary: "Export port groups", Tags: []string{"port-groups"}}, handler.exportPortGroups)
 }
 
-func (h portsvcHandler) listServices(ctx context.Context, input *ServiceListInputDTO) (*BodyDTO[[]ServiceDTO], error) {
-	actor, err := h.actor(ctx, input.Session)
-	if err != nil {
+func (h portsvcHandler) listHosts(ctx context.Context, input *HostListInputDTO) (*BodyDTO[[]HostDTO], error) {
+	if _, err := h.actor(ctx, input.Session); err != nil {
 		return nil, err
 	}
-	services, err := h.services.Portsvc.ListServices(ctx, service.ServiceListParams{Actor: actor, OwnerSubject: input.OwnerSubject, Query: input.Query, Sort: input.Sort, Status: input.Status, ProjectName: input.ProjectName})
+	hosts, err := h.services.Portsvc.ListHosts(ctx, service.HostListParams{Query: input.Query, Status: input.Status})
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
-	return &BodyDTO[[]ServiceDTO]{Body: ToServiceDTOs(services)}, nil
+	return &BodyDTO[[]HostDTO]{Body: ToHostDTOs(hosts)}, nil
 }
 
-func (h portsvcHandler) getService(ctx context.Context, input *ServiceInputDTO) (*BodyDTO[ServiceDTO], error) {
+func (h portsvcHandler) createHost(ctx context.Context, input *HostBodyInputDTO) (*BodyDTO[HostDTO], error) {
 	actor, err := h.actor(ctx, input.Session)
 	if err != nil {
 		return nil, err
 	}
-	item, err := h.services.Portsvc.GetService(ctx, actor, input.ID)
+	host, err := h.services.Portsvc.CreateHost(ctx, actor, ToHostPayload(input.Body))
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
-	return &BodyDTO[ServiceDTO]{Body: ToServiceDTO(*item)}, nil
+	return &BodyDTO[HostDTO]{Body: ToHostDTO(*host)}, nil
 }
 
-func (h portsvcHandler) createService(ctx context.Context, input *ServiceBodyInputDTO) (*BodyDTO[ServiceDTO], error) {
+func (h portsvcHandler) updateHost(ctx context.Context, input *HostUpdateInputDTO) (*BodyDTO[HostDTO], error) {
 	actor, err := h.actor(ctx, input.Session)
 	if err != nil {
 		return nil, err
 	}
-	item, err := h.services.Portsvc.CreateService(ctx, actor, ToServicePayload(input.Body))
+	host, err := h.services.Portsvc.UpdateHost(ctx, actor, input.ID, ToHostPayload(input.Body))
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
-	return &BodyDTO[ServiceDTO]{Body: ToServiceDTO(*item)}, nil
+	return &BodyDTO[HostDTO]{Body: ToHostDTO(*host)}, nil
 }
 
-func (h portsvcHandler) updateService(ctx context.Context, input *ServiceUpdateInputDTO) (*BodyDTO[ServiceDTO], error) {
+func (h portsvcHandler) deleteHost(ctx context.Context, input *HostInputDTO) (*BodyDTO[DeleteDTO], error) {
 	actor, err := h.actor(ctx, input.Session)
 	if err != nil {
 		return nil, err
 	}
-	item, err := h.services.Portsvc.UpdateService(ctx, actor, input.ID, ToServicePayload(input.Body))
-	if err != nil {
-		return nil, utilPortsvcAPIError(err)
-	}
-	return &BodyDTO[ServiceDTO]{Body: ToServiceDTO(*item)}, nil
-}
-
-func (h portsvcHandler) deleteService(ctx context.Context, input *ServiceInputDTO) (*BodyDTO[DeleteDTO], error) {
-	actor, err := h.actor(ctx, input.Session)
-	if err != nil {
-		return nil, err
-	}
-	if err := h.services.Portsvc.DeleteService(ctx, actor, input.ID); err != nil {
+	if err := h.services.Portsvc.DeleteHost(ctx, actor, input.ID); err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
 	return &BodyDTO[DeleteDTO]{Body: DeleteDTO{Deleted: true}}, nil
 }
 
-func (h portsvcHandler) batchDeleteServices(ctx context.Context, input *ServiceBatchDeleteInputDTO) (*BodyDTO[DeleteDTO], error) {
+func (h portsvcHandler) listPortGroups(ctx context.Context, input *PortGroupListInputDTO) (*BodyDTO[[]PortGroupDTO], error) {
 	actor, err := h.actor(ctx, input.Session)
 	if err != nil {
 		return nil, err
 	}
-	if err := h.services.Portsvc.DeleteServices(ctx, ToServiceBatchDeleteInput(actor, input.Body.IDs)); err != nil {
+	groups, err := h.services.Portsvc.ListPortGroups(ctx, service.PortGroupListParams{Actor: actor, OwnerSubject: input.OwnerSubject, Query: input.Query, Sort: input.Sort, Status: input.Status})
+	if err != nil {
+		return nil, utilPortsvcAPIError(err)
+	}
+	return &BodyDTO[[]PortGroupDTO]{Body: ToPortGroupDTOs(groups)}, nil
+}
+
+func (h portsvcHandler) getPortGroup(ctx context.Context, input *PortGroupInputDTO) (*BodyDTO[PortGroupDTO], error) {
+	actor, err := h.actor(ctx, input.Session)
+	if err != nil {
+		return nil, err
+	}
+	group, err := h.services.Portsvc.GetPortGroup(ctx, actor, input.ID)
+	if err != nil {
+		return nil, utilPortsvcAPIError(err)
+	}
+	return &BodyDTO[PortGroupDTO]{Body: ToPortGroupDTO(*group)}, nil
+}
+
+func (h portsvcHandler) createPortGroup(ctx context.Context, input *PortGroupBodyInputDTO) (*BodyDTO[PortGroupDTO], error) {
+	actor, err := h.actor(ctx, input.Session)
+	if err != nil {
+		return nil, err
+	}
+	group, err := h.services.Portsvc.CreatePortGroup(ctx, actor, ToPortGroupPayload(input.Body))
+	if err != nil {
+		return nil, utilPortsvcAPIError(err)
+	}
+	return &BodyDTO[PortGroupDTO]{Body: ToPortGroupDTO(*group)}, nil
+}
+
+func (h portsvcHandler) updatePortGroup(ctx context.Context, input *PortGroupUpdateInputDTO) (*BodyDTO[PortGroupDTO], error) {
+	actor, err := h.actor(ctx, input.Session)
+	if err != nil {
+		return nil, err
+	}
+	group, err := h.services.Portsvc.UpdatePortGroup(ctx, actor, input.ID, ToPortGroupPayload(input.Body))
+	if err != nil {
+		return nil, utilPortsvcAPIError(err)
+	}
+	return &BodyDTO[PortGroupDTO]{Body: ToPortGroupDTO(*group)}, nil
+}
+
+func (h portsvcHandler) deletePortGroup(ctx context.Context, input *PortGroupInputDTO) (*BodyDTO[DeleteDTO], error) {
+	actor, err := h.actor(ctx, input.Session)
+	if err != nil {
+		return nil, err
+	}
+	if err := h.services.Portsvc.DeletePortGroup(ctx, actor, input.ID); err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
 	return &BodyDTO[DeleteDTO]{Body: DeleteDTO{Deleted: true}}, nil
 }
 
-func (h portsvcHandler) listPortAllocations(ctx context.Context, input *PortAllocationListInputDTO) (*BodyDTO[[]PortAllocationDTO], error) {
+func (h portsvcHandler) createPortSlot(ctx context.Context, input *PortSlotBodyInputDTO) (*BodyDTO[PortSlotDTO], error) {
 	actor, err := h.actor(ctx, input.Session)
 	if err != nil {
 		return nil, err
 	}
-	groups, err := h.services.Portsvc.ListPortAllocations(ctx, service.PortAllocationListParams{Actor: actor, OwnerSubject: input.OwnerSubject, Sort: input.Sort, Status: input.Status})
+	slot, err := h.services.Portsvc.CreatePortSlot(ctx, actor, input.ID, ToPortSlotPayload(input.Body))
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
-	return &BodyDTO[[]PortAllocationDTO]{Body: ToPortAllocationDTOs(groups)}, nil
+	return &BodyDTO[PortSlotDTO]{Body: ToPortSlotDTO(*slot)}, nil
 }
 
-func (h portsvcHandler) createPortAllocation(ctx context.Context, input *PortAllocationBodyInputDTO) (*BodyDTO[PortAllocationDTO], error) {
+func (h portsvcHandler) updatePortSlot(ctx context.Context, input *PortSlotUpdateInputDTO) (*BodyDTO[PortSlotDTO], error) {
 	actor, err := h.actor(ctx, input.Session)
 	if err != nil {
 		return nil, err
 	}
-	group, err := h.services.Portsvc.CreatePortAllocation(ctx, actor, ToPortAllocationPayload(input.Body))
+	slot, err := h.services.Portsvc.UpdatePortSlot(ctx, actor, input.ID, ToPortSlotPayload(input.Body))
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
-	return &BodyDTO[PortAllocationDTO]{Body: ToPortAllocationDTO(*group)}, nil
+	return &BodyDTO[PortSlotDTO]{Body: ToPortSlotDTO(*slot)}, nil
 }
 
-func (h portsvcHandler) updatePortAllocation(ctx context.Context, input *PortAllocationUpdateInputDTO) (*BodyDTO[PortAllocationDTO], error) {
+func (h portsvcHandler) deletePortSlot(ctx context.Context, input *PortGroupInputDTO) (*BodyDTO[DeleteDTO], error) {
 	actor, err := h.actor(ctx, input.Session)
 	if err != nil {
 		return nil, err
 	}
-	group, err := h.services.Portsvc.UpdatePortAllocation(ctx, actor, input.ID, ToPortAllocationPayload(input.Body))
-	if err != nil {
-		return nil, utilPortsvcAPIError(err)
-	}
-	return &BodyDTO[PortAllocationDTO]{Body: ToPortAllocationDTO(*group)}, nil
-}
-
-func (h portsvcHandler) deletePortAllocation(ctx context.Context, input *PortAllocationInputDTO) (*BodyDTO[DeleteDTO], error) {
-	actor, err := h.actor(ctx, input.Session)
-	if err != nil {
-		return nil, err
-	}
-	if err := h.services.Portsvc.DeletePortAllocation(ctx, actor, input.ID); err != nil {
+	if err := h.services.Portsvc.DeletePortSlot(ctx, actor, input.ID); err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
 	return &BodyDTO[DeleteDTO]{Body: DeleteDTO{Deleted: true}}, nil
 }
 
-func (h portsvcHandler) exportServices(ctx context.Context, input *ServiceListInputDTO) (*CSVOutputDTO, error) {
+func (h portsvcHandler) exportPortGroups(ctx context.Context, input *PortGroupListInputDTO) (*CSVOutputDTO, error) {
 	actor, err := h.actor(ctx, input.Session)
 	if err != nil {
 		return nil, err
 	}
-	body, err := h.services.Portsvc.ExportServicesCSV(ctx, service.ServiceListParams{Actor: actor, OwnerSubject: input.OwnerSubject, Query: input.Query, Sort: input.Sort, Status: input.Status, ProjectName: input.ProjectName})
+	body, err := h.services.Portsvc.ExportPortGroupsCSV(ctx, service.PortGroupListParams{Actor: actor, OwnerSubject: input.OwnerSubject, Query: input.Query, Sort: input.Sort, Status: input.Status})
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
 	return &CSVOutputDTO{
 		ContentType:        "text/csv; charset=utf-8",
-		ContentDisposition: `attachment; filename="miniport-services.csv"`,
+		ContentDisposition: `attachment; filename="miniport-port-groups.csv"`,
 		Body:               body,
 	}, nil
 }

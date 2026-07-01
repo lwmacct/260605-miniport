@@ -13,18 +13,25 @@ import (
 )
 
 const (
-	allocationPortMin       = 10000
-	allocationPortMax       = 59999
-	allocationPortMaxStart  = 59990
-	allocationGroupSize     = 10
-	defaultAllocationStatus = "available"
-	defaultServiceStatus    = "planned"
-	defaultDependencyType   = "opensource"
-	defaultRepositoryKind   = "source"
+	allocationPortMin      = 10000
+	allocationPortMax      = 59999
+	allocationPortMaxStart = 59990
+	allocationGroupSize    = 10
+	defaultHostStatus      = "active"
+	defaultPortGroupStatus = "available"
+	defaultRuntimeMode     = "dind"
+	defaultSlotKind        = "app"
+	defaultSlotProtocol    = "tcp"
+	defaultSlotStatus      = "planned"
+	defaultDependencyType  = "opensource"
+	defaultRepositoryKind  = "source"
+	runtimeModeDind        = "dind"
+	runtimeModeHost        = "host"
 )
 
-type PortsvcServiceRecord = repository.PortsvcServiceRecord
-type PortAllocation = repository.PortsvcPortAllocationRecord
+type Host = repository.PortsvcHostRecord
+type PortGroup = repository.PortsvcPortGroupRecord
+type PortSlot = repository.PortsvcPortSlotRecord
 type Dependency = repository.PortsvcDependencyRecord
 type RepositoryRef = repository.PortsvcRepositoryRecord
 
@@ -34,12 +41,30 @@ type PortsvcActor struct {
 	Admin        bool
 }
 
+type HostPayload struct {
+	Name   string
+	IP     string
+	Spec   string
+	Status string
+	Notes  string
+}
+
+type PortSlotPayload struct {
+	ID            string
+	Port          int
+	Name          string
+	Kind          string
+	Protocol      string
+	ContainerName string
+	Status        string
+	Notes         string
+}
+
 type RepositoryPayload struct {
 	ID    string
 	Name  string
 	URL   string
 	Kind  string
-	Role  string
 	Notes string
 }
 
@@ -49,59 +74,46 @@ type DependencyPayload struct {
 	Type    string
 	URL     string
 	Version string
-	Role    string
 	Notes   string
 }
 
-type ServicePayload struct {
-	OwnerSubject     string
-	PortAllocationID string
-	Name             string
-	ProjectName      string
-	DindIP           string
-	DindContainer    string
-	Status           string
-	Owner            string
-	Tags             string
-	Notes            string
-	Repositories     []RepositoryPayload
-	Dependencies     []DependencyPayload
-}
-
-type PortAllocationPayload struct {
+type PortGroupPayload struct {
 	OwnerSubject string
+	HostID       string
 	PortStart    int
 	PortEnd      int
+	ProjectName  string
+	ProjectOwner string
+	RuntimeMode  string
+	RuntimeName  string
+	ServiceIP    string
 	Status       string
+	Tags         string
 	Notes        string
+	Slots        []PortSlotPayload
+	Repositories []RepositoryPayload
+	Dependencies []DependencyPayload
 }
 
-type ServiceView struct {
-	PortsvcServiceRecord
+type PortGroupView struct {
+	PortGroup
 
+	Slots        []PortSlot
 	Repositories []RepositoryRef
 	Dependencies []Dependency
 }
 
-type ServiceListParams struct {
+type HostListParams struct {
+	Query  string
+	Status string
+}
+
+type PortGroupListParams struct {
 	Actor        PortsvcActor
 	OwnerSubject string
 	Query        string
 	Sort         string
 	Status       string
-	ProjectName  string
-}
-
-type PortAllocationListParams struct {
-	Actor        PortsvcActor
-	OwnerSubject string
-	Sort         string
-	Status       string
-}
-
-type ServiceBatchDeleteInput struct {
-	Actor PortsvcActor
-	IDs   []string
 }
 
 var (
@@ -135,50 +147,24 @@ func utilVisibleOwnerSubject(actor PortsvcActor, requestedOwnerSubject string) s
 	return actor.OwnerSubject
 }
 
-func utilNormalizeService(ctx context.Context, store *repository.Store, actor PortsvcActor, current *PortsvcServiceRecord, payload ServicePayload) (*PortsvcServiceRecord, error) {
-	ownerSubject := strings.TrimSpace(actor.OwnerSubject)
-	if actor.Admin {
-		if subject := strings.TrimSpace(payload.OwnerSubject); subject != "" {
-			ownerSubject = subject
-		} else if current != nil {
-			ownerSubject = current.OwnerSubject
-		}
+func utilNormalizeHost(payload HostPayload) (*Host, error) {
+	host := &Host{
+		Name:   strings.TrimSpace(payload.Name),
+		IP:     strings.TrimSpace(payload.IP),
+		Spec:   strings.TrimSpace(payload.Spec),
+		Status: strings.TrimSpace(payload.Status),
+		Notes:  strings.TrimSpace(payload.Notes),
 	}
-	if ownerSubject == "" {
-		return nil, utilBadPortsvcRequest("ownerSubject is required")
+	if host.Name == "" {
+		return nil, utilBadPortsvcRequest("host name is required")
 	}
-	portID := payload.PortAllocationID
-	if portID != "" {
-		port, err := store.FetchPortsvcPortAllocationByID(ctx, portID)
-		if err != nil {
-			return nil, err
-		}
-		if port.OwnerSubject != ownerSubject {
-			return nil, utilBadPortsvcRequest("port allocation must belong to the service owner")
-		}
+	if host.Status == "" {
+		host.Status = defaultHostStatus
 	}
-	service := &PortsvcServiceRecord{
-		OwnerSubject:     ownerSubject,
-		PortAllocationID: portID,
-		Name:             strings.TrimSpace(payload.Name),
-		ProjectName:      strings.TrimSpace(payload.ProjectName),
-		DindIP:           strings.TrimSpace(payload.DindIP),
-		DindContainer:    strings.TrimSpace(payload.DindContainer),
-		Status:           strings.TrimSpace(payload.Status),
-		Owner:            strings.TrimSpace(payload.Owner),
-		Tags:             strings.TrimSpace(payload.Tags),
-		Notes:            strings.TrimSpace(payload.Notes),
-	}
-	if service.Name == "" {
-		return nil, utilBadPortsvcRequest("name is required")
-	}
-	if service.Status == "" {
-		service.Status = defaultServiceStatus
-	}
-	return service, nil
+	return host, nil
 }
 
-func utilNormalizePortAllocation(ctx context.Context, store *repository.Store, actor PortsvcActor, current *PortAllocation, payload PortAllocationPayload) (*PortAllocation, error) {
+func utilNormalizePortGroup(ctx context.Context, store *repository.Store, actor PortsvcActor, current *PortGroup, payload PortGroupPayload) (*PortGroup, error) {
 	ownerSubject := strings.TrimSpace(actor.OwnerSubject)
 	if actor.Admin {
 		if subject := strings.TrimSpace(payload.OwnerSubject); subject != "" {
@@ -189,11 +175,18 @@ func utilNormalizePortAllocation(ctx context.Context, store *repository.Store, a
 	}
 	if ownerSubject == "" {
 		return nil, utilBadPortsvcRequest("ownerSubject is required")
+	}
+
+	hostID := strings.TrimSpace(payload.HostID)
+	if hostID != "" {
+		if _, err := store.FetchPortsvcHostByID(ctx, hostID); err != nil {
+			return nil, err
+		}
 	}
 
 	portStart := payload.PortStart
 	if portStart == 0 {
-		allocated, err := utilNextAvailablePortStart(ctx, store, ownerSubject, utilCurrentPortID(current))
+		allocated, err := utilNextAvailablePortStart(ctx, store, ownerSubject, utilCurrentPortGroupID(current))
 		if err != nil {
 			return nil, err
 		}
@@ -203,30 +196,42 @@ func utilNormalizePortAllocation(ctx context.Context, store *repository.Store, a
 	if payload.PortEnd > 0 && payload.PortEnd != portEnd {
 		return nil, utilBadPortsvcRequest("portEnd must equal portStart + 9")
 	}
-	group := &PortAllocation{
+
+	runtimeMode := strings.TrimSpace(payload.RuntimeMode)
+	if runtimeMode == "" {
+		runtimeMode = defaultRuntimeMode
+	}
+	group := &PortGroup{
 		OwnerSubject: ownerSubject,
+		HostID:       hostID,
 		PortStart:    portStart,
 		PortEnd:      portEnd,
+		ProjectName:  strings.TrimSpace(payload.ProjectName),
+		ProjectOwner: strings.TrimSpace(payload.ProjectOwner),
+		RuntimeMode:  runtimeMode,
+		RuntimeName:  strings.TrimSpace(payload.RuntimeName),
+		ServiceIP:    strings.TrimSpace(payload.ServiceIP),
 		Status:       strings.TrimSpace(payload.Status),
+		Tags:         strings.TrimSpace(payload.Tags),
 		Notes:        strings.TrimSpace(payload.Notes),
 	}
 	if group.Status == "" {
-		group.Status = defaultAllocationStatus
+		group.Status = defaultPortGroupStatus
 	}
-	if err := utilValidatePortAllocation(ctx, store, utilCurrentPortID(current), group); err != nil {
+	if err := utilValidatePortGroup(ctx, store, utilCurrentPortGroupID(current), group); err != nil {
 		return nil, err
 	}
 	return group, nil
 }
 
-func utilCurrentPortID(group *PortAllocation) string {
+func utilCurrentPortGroupID(group *PortGroup) string {
 	if group == nil {
 		return ""
 	}
 	return group.ID
 }
 
-func utilValidatePortAllocation(ctx context.Context, store *repository.Store, currentID string, group *PortAllocation) error {
+func utilValidatePortGroup(ctx context.Context, store *repository.Store, currentID string, group *PortGroup) error {
 	if group.PortStart < allocationPortMin || group.PortStart > allocationPortMaxStart {
 		return utilBadPortsvcRequest("portStart must be between 10000 and 59990")
 	}
@@ -234,23 +239,29 @@ func utilValidatePortAllocation(ctx context.Context, store *repository.Store, cu
 		return utilBadPortsvcRequest("portStart must align to a 10-port group")
 	}
 	if group.PortEnd != group.PortStart+allocationGroupSize-1 {
-		return utilBadPortsvcRequest("port allocation must contain exactly 10 ports")
+		return utilBadPortsvcRequest("port group must contain exactly 10 ports")
 	}
 	if group.PortEnd > allocationPortMax {
 		return utilBadPortsvcRequest("portEnd must be less than or equal to 59999")
 	}
-	count, err := store.CountPortsvcOverlappingPortAllocations(ctx, currentID, group)
+	if group.RuntimeMode != runtimeModeDind && group.RuntimeMode != runtimeModeHost {
+		return utilBadPortsvcRequest("runtimeMode must be dind or host")
+	}
+	if group.RuntimeMode == runtimeModeHost && group.HostID == "" {
+		return utilBadPortsvcRequest("hostId is required when runtimeMode is host")
+	}
+	count, err := store.CountPortsvcOverlappingPortGroups(ctx, currentID, group)
 	if err != nil {
 		return err
 	}
 	if count > 0 {
-		return utilBadPortsvcRequest("port allocation is already allocated for this user")
+		return utilBadPortsvcRequest("port group is already allocated for this user")
 	}
 	return nil
 }
 
 func utilNextAvailablePortStart(ctx context.Context, store *repository.Store, ownerSubject string, excludeID string) (int, error) {
-	used, err := store.ListPortsvcPortAllocationStartsByOwner(ctx, ownerSubject, excludeID)
+	used, err := store.ListPortsvcPortGroupStartsByOwner(ctx, ownerSubject, excludeID)
 	if err != nil {
 		return 0, err
 	}
@@ -263,7 +274,56 @@ func utilNextAvailablePortStart(ctx context.Context, store *repository.Store, ow
 			return portStart, nil
 		}
 	}
-	return 0, utilBadPortsvcRequest("no available port allocations for this user")
+	return 0, utilBadPortsvcRequest("no available port groups for this user")
+}
+
+func utilNormalizePortSlot(group PortGroup, payload PortSlotPayload) (*PortSlot, error) {
+	slot := &PortSlot{
+		PortGroupID:   group.ID,
+		Port:          payload.Port,
+		Name:          strings.TrimSpace(payload.Name),
+		Kind:          strings.TrimSpace(payload.Kind),
+		Protocol:      strings.TrimSpace(payload.Protocol),
+		ContainerName: strings.TrimSpace(payload.ContainerName),
+		Status:        strings.TrimSpace(payload.Status),
+		Notes:         strings.TrimSpace(payload.Notes),
+	}
+	if slot.Name == "" {
+		return nil, utilBadPortsvcRequest("slot name is required")
+	}
+	if slot.Port < group.PortStart || slot.Port > group.PortEnd {
+		return nil, utilBadPortsvcRequest("slot port must be inside the port group range")
+	}
+	if slot.Kind == "" {
+		slot.Kind = defaultSlotKind
+	}
+	if slot.Protocol == "" {
+		slot.Protocol = defaultSlotProtocol
+	}
+	if slot.Status == "" {
+		slot.Status = defaultSlotStatus
+	}
+	return slot, nil
+}
+
+func utilNormalizePortSlots(group PortGroup, payloads []PortSlotPayload) ([]PortSlot, error) {
+	out := make([]PortSlot, 0, len(payloads))
+	ports := map[int]struct{}{}
+	for _, payload := range payloads {
+		if strings.TrimSpace(payload.Name) == "" && payload.Port == 0 {
+			continue
+		}
+		slot, err := utilNormalizePortSlot(group, payload)
+		if err != nil {
+			return nil, err
+		}
+		if _, exists := ports[slot.Port]; exists {
+			return nil, utilBadPortsvcRequest("slot ports must be unique inside a port group")
+		}
+		ports[slot.Port] = struct{}{}
+		out = append(out, *slot)
+	}
+	return out, nil
 }
 
 func utilResolveActivePrincipal(ctx context.Context, directory identity.Directory, ownerSubject string) error {
@@ -296,26 +356,6 @@ func utilPrincipalName(principal *identity.Principal, fallback string) string {
 	return fallback
 }
 
-func utilNormalizeIDs(ids []string) ([]string, error) {
-	seen := map[string]struct{}{}
-	out := make([]string, 0, len(ids))
-	for _, id := range ids {
-		id = strings.TrimSpace(id)
-		if id == "" {
-			return nil, utilBadPortsvcRequest("ids must be non-empty")
-		}
-		if _, exists := seen[id]; exists {
-			continue
-		}
-		seen[id] = struct{}{}
-		out = append(out, id)
-	}
-	if len(out) == 0 {
-		return nil, utilBadPortsvcRequest("ids are required")
-	}
-	return out, nil
-}
-
 func utilCSVBytes(records [][]string) ([]byte, error) {
 	var builder strings.Builder
 	writer := csv.NewWriter(&builder)
@@ -325,33 +365,45 @@ func utilCSVBytes(records [][]string) ([]byte, error) {
 	return []byte(builder.String()), nil
 }
 
-func utilServiceRepositories(items []RepositoryRef) string {
-	values := make([]string, 0, len(items))
-	for _, item := range items {
-		value := item.Name
-		if item.URL != "" {
-			value += " " + item.URL
-		}
-		values = append(values, value)
-	}
-	return strings.Join(values, "; ")
-}
-
-func utilServiceDependencies(items []Dependency) string {
-	values := make([]string, 0, len(items))
-	for _, item := range items {
-		value := item.Name
-		if item.Version != "" {
-			value += " " + item.Version
-		}
-		values = append(values, value)
-	}
-	return strings.Join(values, "; ")
-}
-
-func utilPortRange(group *PortAllocation) string {
-	if group == nil {
-		return ""
-	}
+func utilPortRange(group PortGroup) string {
 	return strconv.Itoa(group.PortStart) + "-" + strconv.Itoa(group.PortEnd)
+}
+
+func utilWrapNotFound(err error, message string) error {
+	if errors.Is(err, repository.ErrNotFound) {
+		return utilPortsvcNotFound(message)
+	}
+	return err
+}
+
+func utilPortSlots(slots []PortSlot) string {
+	items := make([]string, 0, len(slots))
+	for _, slot := range slots {
+		items = append(items, slot.Name+":"+strconv.Itoa(slot.Port))
+	}
+	return strings.Join(items, "; ")
+}
+
+func utilRepositories(repos []RepositoryRef) string {
+	items := make([]string, 0, len(repos))
+	for _, repo := range repos {
+		if repo.Name != "" {
+			items = append(items, repo.Name+" "+repo.URL)
+		} else {
+			items = append(items, repo.URL)
+		}
+	}
+	return strings.Join(items, "; ")
+}
+
+func utilDependencies(dependencies []Dependency) string {
+	items := make([]string, 0, len(dependencies))
+	for _, dep := range dependencies {
+		label := dep.Name
+		if dep.Version != "" {
+			label += " " + dep.Version
+		}
+		items = append(items, label)
+	}
+	return strings.Join(items, "; ")
 }

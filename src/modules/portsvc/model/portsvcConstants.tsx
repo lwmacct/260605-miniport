@@ -1,8 +1,22 @@
 export const statusOptions = [
+  { value: "available", label: "可用" },
   { value: "planned", label: "规划中" },
   { value: "running", label: "运行中" },
   { value: "reserved", label: "保留" },
   { value: "stopped", label: "停用" },
+];
+
+export const runtimeModeOptions = [
+  { value: "dind", label: "DIND" },
+  { value: "host", label: "宿主机直跑" },
+];
+
+export const slotKindOptions = [
+  { value: "app", label: "应用" },
+  { value: "db", label: "数据库" },
+  { value: "cache", label: "缓存" },
+  { value: "mq", label: "消息队列" },
+  { value: "middleware", label: "中间件" },
 ];
 
 export const componentTypeOptions = [

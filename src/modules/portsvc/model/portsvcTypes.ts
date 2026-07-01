@@ -6,12 +6,23 @@ export type Meta = {
   docsPath: string;
 };
 
-export type PortAllocation = {
+export type HostItem = {
   id: string;
-  ownerSubject: string;
-  ownerName: string;
-  portStart: number;
-  portEnd: number;
+  name: string;
+  ip: string;
+  spec: string;
+  status: string;
+  notes: string;
+};
+
+export type PortSlotItem = {
+  id?: string;
+  portGroupId?: string;
+  port: number;
+  name: string;
+  kind: string;
+  protocol: string;
+  containerName: string;
   status: string;
   notes: string;
 };
@@ -19,69 +30,72 @@ export type PortAllocation = {
 export type RepositoryItem = {
   id?: string;
   ownerSubject?: string;
+  portGroupId?: string;
   name: string;
   url: string;
   kind: string;
-  role?: string;
   notes: string;
 };
 
 export type DependencyItem = {
   id?: string;
   ownerSubject?: string;
+  portGroupId?: string;
   name: string;
   type: string;
   url: string;
   version: string;
-  role?: string;
   notes: string;
 };
 
-export type ServiceItem = {
+export type PortGroupItem = {
   id: string;
   ownerSubject: string;
   ownerName: string;
-  portAllocationId: string;
-  portAllocation?: PortAllocation;
-  name: string;
+  hostId: string;
+  host?: HostItem;
+  portStart: number;
+  portEnd: number;
   projectName: string;
-  dindIp: string;
-  dindContainer: string;
+  projectOwner: string;
+  runtimeMode: string;
+  runtimeName: string;
+  serviceIp: string;
   status: string;
-  owner: string;
   tags: string;
   notes: string;
+  slots: PortSlotItem[];
   repositories: RepositoryItem[];
   dependencies: DependencyItem[];
 };
 
-export type ServiceForm = Partial<Omit<ServiceItem, "id" | "ownerName" | "portAllocation">> & {
-  name?: string;
+export type PortGroupForm = Partial<Omit<PortGroupItem, "id" | "ownerName" | "host">> & {
+  projectName?: string;
 };
 
-export type PortAllocationForm = Partial<PortAllocation> & {
-  portStart?: number;
+export type HostForm = Partial<HostItem> & {
+  name?: string;
 };
 
 export type PortsvcSnapshot = {
   meta: Meta;
-  ports: PortAllocation[];
-  services: ServiceItem[];
+  hosts: HostItem[];
+  portGroups: PortGroupItem[];
 };
 
 export type PortsvcQuery = {
-  projectName?: string;
-  serviceQuery?: string;
-  serviceSort?: string;
+  query?: string;
+  sort?: string;
   status?: string;
   ownerSubject?: string;
 };
 
 export type AppStats = {
-  services: number;
-  ports: number;
-  boundPorts: number;
-  freePorts: number;
+  groups: number;
+  hosts: number;
+  runningGroups: number;
+  freeGroups: number;
+  slots: number;
   repositories: number;
   dependencies: number;
 };

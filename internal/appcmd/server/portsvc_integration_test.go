@@ -18,7 +18,7 @@ func TestPortsvcWriteAllowsAuthenticatedUser(t *testing.T) {
 	app, handler := setupPortsvcTestApp(t)
 	cookie := createTestSessionCookie(t, app, "member")
 
-	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/api/services", strings.NewReader(`{"name":"member-service","projectName":"miniport","dindIp":"172.22.11.12"}`))
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/api/port-groups", strings.NewReader(`{"projectName":"miniport","runtimeMode":"dind","runtimeName":"miniport-dind-01","serviceIp":"172.22.11.12","slots":[{"port":10000,"name":"redis","kind":"cache","protocol":"redis"}]}`))
 	req.Header.Set("Content-Type", "application/json")
 	req.RemoteAddr = "127.0.0.1:12345"
 	req.AddCookie(cookie)
@@ -29,18 +29,23 @@ func TestPortsvcWriteAllowsAuthenticatedUser(t *testing.T) {
 	var body struct {
 		OwnerSubject string `json:"ownerSubject"`
 		OwnerName    string `json:"ownerName"`
-		Name         string `json:"name"`
+		ProjectName  string `json:"projectName"`
+		Slots        []struct {
+			Name string `json:"name"`
+		} `json:"slots"`
 	}
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
 	require.NotEmpty(t, body.OwnerSubject)
 	require.Equal(t, "member", body.OwnerName)
-	require.Equal(t, "member-service", body.Name)
+	require.Equal(t, "miniport", body.ProjectName)
+	require.Len(t, body.Slots, 1)
+	require.Equal(t, "redis", body.Slots[0].Name)
 }
 
 func TestPortsvcReadRejectsMissingSession(t *testing.T) {
 	_, handler := setupPortsvcTestApp(t)
 
-	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/services", nil)
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/port-groups", nil)
 	req.RemoteAddr = "127.0.0.1:12345"
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
@@ -83,7 +88,7 @@ func testSessionRequest() auth.SessionRequest {
 		Host:       "example.test",
 		UserAgent:  "test",
 		Method:     "GET",
-		Path:       "/api/services",
+		Path:       "/api/port-groups",
 		RemoteAddr: "127.0.0.1:12345",
 	}
 }
