@@ -23,8 +23,13 @@ const (
 	defaultSlotKind        = "app"
 	defaultSlotProtocol    = "tcp"
 	defaultSlotStatus      = "planned"
-	defaultDependencyType  = "opensource"
-	defaultRepositoryKind  = "source"
+	defaultAssetKind       = "component"
+	defaultAssetType       = "middleware"
+	defaultAssetProvider   = "manual"
+	defaultAssetVisibility = "unknown"
+	defaultControllability = "unknown"
+	defaultAssetStatus     = "active"
+	defaultRelationType    = "runtime"
 	runtimeModeDind        = "dind"
 	runtimeModeHost        = "host"
 )
@@ -32,8 +37,8 @@ const (
 type Host = repository.PortsvcHostRecord
 type PortGroup = repository.PortsvcPortGroupRecord
 type PortSlot = repository.PortsvcPortSlotRecord
-type Dependency = repository.PortsvcDependencyRecord
-type RepositoryRef = repository.PortsvcRepositoryRecord
+type DependencyAsset = repository.PortsvcDependencyAssetRecord
+type PortGroupAssetLink = repository.PortsvcPortGroupAssetLinkRecord
 
 type PortsvcActor struct {
 	OwnerSubject string
@@ -60,21 +65,30 @@ type PortSlotPayload struct {
 	Notes         string
 }
 
-type RepositoryPayload struct {
-	ID    string
-	Name  string
-	URL   string
-	Kind  string
-	Notes string
+type DependencyAssetPayload struct {
+	OwnerSubject    string
+	Name            string
+	AssetKind       string
+	AssetType       string
+	Provider        string
+	URL             string
+	FullName        string
+	ExternalID      string
+	Visibility      string
+	Controllability string
+	Status          string
+	Description     string
+	Metadata        string
+	Notes           string
 }
 
-type DependencyPayload struct {
-	ID      string
-	Name    string
-	Type    string
-	URL     string
-	Version string
-	Notes   string
+type PortGroupAssetLinkPayload struct {
+	ID           string
+	PortSlotID   string
+	AssetID      string
+	RelationType string
+	Required     bool
+	Notes        string
 }
 
 type PortGroupPayload struct {
@@ -91,16 +105,14 @@ type PortGroupPayload struct {
 	Tags         string
 	Notes        string
 	Slots        []PortSlotPayload
-	Repositories []RepositoryPayload
-	Dependencies []DependencyPayload
+	AssetLinks   []PortGroupAssetLinkPayload
 }
 
 type PortGroupView struct {
 	PortGroup
 
-	Slots        []PortSlot
-	Repositories []RepositoryRef
-	Dependencies []Dependency
+	Slots      []PortSlot
+	AssetLinks []PortGroupAssetLink
 }
 
 type HostListParams struct {
@@ -113,6 +125,16 @@ type PortGroupListParams struct {
 	OwnerSubject string
 	Query        string
 	Sort         string
+	Status       string
+}
+
+type DependencyAssetListParams struct {
+	Actor        PortsvcActor
+	OwnerSubject string
+	Query        string
+	AssetKind    string
+	AssetType    string
+	Provider     string
 	Status       string
 }
 
@@ -162,6 +184,58 @@ func utilNormalizeHost(payload HostPayload) (*Host, error) {
 		host.Status = defaultHostStatus
 	}
 	return host, nil
+}
+
+func utilNormalizeDependencyAsset(actor PortsvcActor, current *DependencyAsset, payload DependencyAssetPayload) (*DependencyAsset, error) {
+	ownerSubject := strings.TrimSpace(actor.OwnerSubject)
+	if actor.Admin {
+		if subject := strings.TrimSpace(payload.OwnerSubject); subject != "" {
+			ownerSubject = subject
+		} else if current != nil {
+			ownerSubject = current.OwnerSubject
+		}
+	}
+	if ownerSubject == "" {
+		return nil, utilBadPortsvcRequest("ownerSubject is required")
+	}
+	asset := &DependencyAsset{
+		OwnerSubject:    ownerSubject,
+		Name:            strings.TrimSpace(payload.Name),
+		AssetKind:       strings.TrimSpace(payload.AssetKind),
+		AssetType:       strings.TrimSpace(payload.AssetType),
+		Provider:        strings.TrimSpace(payload.Provider),
+		URL:             strings.TrimSpace(payload.URL),
+		FullName:        strings.TrimSpace(payload.FullName),
+		ExternalID:      strings.TrimSpace(payload.ExternalID),
+		Visibility:      strings.TrimSpace(payload.Visibility),
+		Controllability: strings.TrimSpace(payload.Controllability),
+		Status:          strings.TrimSpace(payload.Status),
+		Description:     strings.TrimSpace(payload.Description),
+		Metadata:        strings.TrimSpace(payload.Metadata),
+		Notes:           strings.TrimSpace(payload.Notes),
+	}
+	if asset.Name == "" {
+		return nil, utilBadPortsvcRequest("asset name is required")
+	}
+	if asset.AssetKind == "" {
+		asset.AssetKind = defaultAssetKind
+	}
+	if asset.AssetType == "" {
+		asset.AssetType = defaultAssetType
+	}
+	if asset.Provider == "" {
+		asset.Provider = defaultAssetProvider
+	}
+	if asset.Visibility == "" {
+		asset.Visibility = defaultAssetVisibility
+	}
+	if asset.Controllability == "" {
+		asset.Controllability = defaultControllability
+	}
+	if asset.Status == "" {
+		asset.Status = defaultAssetStatus
+	}
+	return asset, nil
 }
 
 func utilNormalizePortGroup(ctx context.Context, store *repository.Store, actor PortsvcActor, current *PortGroup, payload PortGroupPayload) (*PortGroup, error) {
@@ -326,6 +400,52 @@ func utilNormalizePortSlots(group PortGroup, payloads []PortSlotPayload) ([]Port
 	return out, nil
 }
 
+func utilNormalizeAssetLinks(ctx context.Context, store *repository.Store, group PortGroup, payloads []PortGroupAssetLinkPayload) ([]PortGroupAssetLink, error) {
+	out := make([]PortGroupAssetLink, 0, len(payloads))
+	seen := map[string]struct{}{}
+	for _, payload := range payloads {
+		assetID := strings.TrimSpace(payload.AssetID)
+		if assetID == "" {
+			continue
+		}
+		asset, err := store.FetchPortsvcDependencyAssetByID(ctx, assetID)
+		if err != nil {
+			return nil, err
+		}
+		if asset.OwnerSubject != group.OwnerSubject {
+			return nil, utilBadPortsvcRequest("asset must belong to the port group owner")
+		}
+		portSlotID := strings.TrimSpace(payload.PortSlotID)
+		if portSlotID != "" {
+			slot, err := store.FetchPortsvcPortSlotByID(ctx, portSlotID)
+			if err != nil {
+				return nil, err
+			}
+			if slot.PortGroupID != group.ID {
+				return nil, utilBadPortsvcRequest("portSlotId must belong to the port group")
+			}
+		}
+		relationType := strings.TrimSpace(payload.RelationType)
+		if relationType == "" {
+			relationType = defaultRelationType
+		}
+		key := portSlotID + "\x00" + assetID + "\x00" + relationType
+		if _, exists := seen[key]; exists {
+			return nil, utilBadPortsvcRequest("asset links must be unique inside a port group")
+		}
+		seen[key] = struct{}{}
+		out = append(out, PortGroupAssetLink{
+			PortGroupID:  group.ID,
+			PortSlotID:   portSlotID,
+			AssetID:      assetID,
+			RelationType: relationType,
+			Required:     payload.Required,
+			Notes:        strings.TrimSpace(payload.Notes),
+		})
+	}
+	return out, nil
+}
+
 func utilResolveActivePrincipal(ctx context.Context, directory identity.Directory, ownerSubject string) error {
 	if directory == nil {
 		return utilBadPortsvcRequest("identity directory is required")
@@ -384,26 +504,14 @@ func utilPortSlots(slots []PortSlot) string {
 	return strings.Join(items, "; ")
 }
 
-func utilRepositories(repos []RepositoryRef) string {
-	items := make([]string, 0, len(repos))
-	for _, repo := range repos {
-		if repo.Name != "" {
-			items = append(items, repo.Name+" "+repo.URL)
-		} else {
-			items = append(items, repo.URL)
+func utilAssetLinks(links []PortGroupAssetLink) string {
+	items := make([]string, 0, len(links))
+	for _, link := range links {
+		label := link.AssetID
+		if link.Asset != nil && link.Asset.Name != "" {
+			label = link.Asset.Name
 		}
-	}
-	return strings.Join(items, "; ")
-}
-
-func utilDependencies(dependencies []Dependency) string {
-	items := make([]string, 0, len(dependencies))
-	for _, dep := range dependencies {
-		label := dep.Name
-		if dep.Version != "" {
-			label += " " + dep.Version
-		}
-		items = append(items, label)
+		items = append(items, link.RelationType+":"+label)
 	}
 	return strings.Join(items, "; ")
 }

@@ -25,6 +25,10 @@ func ToPortSlotPayload(input PortSlotPayloadDTO) service.PortSlotPayload {
 	return service.PortSlotPayload(input)
 }
 
+func ToDependencyAssetPayload(input DependencyAssetPayloadDTO) service.DependencyAssetPayload {
+	return service.DependencyAssetPayload(input)
+}
+
 func ToPortGroupPayload(input PortGroupPayloadDTO) service.PortGroupPayload {
 	out := service.PortGroupPayload{
 		OwnerSubject: input.OwnerSubject,
@@ -40,17 +44,13 @@ func ToPortGroupPayload(input PortGroupPayloadDTO) service.PortGroupPayload {
 		Tags:         input.Tags,
 		Notes:        input.Notes,
 		Slots:        make([]service.PortSlotPayload, 0, len(input.Slots)),
-		Repositories: make([]service.RepositoryPayload, 0, len(input.Repositories)),
-		Dependencies: make([]service.DependencyPayload, 0, len(input.Dependencies)),
+		AssetLinks:   make([]service.PortGroupAssetLinkPayload, 0, len(input.AssetLinks)),
 	}
 	for _, slot := range input.Slots {
 		out.Slots = append(out.Slots, service.PortSlotPayload(slot))
 	}
-	for _, repo := range input.Repositories {
-		out.Repositories = append(out.Repositories, service.RepositoryPayload(repo))
-	}
-	for _, dep := range input.Dependencies {
-		out.Dependencies = append(out.Dependencies, service.DependencyPayload(dep))
+	for _, link := range input.AssetLinks {
+		out.AssetLinks = append(out.AssetLinks, service.PortGroupAssetLinkPayload(link))
 	}
 	return out
 }
@@ -100,6 +100,65 @@ func ToPortSlotDTOs(slots []service.PortSlot) []PortSlotDTO {
 	return out
 }
 
+func ToDependencyAssetDTO(asset service.DependencyAsset) DependencyAssetDTO {
+	return DependencyAssetDTO{
+		ID:              asset.ID,
+		OwnerSubject:    asset.OwnerSubject,
+		OwnerName:       asset.OwnerName,
+		Name:            asset.Name,
+		AssetKind:       asset.AssetKind,
+		AssetType:       asset.AssetType,
+		Provider:        asset.Provider,
+		URL:             asset.URL,
+		FullName:        asset.FullName,
+		ExternalID:      asset.ExternalID,
+		Visibility:      asset.Visibility,
+		Controllability: asset.Controllability,
+		Status:          asset.Status,
+		Description:     asset.Description,
+		Metadata:        asset.Metadata,
+		LastSyncedAt:    utilHTTPTime(asset.LastSyncedAt),
+		Notes:           asset.Notes,
+		CreatedAt:       utilHTTPTime(asset.CreatedAt),
+		UpdatedAt:       utilHTTPTime(asset.UpdatedAt),
+	}
+}
+
+func ToDependencyAssetDTOs(assets []service.DependencyAsset) []DependencyAssetDTO {
+	out := make([]DependencyAssetDTO, 0, len(assets))
+	for _, asset := range assets {
+		out = append(out, ToDependencyAssetDTO(asset))
+	}
+	return out
+}
+
+func ToPortGroupAssetLinkDTO(link service.PortGroupAssetLink) PortGroupAssetLinkDTO {
+	out := PortGroupAssetLinkDTO{
+		ID:           link.ID,
+		PortGroupID:  link.PortGroupID,
+		PortSlotID:   link.PortSlotID,
+		AssetID:      link.AssetID,
+		RelationType: link.RelationType,
+		Required:     link.Required,
+		Notes:        link.Notes,
+		CreatedAt:    utilHTTPTime(link.CreatedAt),
+		UpdatedAt:    utilHTTPTime(link.UpdatedAt),
+	}
+	if link.Asset != nil {
+		asset := ToDependencyAssetDTO(*link.Asset)
+		out.Asset = &asset
+	}
+	return out
+}
+
+func ToPortGroupAssetLinkDTOs(links []service.PortGroupAssetLink) []PortGroupAssetLinkDTO {
+	out := make([]PortGroupAssetLinkDTO, 0, len(links))
+	for _, link := range links {
+		out = append(out, ToPortGroupAssetLinkDTO(link))
+	}
+	return out
+}
+
 func ToPortGroupDTO(group service.PortGroupView) PortGroupDTO {
 	out := PortGroupDTO{
 		ID:           group.ID,
@@ -119,18 +178,11 @@ func ToPortGroupDTO(group service.PortGroupView) PortGroupDTO {
 		CreatedAt:    utilHTTPTime(group.CreatedAt),
 		UpdatedAt:    utilHTTPTime(group.UpdatedAt),
 		Slots:        ToPortSlotDTOs(group.Slots),
-		Repositories: make([]RepositoryDTO, 0, len(group.Repositories)),
-		Dependencies: make([]DependencyDTO, 0, len(group.Dependencies)),
+		AssetLinks:   ToPortGroupAssetLinkDTOs(group.AssetLinks),
 	}
 	if group.Host != nil {
 		host := ToHostDTO(*group.Host)
 		out.Host = &host
-	}
-	for _, repo := range group.Repositories {
-		out.Repositories = append(out.Repositories, ToRepositoryDTO(repo))
-	}
-	for _, dep := range group.Dependencies {
-		out.Dependencies = append(out.Dependencies, ToDependencyDTO(dep))
 	}
 	return out
 }
@@ -141,33 +193,4 @@ func ToPortGroupDTOs(groups []service.PortGroupView) []PortGroupDTO {
 		out = append(out, ToPortGroupDTO(group))
 	}
 	return out
-}
-
-func ToRepositoryDTO(repository service.RepositoryRef) RepositoryDTO {
-	return RepositoryDTO{
-		ID:           repository.ID,
-		OwnerSubject: repository.OwnerSubject,
-		PortGroupID:  repository.PortGroupID,
-		Name:         repository.Name,
-		URL:          repository.URL,
-		Kind:         repository.Kind,
-		Notes:        repository.Notes,
-		CreatedAt:    utilHTTPTime(repository.CreatedAt),
-		UpdatedAt:    utilHTTPTime(repository.UpdatedAt),
-	}
-}
-
-func ToDependencyDTO(component service.Dependency) DependencyDTO {
-	return DependencyDTO{
-		ID:           component.ID,
-		OwnerSubject: component.OwnerSubject,
-		PortGroupID:  component.PortGroupID,
-		Name:         component.Name,
-		Type:         component.Type,
-		URL:          component.URL,
-		Version:      component.Version,
-		Notes:        component.Notes,
-		CreatedAt:    utilHTTPTime(component.CreatedAt),
-		UpdatedAt:    utilHTTPTime(component.UpdatedAt),
-	}
 }

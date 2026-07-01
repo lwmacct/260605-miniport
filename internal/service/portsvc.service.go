@@ -59,6 +59,81 @@ func (s *PortsvcService) DeleteHost(ctx context.Context, _ PortsvcActor, id stri
 	return nil
 }
 
+func (s *PortsvcService) ListDependencyAssets(ctx context.Context, params DependencyAssetListParams) ([]DependencyAsset, error) {
+	assets, err := s.store.ListPortsvcDependencyAssets(ctx, repository.PortsvcDependencyAssetListFilter{
+		OwnerSubject: utilVisibleOwnerSubject(params.Actor, params.OwnerSubject),
+		Admin:        params.Actor.Admin,
+		Query:        params.Query,
+		AssetKind:    params.AssetKind,
+		AssetType:    params.AssetType,
+		Provider:     params.Provider,
+		Status:       params.Status,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if err := s.attachDependencyAssetOwnerNames(ctx, assets); err != nil {
+		return nil, err
+	}
+	return assets, nil
+}
+
+func (s *PortsvcService) CreateDependencyAsset(ctx context.Context, actor PortsvcActor, payload DependencyAssetPayload) (*DependencyAsset, error) {
+	asset, err := utilNormalizeDependencyAsset(actor, nil, payload)
+	if err != nil {
+		return nil, err
+	}
+	if principalErr := utilResolveActivePrincipal(ctx, s.directory, asset.OwnerSubject); principalErr != nil {
+		return nil, principalErr
+	}
+	now := utilNowUTC()
+	asset.CreatedAt = now
+	asset.UpdatedAt = now
+	created, err := s.store.CreatePortsvcDependencyAsset(ctx, asset)
+	if err != nil {
+		return nil, err
+	}
+	assets := []DependencyAsset{*created}
+	if err := s.attachDependencyAssetOwnerNames(ctx, assets); err != nil {
+		return nil, err
+	}
+	return &assets[0], nil
+}
+
+func (s *PortsvcService) UpdateDependencyAsset(ctx context.Context, actor PortsvcActor, id string, payload DependencyAssetPayload) (*DependencyAsset, error) {
+	current, err := s.store.FetchPortsvcDependencyAssetByID(ctx, id)
+	if err != nil {
+		return nil, utilWrapNotFound(err, "dependency asset not found")
+	}
+	if !actor.Admin && current.OwnerSubject != actor.OwnerSubject {
+		return nil, utilPortsvcNotFound("dependency asset not found")
+	}
+	asset, err := utilNormalizeDependencyAsset(actor, current, payload)
+	if err != nil {
+		return nil, err
+	}
+	if principalErr := utilResolveActivePrincipal(ctx, s.directory, asset.OwnerSubject); principalErr != nil {
+		return nil, principalErr
+	}
+	asset.UpdatedAt = utilNowUTC()
+	updated, err := s.store.UpdatePortsvcDependencyAsset(ctx, id, asset)
+	if err != nil {
+		return nil, utilWrapNotFound(err, "dependency asset not found")
+	}
+	assets := []DependencyAsset{*updated}
+	if err := s.attachDependencyAssetOwnerNames(ctx, assets); err != nil {
+		return nil, err
+	}
+	return &assets[0], nil
+}
+
+func (s *PortsvcService) DeleteDependencyAsset(ctx context.Context, actor PortsvcActor, id string) error {
+	if err := s.store.DeletePortsvcDependencyAsset(ctx, id, actor.OwnerSubject, actor.Admin); err != nil {
+		return utilWrapNotFound(err, "dependency asset not found")
+	}
+	return nil
+}
+
 func (s *PortsvcService) ListPortGroups(ctx context.Context, params PortGroupListParams) ([]PortGroupView, error) {
 	groups, err := s.store.ListPortsvcPortGroups(ctx, repository.PortsvcPortGroupListFilter{
 		OwnerSubject: utilVisibleOwnerSubject(params.Actor, params.OwnerSubject),
@@ -228,7 +303,7 @@ func (s *PortsvcService) ExportPortGroupsCSV(ctx context.Context, params PortGro
 	}
 	records := [][]string{{
 		"ownerName", "project_name", "status", "port_range", "runtime_mode", "runtime_name", "service_ip",
-		"host_name", "host_ip", "project_owner", "tags", "slots", "repositories", "dependencies", "notes",
+		"host_name", "host_ip", "project_owner", "tags", "slots", "asset_links", "notes",
 	}}
 	for _, group := range groups {
 		hostName := ""
@@ -250,8 +325,7 @@ func (s *PortsvcService) ExportPortGroupsCSV(ctx context.Context, params PortGro
 			group.ProjectOwner,
 			group.Tags,
 			utilPortSlots(group.Slots),
-			utilRepositories(group.Repositories),
-			utilDependencies(group.Dependencies),
+			utilAssetLinks(group.AssetLinks),
 			group.Notes,
 		})
 	}
@@ -279,8 +353,7 @@ func (s *PortsvcService) buildPortGroupViews(ctx context.Context, groups []PortG
 	for idx := range views {
 		child := children[views[idx].ID]
 		views[idx].Slots = child.Slots
-		views[idx].Repositories = child.Repositories
-		views[idx].Dependencies = child.Dependencies
+		views[idx].AssetLinks = child.AssetLinks
 	}
 	if err := s.attachPortGroupOwnerNames(ctx, views); err != nil {
 		return nil, err
@@ -289,11 +362,15 @@ func (s *PortsvcService) buildPortGroupViews(ctx context.Context, groups []PortG
 }
 
 func (s *PortsvcService) replacePortGroupChildren(ctx context.Context, group PortGroup, payload PortGroupPayload, now time.Time) error {
-	if err := s.store.ReplacePortsvcPortGroupChildren(ctx, group.ID); err != nil {
-		return err
-	}
 	slots, err := utilNormalizePortSlots(group, payload.Slots)
 	if err != nil {
+		return err
+	}
+	links, err := utilNormalizeAssetLinks(ctx, s.store, group, payload.AssetLinks)
+	if err != nil {
+		return err
+	}
+	if err := s.store.ReplacePortsvcPortGroupChildren(ctx, group.ID); err != nil {
 		return err
 	}
 	for idx := range slots {
@@ -303,59 +380,11 @@ func (s *PortsvcService) replacePortGroupChildren(ctx context.Context, group Por
 	if err := s.store.AddPortsvcPortSlots(ctx, slots); err != nil {
 		return err
 	}
-
-	repos := make([]repository.PortsvcRepositoryRecord, 0, len(payload.Repositories))
-	for _, item := range payload.Repositories {
-		name := strings.TrimSpace(item.Name)
-		url := strings.TrimSpace(item.URL)
-		if name == "" && url == "" {
-			continue
-		}
-		if url == "" {
-			return utilBadPortsvcRequest("repository url is required")
-		}
-		kind := strings.TrimSpace(item.Kind)
-		if kind == "" {
-			kind = defaultRepositoryKind
-		}
-		repos = append(repos, repository.PortsvcRepositoryRecord{
-			OwnerSubject: group.OwnerSubject,
-			PortGroupID:  group.ID,
-			Name:         name,
-			URL:          url,
-			Kind:         kind,
-			Notes:        strings.TrimSpace(item.Notes),
-			CreatedAt:    now,
-			UpdatedAt:    now,
-		})
+	for idx := range links {
+		links[idx].CreatedAt = now
+		links[idx].UpdatedAt = now
 	}
-	if err := s.store.AddPortsvcRepositories(ctx, repos); err != nil {
-		return err
-	}
-
-	deps := make([]repository.PortsvcDependencyRecord, 0, len(payload.Dependencies))
-	for _, item := range payload.Dependencies {
-		name := strings.TrimSpace(item.Name)
-		if name == "" {
-			continue
-		}
-		itemType := strings.TrimSpace(item.Type)
-		if itemType == "" {
-			itemType = defaultDependencyType
-		}
-		deps = append(deps, repository.PortsvcDependencyRecord{
-			OwnerSubject: group.OwnerSubject,
-			PortGroupID:  group.ID,
-			Name:         name,
-			Type:         itemType,
-			URL:          strings.TrimSpace(item.URL),
-			Version:      strings.TrimSpace(item.Version),
-			Notes:        strings.TrimSpace(item.Notes),
-			CreatedAt:    now,
-			UpdatedAt:    now,
-		})
-	}
-	return s.store.AddPortsvcDependencies(ctx, deps)
+	return s.store.AddPortsvcPortGroupAssetLinks(ctx, links)
 }
 
 func (s *PortsvcService) attachPortGroupOwnerNames(ctx context.Context, views []PortGroupView) error {
@@ -371,6 +400,24 @@ func (s *PortsvcService) attachPortGroupOwnerNames(ctx context.Context, views []
 		views[idx].OwnerName = names[views[idx].OwnerSubject]
 		if views[idx].OwnerName == "" {
 			views[idx].OwnerName = views[idx].OwnerSubject
+		}
+	}
+	return nil
+}
+
+func (s *PortsvcService) attachDependencyAssetOwnerNames(ctx context.Context, assets []DependencyAsset) error {
+	subjects := make([]string, 0, len(assets))
+	for _, asset := range assets {
+		subjects = append(subjects, asset.OwnerSubject)
+	}
+	names, err := s.ownerNames(ctx, subjects)
+	if err != nil {
+		return err
+	}
+	for idx := range assets {
+		assets[idx].OwnerName = names[assets[idx].OwnerSubject]
+		if assets[idx].OwnerName == "" {
+			assets[idx].OwnerName = assets[idx].OwnerSubject
 		}
 	}
 	return nil

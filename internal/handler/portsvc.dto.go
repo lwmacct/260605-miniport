@@ -19,39 +19,47 @@ type PortSlotPayloadDTO struct {
 	Notes         string `json:"notes,omitempty"`
 }
 
-type RepositoryPayloadDTO struct {
-	ID    string `json:"id,omitempty"`
-	Name  string `json:"name,omitempty"`
-	URL   string `json:"url,omitempty"`
-	Kind  string `json:"kind,omitempty"`
-	Notes string `json:"notes,omitempty"`
+type DependencyAssetPayloadDTO struct {
+	OwnerSubject    string `json:"ownerSubject,omitempty"`
+	Name            string `json:"name,omitempty"`
+	AssetKind       string `json:"assetKind,omitempty"`
+	AssetType       string `json:"assetType,omitempty"`
+	Provider        string `json:"provider,omitempty"`
+	URL             string `json:"url,omitempty"`
+	FullName        string `json:"fullName,omitempty"`
+	ExternalID      string `json:"externalId,omitempty"`
+	Visibility      string `json:"visibility,omitempty"`
+	Controllability string `json:"controllability,omitempty"`
+	Status          string `json:"status,omitempty"`
+	Description     string `json:"description,omitempty"`
+	Metadata        string `json:"metadata,omitempty"`
+	Notes           string `json:"notes,omitempty"`
 }
 
-type DependencyPayloadDTO struct {
-	ID      string `json:"id,omitempty"`
-	Name    string `json:"name,omitempty"`
-	Type    string `json:"type,omitempty"`
-	URL     string `json:"url,omitempty"`
-	Version string `json:"version,omitempty"`
-	Notes   string `json:"notes,omitempty"`
+type PortGroupAssetLinkPayloadDTO struct {
+	ID           string `json:"id,omitempty"`
+	PortSlotID   string `json:"portSlotId,omitempty"`
+	AssetID      string `json:"assetId,omitempty"`
+	RelationType string `json:"relationType,omitempty"`
+	Required     bool   `json:"required,omitempty"`
+	Notes        string `json:"notes,omitempty"`
 }
 
 type PortGroupPayloadDTO struct {
-	OwnerSubject string                 `json:"ownerSubject,omitempty"`
-	HostID       string                 `json:"hostId,omitempty"`
-	PortStart    int                    `json:"portStart,omitempty"`
-	PortEnd      int                    `json:"portEnd,omitempty"`
-	ProjectName  string                 `json:"projectName,omitempty"`
-	ProjectOwner string                 `json:"projectOwner,omitempty"`
-	RuntimeMode  string                 `json:"runtimeMode,omitempty"`
-	RuntimeName  string                 `json:"runtimeName,omitempty"`
-	ServiceIP    string                 `json:"serviceIp,omitempty"`
-	Status       string                 `json:"status,omitempty"`
-	Tags         string                 `json:"tags,omitempty"`
-	Notes        string                 `json:"notes,omitempty"`
-	Slots        []PortSlotPayloadDTO   `json:"slots,omitempty"`
-	Repositories []RepositoryPayloadDTO `json:"repositories,omitempty"`
-	Dependencies []DependencyPayloadDTO `json:"dependencies,omitempty"`
+	OwnerSubject string                         `json:"ownerSubject,omitempty"`
+	HostID       string                         `json:"hostId,omitempty"`
+	PortStart    int                            `json:"portStart,omitempty"`
+	PortEnd      int                            `json:"portEnd,omitempty"`
+	ProjectName  string                         `json:"projectName,omitempty"`
+	ProjectOwner string                         `json:"projectOwner,omitempty"`
+	RuntimeMode  string                         `json:"runtimeMode,omitempty"`
+	RuntimeName  string                         `json:"runtimeName,omitempty"`
+	ServiceIP    string                         `json:"serviceIp,omitempty"`
+	Status       string                         `json:"status,omitempty"`
+	Tags         string                         `json:"tags,omitempty"`
+	Notes        string                         `json:"notes,omitempty"`
+	Slots        []PortSlotPayloadDTO           `json:"slots,omitempty"`
+	AssetLinks   []PortGroupAssetLinkPayloadDTO `json:"assetLinks,omitempty"`
 }
 
 type HostDTO struct {
@@ -80,51 +88,60 @@ type PortSlotDTO struct {
 }
 
 type PortGroupDTO struct {
-	ID           string          `json:"id"`
-	OwnerSubject string          `json:"ownerSubject"`
-	OwnerName    string          `json:"ownerName"`
-	HostID       string          `json:"hostId"`
-	Host         *HostDTO        `json:"host,omitempty"`
-	PortStart    int             `json:"portStart"`
-	PortEnd      int             `json:"portEnd"`
-	ProjectName  string          `json:"projectName"`
-	ProjectOwner string          `json:"projectOwner"`
-	RuntimeMode  string          `json:"runtimeMode"`
-	RuntimeName  string          `json:"runtimeName"`
-	ServiceIP    string          `json:"serviceIp"`
-	Status       string          `json:"status"`
-	Tags         string          `json:"tags"`
-	Notes        string          `json:"notes"`
-	CreatedAt    string          `json:"createdAt"`
-	UpdatedAt    string          `json:"updatedAt"`
-	Slots        []PortSlotDTO   `json:"slots"`
-	Repositories []RepositoryDTO `json:"repositories"`
-	Dependencies []DependencyDTO `json:"dependencies"`
+	ID           string                  `json:"id"`
+	OwnerSubject string                  `json:"ownerSubject"`
+	OwnerName    string                  `json:"ownerName"`
+	HostID       string                  `json:"hostId"`
+	Host         *HostDTO                `json:"host,omitempty"`
+	PortStart    int                     `json:"portStart"`
+	PortEnd      int                     `json:"portEnd"`
+	ProjectName  string                  `json:"projectName"`
+	ProjectOwner string                  `json:"projectOwner"`
+	RuntimeMode  string                  `json:"runtimeMode"`
+	RuntimeName  string                  `json:"runtimeName"`
+	ServiceIP    string                  `json:"serviceIp"`
+	Status       string                  `json:"status"`
+	Tags         string                  `json:"tags"`
+	Notes        string                  `json:"notes"`
+	CreatedAt    string                  `json:"createdAt"`
+	UpdatedAt    string                  `json:"updatedAt"`
+	Slots        []PortSlotDTO           `json:"slots"`
+	AssetLinks   []PortGroupAssetLinkDTO `json:"assetLinks"`
 }
 
-type RepositoryDTO struct {
-	ID           string `json:"id"`
-	OwnerSubject string `json:"ownerSubject"`
-	PortGroupID  string `json:"portGroupId"`
-	Name         string `json:"name"`
-	URL          string `json:"url"`
-	Kind         string `json:"kind"`
-	Notes        string `json:"notes"`
-	CreatedAt    string `json:"createdAt"`
-	UpdatedAt    string `json:"updatedAt"`
+type DependencyAssetDTO struct {
+	ID              string `json:"id"`
+	OwnerSubject    string `json:"ownerSubject"`
+	OwnerName       string `json:"ownerName"`
+	Name            string `json:"name"`
+	AssetKind       string `json:"assetKind"`
+	AssetType       string `json:"assetType"`
+	Provider        string `json:"provider"`
+	URL             string `json:"url"`
+	FullName        string `json:"fullName"`
+	ExternalID      string `json:"externalId"`
+	Visibility      string `json:"visibility"`
+	Controllability string `json:"controllability"`
+	Status          string `json:"status"`
+	Description     string `json:"description"`
+	Metadata        string `json:"metadata"`
+	LastSyncedAt    string `json:"lastSyncedAt"`
+	Notes           string `json:"notes"`
+	CreatedAt       string `json:"createdAt"`
+	UpdatedAt       string `json:"updatedAt"`
 }
 
-type DependencyDTO struct {
-	ID           string `json:"id"`
-	OwnerSubject string `json:"ownerSubject"`
-	PortGroupID  string `json:"portGroupId"`
-	Name         string `json:"name"`
-	Type         string `json:"type"`
-	URL          string `json:"url"`
-	Version      string `json:"version"`
-	Notes        string `json:"notes"`
-	CreatedAt    string `json:"createdAt"`
-	UpdatedAt    string `json:"updatedAt"`
+type PortGroupAssetLinkDTO struct {
+	ID           string              `json:"id"`
+	PortGroupID  string              `json:"portGroupId"`
+	PortSlotID   string              `json:"portSlotId"`
+	AssetID      string              `json:"assetId"`
+	Asset        *DependencyAssetDTO `json:"asset,omitempty"`
+	RelationType string              `json:"relationType"`
+	Required     bool                `json:"required"`
+	Notes        string              `json:"notes"`
+	CreatedAt    string              `json:"createdAt"`
+	UpdatedAt    string              `json:"updatedAt"`
 }
 
 type HostListInputDTO struct {
@@ -155,6 +172,32 @@ type PortGroupListInputDTO struct {
 	Query        string `query:"q" example:"miniport"`
 	Sort         string `query:"sort" example:"port"`
 	Status       string `query:"status" example:"running"`
+}
+
+type DependencyAssetListInputDTO struct {
+	Session      string `cookie:"web_session"`
+	OwnerSubject string `query:"ownerSubject" example:"018f2f9c-1111-7000-8000-000000000001"`
+	Query        string `query:"q" example:"github"`
+	AssetKind    string `query:"assetKind" example:"repository"`
+	AssetType    string `query:"assetType" example:"owned"`
+	Provider     string `query:"provider" example:"github"`
+	Status       string `query:"status" example:"active"`
+}
+
+type DependencyAssetInputDTO struct {
+	Session string `cookie:"web_session"`
+	ID      string `path:"id" example:"018f2f9c-1111-7000-8000-000000000004"`
+}
+
+type DependencyAssetBodyInputDTO struct {
+	Session string `cookie:"web_session"`
+	Body    DependencyAssetPayloadDTO
+}
+
+type DependencyAssetUpdateInputDTO struct {
+	Session string `cookie:"web_session"`
+	ID      string `path:"id" example:"018f2f9c-1111-7000-8000-000000000004"`
+	Body    DependencyAssetPayloadDTO
 }
 
 type PortGroupInputDTO struct {

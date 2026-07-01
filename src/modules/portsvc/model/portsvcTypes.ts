@@ -27,24 +27,33 @@ export type PortSlotItem = {
   notes: string;
 };
 
-export type RepositoryItem = {
+export type DependencyAssetItem = {
   id?: string;
   ownerSubject?: string;
-  portGroupId?: string;
+  ownerName?: string;
   name: string;
+  assetKind: string;
+  assetType: string;
+  provider: string;
   url: string;
-  kind: string;
+  fullName: string;
+  externalId: string;
+  visibility: string;
+  controllability: string;
+  status: string;
+  description: string;
+  metadata: string;
   notes: string;
 };
 
-export type DependencyItem = {
+export type PortGroupAssetLinkItem = {
   id?: string;
-  ownerSubject?: string;
   portGroupId?: string;
-  name: string;
-  type: string;
-  url: string;
-  version: string;
+  portSlotId?: string;
+  assetId: string;
+  asset?: DependencyAssetItem;
+  relationType: string;
+  required: boolean;
   notes: string;
 };
 
@@ -65,8 +74,7 @@ export type PortGroupItem = {
   tags: string;
   notes: string;
   slots: PortSlotItem[];
-  repositories: RepositoryItem[];
-  dependencies: DependencyItem[];
+  assetLinks: PortGroupAssetLinkItem[];
 };
 
 export type PortGroupForm = Partial<Omit<PortGroupItem, "id" | "ownerName" | "host">> & {
@@ -81,6 +89,7 @@ export type PortsvcSnapshot = {
   meta: Meta;
   hosts: HostItem[];
   portGroups: PortGroupItem[];
+  dependencyAssets: DependencyAssetItem[];
 };
 
 export type PortsvcQuery = {
@@ -96,6 +105,6 @@ export type AppStats = {
   runningGroups: number;
   freeGroups: number;
   slots: number;
-  repositories: number;
-  dependencies: number;
+  dependencyAssets: number;
+  assetLinks: number;
 };

@@ -1,14 +1,42 @@
-import { Card, Col, Row, Space, Statistic, Table, Tag, Typography } from "antd";
+import { EditOutlined } from "@ant-design/icons";
+import { Button, Card, Col, Row, Space, Statistic, Table, Tag, Tooltip, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import type { AppStats, PortGroupItem } from "../model/portsvcTypes";
+import type { AppStats, DependencyAssetItem, PortGroupItem } from "../model/portsvcTypes";
 
 type DependenciesSectionProps = {
+  canManage: boolean;
+  dependencyAssets: DependencyAssetItem[];
   groups: PortGroupItem[];
+  onEditAsset: (asset: DependencyAssetItem) => void;
   stats: AppStats;
 };
 
-export function DependenciesSection({ groups, stats }: DependenciesSectionProps) {
-  const columns: ColumnsType<PortGroupItem> = [
+export function DependenciesSection({ canManage, dependencyAssets, groups, onEditAsset, stats }: DependenciesSectionProps) {
+  const assetColumns: ColumnsType<DependencyAssetItem> = [
+    { title: "名称", dataIndex: "name", render: (value, item) => value || item.fullName || item.url },
+    { title: "类别", width: 120, render: (_, item) => <Tag>{item.assetKind}</Tag> },
+    { title: "类型", width: 150, render: (_, item) => <Tag>{item.assetType}</Tag> },
+    { title: "Provider", dataIndex: "provider", width: 120 },
+    {
+      title: "地址",
+      dataIndex: "url",
+      render: (url) => (url ? <Typography.Text copyable ellipsis>{url}</Typography.Text> : "-"),
+    },
+    { title: "可控性", dataIndex: "controllability", width: 120 },
+    { title: "状态", dataIndex: "status", width: 100 },
+    {
+      title: "操作",
+      width: 80,
+      render: (_, item) =>
+        canManage ? (
+          <Tooltip title="编辑资产">
+            <Button size="small" icon={<EditOutlined />} onClick={() => onEditAsset(item)} />
+          </Tooltip>
+        ) : null,
+    },
+  ];
+
+  const groupColumns: ColumnsType<PortGroupItem> = [
     { title: "项目", dataIndex: "projectName", render: (value) => value || "-" },
     {
       title: "服务组件",
@@ -21,26 +49,13 @@ export function DependenciesSection({ groups, stats }: DependenciesSectionProps)
       ),
     },
     {
-      title: "仓库",
-      render: (_, item) => (
-        <Space direction="vertical" size={2}>
-          {item.repositories.length === 0 ? <Typography.Text type="secondary">-</Typography.Text> : null}
-          {item.repositories.map((repo) => (
-            <Typography.Text key={repo.id ?? repo.url} copyable ellipsis>
-              {repo.name || repo.kind}: {repo.url}
-            </Typography.Text>
-          ))}
-        </Space>
-      ),
-    },
-    {
-      title: "依赖",
+      title: "依赖资产",
       render: (_, item) => (
         <Space size={[4, 4]} wrap>
-          {item.dependencies.map((dep) => (
-            <Tag key={dep.id ?? `${dep.name}-${dep.version}`}>
-              {dep.name}
-              {dep.version ? ` ${dep.version}` : ""}
+          {item.assetLinks.length === 0 ? <Typography.Text type="secondary">-</Typography.Text> : null}
+          {item.assetLinks.map((link) => (
+            <Tag key={link.id ?? `${link.assetId}-${link.relationType}`}>
+              {link.relationType}: {link.asset?.name ?? link.assetId}
             </Tag>
           ))}
         </Space>
@@ -55,19 +70,28 @@ export function DependenciesSection({ groups, stats }: DependenciesSectionProps)
           <Card><Statistic title="服务组件" value={stats.slots} /></Card>
         </Col>
         <Col xs={24} sm={8}>
-          <Card><Statistic title="仓库" value={stats.repositories} /></Card>
+          <Card><Statistic title="依赖资产" value={stats.dependencyAssets} /></Card>
         </Col>
         <Col xs={24} sm={8}>
-          <Card><Statistic title="依赖" value={stats.dependencies} /></Card>
+          <Card><Statistic title="资产关系" value={stats.assetLinks} /></Card>
         </Col>
       </Row>
-      <Card>
+      <Card title="依赖资产">
+        <Table<DependencyAssetItem>
+          rowKey={(item) => item.id ?? item.name}
+          columns={assetColumns}
+          dataSource={dependencyAssets}
+          pagination={{ pageSize: 10 }}
+          scroll={{ x: 1000 }}
+        />
+      </Card>
+      <Card title="端口组依赖关系">
         <Table<PortGroupItem>
           rowKey="id"
-          columns={columns}
+          columns={groupColumns}
           dataSource={groups}
           pagination={{ pageSize: 12 }}
-          scroll={{ x: 1000 }}
+          scroll={{ x: 900 }}
         />
       </Card>
     </Space>

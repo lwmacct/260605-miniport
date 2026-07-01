@@ -18,6 +18,16 @@ type PortsvcPortGroupListFilter struct {
 	Status       string
 }
 
+type PortsvcDependencyAssetListFilter struct {
+	OwnerSubject string
+	Admin        bool
+	Query        string
+	AssetKind    string
+	AssetType    string
+	Provider     string
+	Status       string
+}
+
 type PortsvcHostRecord struct {
 	ID        string
 	Name      string
@@ -63,36 +73,45 @@ type PortsvcPortSlotRecord struct {
 	UpdatedAt     time.Time
 }
 
-type PortsvcDependencyRecord struct {
-	ID           string
-	OwnerSubject string
-	PortGroupID  string
-	Name         string
-	Type         string
-	URL          string
-	Version      string
-	Notes        string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+type PortsvcDependencyAssetRecord struct {
+	ID              string
+	OwnerSubject    string
+	OwnerName       string
+	Name            string
+	AssetKind       string
+	AssetType       string
+	Provider        string
+	URL             string
+	FullName        string
+	ExternalID      string
+	Visibility      string
+	Controllability string
+	Status          string
+	Description     string
+	Metadata        string
+	LastSyncedAt    time.Time
+	Notes           string
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
 }
 
-type PortsvcRepositoryRecord struct {
+type PortsvcPortGroupAssetLinkRecord struct {
 	ID           string
-	OwnerSubject string
 	PortGroupID  string
-	Name         string
-	URL          string
-	Kind         string
+	PortSlotID   string
+	AssetID      string
+	Asset        *PortsvcDependencyAssetRecord
+	RelationType string
+	Required     bool
 	Notes        string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }
 
 type PortsvcPortGroupChildrenRecord struct {
-	PortGroupID  string
-	Slots        []PortsvcPortSlotRecord
-	Repositories []PortsvcRepositoryRecord
-	Dependencies []PortsvcDependencyRecord
+	PortGroupID string
+	Slots       []PortsvcPortSlotRecord
+	AssetLinks  []PortsvcPortGroupAssetLinkRecord
 }
 
 func utilPortsvcHostRecordFromModel(model *HostsModel) *PortsvcHostRecord {
@@ -155,39 +174,49 @@ func utilPortsvcPortSlotRecordFromModel(model *ServicesModel) *PortsvcPortSlotRe
 	}
 }
 
-func utilPortsvcDependencyRecordFromModel(model *DependenciesModel) *PortsvcDependencyRecord {
+func utilPortsvcDependencyAssetRecordFromModel(model *DependenciesModel) *PortsvcDependencyAssetRecord {
 	if model == nil {
 		return nil
 	}
-	return &PortsvcDependencyRecord{
-		ID:           model.ID,
-		OwnerSubject: model.OwnerSubject,
-		PortGroupID:  model.PortGroupID,
-		Name:         model.Name,
-		Type:         model.Type,
-		URL:          model.URL,
-		Version:      model.Version,
-		Notes:        model.Notes,
-		CreatedAt:    model.CreatedAt,
-		UpdatedAt:    model.UpdatedAt,
+	return &PortsvcDependencyAssetRecord{
+		ID:              model.ID,
+		OwnerSubject:    model.OwnerSubject,
+		Name:            model.Name,
+		AssetKind:       model.AssetKind,
+		AssetType:       model.AssetType,
+		Provider:        model.Provider,
+		URL:             model.URL,
+		FullName:        model.FullName,
+		ExternalID:      model.ExternalID,
+		Visibility:      model.Visibility,
+		Controllability: model.Controllability,
+		Status:          model.Status,
+		Description:     model.Description,
+		Metadata:        model.Metadata,
+		LastSyncedAt:    model.LastSyncedAt,
+		Notes:           model.Notes,
+		CreatedAt:       model.CreatedAt,
+		UpdatedAt:       model.UpdatedAt,
 	}
 }
 
-func utilPortsvcRepositoryRecordFromModel(model *RepositoriesModel) *PortsvcRepositoryRecord {
+func utilPortsvcPortGroupAssetLinkRecordFromModel(model *PortGroupAssetLinksModel) *PortsvcPortGroupAssetLinkRecord {
 	if model == nil {
 		return nil
 	}
-	return &PortsvcRepositoryRecord{
+	out := &PortsvcPortGroupAssetLinkRecord{
 		ID:           model.ID,
-		OwnerSubject: model.OwnerSubject,
 		PortGroupID:  model.PortGroupID,
-		Name:         model.Name,
-		URL:          model.URL,
-		Kind:         model.Kind,
+		PortSlotID:   model.PortSlotID,
+		AssetID:      model.AssetID,
+		RelationType: model.RelationType,
+		Required:     model.Required,
 		Notes:        model.Notes,
 		CreatedAt:    model.CreatedAt,
 		UpdatedAt:    model.UpdatedAt,
 	}
+	out.Asset = utilPortsvcDependencyAssetRecordFromModel(model.Asset)
+	return out
 }
 
 func utilCompactString(value string) string {

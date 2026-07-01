@@ -26,6 +26,11 @@ func RegisterPortsvc(api huma.API, config Config, services Services) {
 	huma.Register(api, huma.Operation{OperationID: "update-host", Method: http.MethodPut, Path: "/hosts/{id}", Summary: "Update host", Tags: []string{"hosts"}}, handler.updateHost)
 	huma.Register(api, huma.Operation{OperationID: "delete-host", Method: http.MethodDelete, Path: "/hosts/{id}", Summary: "Delete host", Tags: []string{"hosts"}}, handler.deleteHost)
 
+	huma.Register(api, huma.Operation{OperationID: "list-dependency-assets", Method: http.MethodGet, Path: "/dependency-assets", Summary: "List dependency assets", Tags: []string{"dependency-assets"}}, handler.listDependencyAssets)
+	huma.Register(api, huma.Operation{OperationID: "create-dependency-asset", Method: http.MethodPost, Path: "/dependency-assets", Summary: "Create dependency asset", Tags: []string{"dependency-assets"}}, handler.createDependencyAsset)
+	huma.Register(api, huma.Operation{OperationID: "update-dependency-asset", Method: http.MethodPut, Path: "/dependency-assets/{id}", Summary: "Update dependency asset", Tags: []string{"dependency-assets"}}, handler.updateDependencyAsset)
+	huma.Register(api, huma.Operation{OperationID: "delete-dependency-asset", Method: http.MethodDelete, Path: "/dependency-assets/{id}", Summary: "Delete dependency asset", Tags: []string{"dependency-assets"}}, handler.deleteDependencyAsset)
+
 	huma.Register(api, huma.Operation{OperationID: "list-port-groups", Method: http.MethodGet, Path: "/port-groups", Summary: "List port groups", Tags: []string{"port-groups"}}, handler.listPortGroups)
 	huma.Register(api, huma.Operation{OperationID: "get-port-group", Method: http.MethodGet, Path: "/port-groups/{id}", Summary: "Get port group", Tags: []string{"port-groups"}}, handler.getPortGroup)
 	huma.Register(api, huma.Operation{OperationID: "create-port-group", Method: http.MethodPost, Path: "/port-groups", Summary: "Create port group", Tags: []string{"port-groups"}}, handler.createPortGroup)
@@ -78,6 +83,61 @@ func (h portsvcHandler) deleteHost(ctx context.Context, input *HostInputDTO) (*B
 		return nil, err
 	}
 	if err := h.services.Portsvc.DeleteHost(ctx, actor, input.ID); err != nil {
+		return nil, utilPortsvcAPIError(err)
+	}
+	return &BodyDTO[DeleteDTO]{Body: DeleteDTO{Deleted: true}}, nil
+}
+
+func (h portsvcHandler) listDependencyAssets(ctx context.Context, input *DependencyAssetListInputDTO) (*BodyDTO[[]DependencyAssetDTO], error) {
+	actor, err := h.actor(ctx, input.Session)
+	if err != nil {
+		return nil, err
+	}
+	assets, err := h.services.Portsvc.ListDependencyAssets(ctx, service.DependencyAssetListParams{
+		Actor:        actor,
+		OwnerSubject: input.OwnerSubject,
+		Query:        input.Query,
+		AssetKind:    input.AssetKind,
+		AssetType:    input.AssetType,
+		Provider:     input.Provider,
+		Status:       input.Status,
+	})
+	if err != nil {
+		return nil, utilPortsvcAPIError(err)
+	}
+	return &BodyDTO[[]DependencyAssetDTO]{Body: ToDependencyAssetDTOs(assets)}, nil
+}
+
+func (h portsvcHandler) createDependencyAsset(ctx context.Context, input *DependencyAssetBodyInputDTO) (*BodyDTO[DependencyAssetDTO], error) {
+	actor, err := h.actor(ctx, input.Session)
+	if err != nil {
+		return nil, err
+	}
+	asset, err := h.services.Portsvc.CreateDependencyAsset(ctx, actor, ToDependencyAssetPayload(input.Body))
+	if err != nil {
+		return nil, utilPortsvcAPIError(err)
+	}
+	return &BodyDTO[DependencyAssetDTO]{Body: ToDependencyAssetDTO(*asset)}, nil
+}
+
+func (h portsvcHandler) updateDependencyAsset(ctx context.Context, input *DependencyAssetUpdateInputDTO) (*BodyDTO[DependencyAssetDTO], error) {
+	actor, err := h.actor(ctx, input.Session)
+	if err != nil {
+		return nil, err
+	}
+	asset, err := h.services.Portsvc.UpdateDependencyAsset(ctx, actor, input.ID, ToDependencyAssetPayload(input.Body))
+	if err != nil {
+		return nil, utilPortsvcAPIError(err)
+	}
+	return &BodyDTO[DependencyAssetDTO]{Body: ToDependencyAssetDTO(*asset)}, nil
+}
+
+func (h portsvcHandler) deleteDependencyAsset(ctx context.Context, input *DependencyAssetInputDTO) (*BodyDTO[DeleteDTO], error) {
+	actor, err := h.actor(ctx, input.Session)
+	if err != nil {
+		return nil, err
+	}
+	if err := h.services.Portsvc.DeleteDependencyAsset(ctx, actor, input.ID); err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
 	return &BodyDTO[DeleteDTO]{Body: DeleteDTO{Deleted: true}}, nil

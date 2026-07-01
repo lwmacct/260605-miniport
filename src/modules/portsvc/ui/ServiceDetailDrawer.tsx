@@ -92,23 +92,12 @@ export function ServiceDetailDrawer({
               ]}
             />
           </Card>
-          <Card title="仓库">
-            <Space direction="vertical" className="content-stack">
-              {group.repositories.length === 0 ? <Typography.Text type="secondary">未记录仓库</Typography.Text> : null}
-              {group.repositories.map((repo) => (
-                <Typography.Text key={`${repo.id ?? repo.url}`} copyable>
-                  {repo.name || repo.kind}: {repo.url || "-"}
-                </Typography.Text>
-              ))}
-            </Space>
-          </Card>
-          <Card title="依赖">
+          <Card title="依赖资产">
             <Space size={[6, 6]} wrap>
-              {group.dependencies.length === 0 ? <Typography.Text type="secondary">未记录依赖</Typography.Text> : null}
-              {group.dependencies.map((item) => (
-                <Tag key={`${item.id ?? item.name}-${item.version}`}>
-                  {item.name}
-                  {item.version ? ` ${item.version}` : ""}
+              {group.assetLinks.length === 0 ? <Typography.Text type="secondary">未记录依赖资产</Typography.Text> : null}
+              {group.assetLinks.map((link) => (
+                <Tag key={`${link.id ?? link.assetId}-${link.relationType}`}>
+                  {link.relationType}: {link.asset?.name ?? link.assetId}
                 </Tag>
               ))}
             </Space>

@@ -2,16 +2,16 @@ import { DeleteOutlined, PlusOutlined, SaveOutlined } from "@ant-design/icons";
 import { Button, Col, Drawer, Form, Input, InputNumber, Row, Select, Space, Tabs } from "antd";
 import type { FormInstance } from "antd";
 import {
-  componentTypeOptions,
-  repositoryKindOptions,
+  relationTypeOptions,
   runtimeModeOptions,
   slotKindOptions,
   statusOptions,
 } from "../model/portsvcConstants";
-import type { HostItem, PortGroupForm, PortGroupItem } from "../model/portsvcTypes";
+import type { DependencyAssetItem, HostItem, PortGroupForm, PortGroupItem } from "../model/portsvcTypes";
 
 type ServiceDrawerProps = {
   editingGroup: PortGroupItem | null;
+  dependencyAssets: DependencyAssetItem[];
   form: FormInstance<PortGroupForm>;
   hosts: HostItem[];
   onClose: () => void;
@@ -22,6 +22,7 @@ type ServiceDrawerProps = {
 
 export function ServiceDrawer({
   editingGroup,
+  dependencyAssets,
   form,
   hosts,
   onClose,
@@ -163,72 +164,43 @@ export function ServiceDrawer({
               ),
             },
             {
-              key: "repositories",
-              label: "仓库",
+              key: "assetLinks",
+              label: "依赖资产",
               children: (
-                <Form.List name="repositories">
+                <Form.List name="assetLinks">
                   {(fields, { add, remove }) => (
                     <Space direction="vertical" className="content-stack">
-                      <Button icon={<PlusOutlined />} onClick={() => add({ kind: "source" })}>
-                        添加仓库
+                      <Button icon={<PlusOutlined />} onClick={() => add({ relationType: "runtime", required: true })}>
+                        添加资产关系
                       </Button>
                       {fields.map((field) => (
                         <Row key={field.key} gutter={10} className="compact-form-row">
+                          <Col xs={24} md={9}>
+                            <Form.Item name={[field.name, "assetId"]} rules={[{ required: true }]}>
+                              <Select
+                                showSearch
+                                placeholder="选择依赖资产"
+                                optionFilterProp="label"
+                                options={dependencyAssets.map((asset) => ({
+                                  value: asset.id,
+                                  label: `${asset.name} · ${asset.assetKind}/${asset.assetType}`,
+                                }))}
+                              />
+                            </Form.Item>
+                          </Col>
+                          <Col xs={24} md={5}>
+                            <Form.Item name={[field.name, "relationType"]}>
+                              <Select options={relationTypeOptions} />
+                            </Form.Item>
+                          </Col>
+                          <Col xs={24} md={3}>
+                            <Form.Item name={[field.name, "required"]}>
+                              <Select options={[{ value: true, label: "必需" }, { value: false, label: "可选" }]} />
+                            </Form.Item>
+                          </Col>
                           <Col xs={24} md={6}>
-                            <Form.Item name={[field.name, "name"]}>
-                              <Input placeholder="仓库名" />
-                            </Form.Item>
-                          </Col>
-                          <Col xs={24} md={5}>
-                            <Form.Item name={[field.name, "kind"]}>
-                              <Select options={repositoryKindOptions} />
-                            </Form.Item>
-                          </Col>
-                          <Col xs={24} md={12}>
-                            <Form.Item name={[field.name, "url"]}>
-                              <Input placeholder="Git URL" />
-                            </Form.Item>
-                          </Col>
-                          <Col xs={24} md={1}>
-                            <Button danger icon={<DeleteOutlined />} onClick={() => remove(field.name)} />
-                          </Col>
-                        </Row>
-                      ))}
-                    </Space>
-                  )}
-                </Form.List>
-              ),
-            },
-            {
-              key: "dependencies",
-              label: "依赖",
-              children: (
-                <Form.List name="dependencies">
-                  {(fields, { add, remove }) => (
-                    <Space direction="vertical" className="content-stack">
-                      <Button icon={<PlusOutlined />} onClick={() => add({ type: "opensource" })}>
-                        添加依赖
-                      </Button>
-                      {fields.map((field) => (
-                        <Row key={field.key} gutter={10} className="compact-form-row">
-                          <Col xs={24} md={7}>
-                            <Form.Item name={[field.name, "name"]}>
-                              <Input placeholder="kafka / etcd / postgresql" />
-                            </Form.Item>
-                          </Col>
-                          <Col xs={24} md={5}>
-                            <Form.Item name={[field.name, "type"]}>
-                              <Select options={componentTypeOptions} />
-                            </Form.Item>
-                          </Col>
-                          <Col xs={24} md={4}>
-                            <Form.Item name={[field.name, "version"]}>
-                              <Input placeholder="版本" />
-                            </Form.Item>
-                          </Col>
-                          <Col xs={24} md={7}>
-                            <Form.Item name={[field.name, "url"]}>
-                              <Input placeholder="项目地址" />
+                            <Form.Item name={[field.name, "notes"]}>
+                              <Input placeholder="备注" />
                             </Form.Item>
                           </Col>
                           <Col xs={24} md={1}>

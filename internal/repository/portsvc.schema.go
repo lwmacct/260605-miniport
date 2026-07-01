@@ -5,7 +5,7 @@ func PortsvcSchema() []any {
 	models = append(models, PortAllocationSchema()...)
 	models = append(models, ServicesSchema()...)
 	models = append(models, DependencySchema()...)
-	models = append(models, RepositoryRefSchema()...)
+	models = append(models, PortGroupAssetLinksSchema()...)
 	return models
 }
 
@@ -14,6 +14,6 @@ func PortsvcIndexesSchema() []string {
 	statements = append(statements, PortAllocationIndexesSchema()...)
 	statements = append(statements, ServicesIndexesSchema()...)
 	statements = append(statements, DependencyIndexesSchema()...)
-	statements = append(statements, RepositoryRefIndexesSchema()...)
+	statements = append(statements, PortGroupAssetLinksIndexesSchema()...)
 	return statements
 }

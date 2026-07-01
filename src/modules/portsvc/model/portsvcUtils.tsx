@@ -1,6 +1,6 @@
 import { Tag } from "antd";
 import { statusOptions } from "./portsvcConstants";
-import type { PortGroupItem } from "./portsvcTypes";
+import type { DependencyAssetItem, PortGroupItem } from "./portsvcTypes";
 
 export function statusTag(status: string) {
   const colorMap: Record<string, string> = {
@@ -30,14 +30,14 @@ export function portRange(group?: Pick<PortGroupItem, "portStart" | "portEnd"> |
   return group ? `${group.portStart}-${group.portEnd}` : "-";
 }
 
-export function buildStats(groups: PortGroupItem[], hosts: unknown[]) {
+export function buildStats(groups: PortGroupItem[], hosts: unknown[], assets: DependencyAssetItem[]) {
   return {
     groups: groups.length,
     hosts: hosts.length,
     runningGroups: groups.filter((item) => item.status === "running").length,
     freeGroups: groups.filter((item) => item.status === "available").length,
     slots: groups.reduce((sum, item) => sum + item.slots.length, 0),
-    repositories: groups.reduce((sum, item) => sum + item.repositories.length, 0),
-    dependencies: groups.reduce((sum, item) => sum + item.dependencies.length, 0),
+    dependencyAssets: assets.length,
+    assetLinks: groups.reduce((sum, item) => sum + item.assetLinks.length, 0),
   };
 }

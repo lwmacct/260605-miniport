@@ -101,6 +101,143 @@ func (s *Store) DeletePortsvcHost(ctx context.Context, id string) error {
 	return nil
 }
 
+func (s *Store) ListPortsvcDependencyAssets(ctx context.Context, params PortsvcDependencyAssetListFilter) ([]PortsvcDependencyAssetRecord, error) {
+	var rows []DependenciesModel
+	query := s.db.NewSelect().Model(&rows)
+	if !params.Admin {
+		query = query.Where("asset.owner_subject = ?", params.OwnerSubject)
+	} else if params.OwnerSubject != "" {
+		query = query.Where("asset.owner_subject = ?", params.OwnerSubject)
+	}
+	if assetKind := utilCompactString(params.AssetKind); assetKind != "" {
+		query = query.Where("asset.asset_kind = ?", assetKind)
+	}
+	if assetType := utilCompactString(params.AssetType); assetType != "" {
+		query = query.Where("asset.asset_type = ?", assetType)
+	}
+	if provider := utilCompactString(params.Provider); provider != "" {
+		query = query.Where("asset.provider = ?", provider)
+	}
+	if status := utilCompactString(params.Status); status != "" {
+		query = query.Where("asset.status = ?", status)
+	}
+	if keyword := utilCompactString(params.Query); keyword != "" {
+		pattern := utilSearchPattern(keyword)
+		query = query.Where(
+			utilJoinSearchClauses([]string{
+				"asset.name",
+				"asset.url",
+				"asset.full_name",
+				"asset.description",
+				"asset.notes",
+			}),
+			utilJoinSearchArgs(pattern, 5)...,
+		)
+	}
+	query = query.Order("asset.name ASC", "asset.id ASC")
+	if err := query.Scan(ctx); err != nil {
+		return nil, err
+	}
+	out := make([]PortsvcDependencyAssetRecord, 0, len(rows))
+	for idx := range rows {
+		out = append(out, *utilPortsvcDependencyAssetRecordFromModel(&rows[idx]))
+	}
+	return out, nil
+}
+
+func (s *Store) FetchPortsvcDependencyAssetByID(ctx context.Context, id string) (*PortsvcDependencyAssetRecord, error) {
+	row := new(DependenciesModel)
+	err := s.db.NewSelect().Model(row).Where("asset.id = ?", id).Scan(ctx)
+	if err != nil {
+		return nil, WrapNotFound(err)
+	}
+	return utilPortsvcDependencyAssetRecordFromModel(row), nil
+}
+
+func (s *Store) CreatePortsvcDependencyAsset(ctx context.Context, asset *PortsvcDependencyAssetRecord) (*PortsvcDependencyAssetRecord, error) {
+	row := &DependenciesModel{
+		ID:              idgen.NewUUID7(),
+		OwnerSubject:    asset.OwnerSubject,
+		Name:            asset.Name,
+		AssetKind:       asset.AssetKind,
+		AssetType:       asset.AssetType,
+		Provider:        asset.Provider,
+		URL:             asset.URL,
+		FullName:        asset.FullName,
+		ExternalID:      asset.ExternalID,
+		Visibility:      asset.Visibility,
+		Controllability: asset.Controllability,
+		Status:          asset.Status,
+		Description:     asset.Description,
+		Metadata:        asset.Metadata,
+		LastSyncedAt:    asset.LastSyncedAt,
+		Notes:           asset.Notes,
+		CreatedAt:       asset.CreatedAt,
+		UpdatedAt:       asset.UpdatedAt,
+	}
+	if _, err := s.db.NewInsert().Model(row).Exec(ctx); err != nil {
+		return nil, err
+	}
+	return utilPortsvcDependencyAssetRecordFromModel(row), nil
+}
+
+func (s *Store) UpdatePortsvcDependencyAsset(ctx context.Context, id string, asset *PortsvcDependencyAssetRecord) (*PortsvcDependencyAssetRecord, error) {
+	row := &DependenciesModel{
+		ID:              id,
+		OwnerSubject:    asset.OwnerSubject,
+		Name:            asset.Name,
+		AssetKind:       asset.AssetKind,
+		AssetType:       asset.AssetType,
+		Provider:        asset.Provider,
+		URL:             asset.URL,
+		FullName:        asset.FullName,
+		ExternalID:      asset.ExternalID,
+		Visibility:      asset.Visibility,
+		Controllability: asset.Controllability,
+		Status:          asset.Status,
+		Description:     asset.Description,
+		Metadata:        asset.Metadata,
+		LastSyncedAt:    asset.LastSyncedAt,
+		Notes:           asset.Notes,
+		UpdatedAt:       asset.UpdatedAt,
+	}
+	res, err := s.db.NewUpdate().
+		Model(row).
+		Column("owner_subject", "name", "asset_kind", "asset_type", "provider", "url", "full_name", "external_id", "visibility", "controllability", "status", "description", "metadata", "last_synced_at", "notes", "updated_at").
+		Where("id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return nil, err
+	}
+	if rows == 0 {
+		return nil, ErrNotFound
+	}
+	return s.FetchPortsvcDependencyAssetByID(ctx, id)
+}
+
+func (s *Store) DeletePortsvcDependencyAsset(ctx context.Context, id string, ownerSubject string, admin bool) error {
+	query := s.db.NewDelete().Model((*DependenciesModel)(nil)).Where("id = ?", id)
+	if !admin {
+		query = query.Where("owner_subject = ?", ownerSubject)
+	}
+	res, err := query.Exec(ctx)
+	if err != nil {
+		return err
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 func (s *Store) ListPortsvcPortGroups(ctx context.Context, params PortsvcPortGroupListFilter) ([]PortsvcPortGroupRecord, error) {
 	var rows []PortAllocationsModel
 	query := s.db.NewSelect().Model(&rows).Relation("Host")
@@ -356,33 +493,19 @@ func (s *Store) ListPortsvcPortGroupChildrenByGroupIDs(ctx context.Context, ids 
 		children[record.PortGroupID] = child
 	}
 
-	var repoRows []RepositoriesModel
+	var linkRows []PortGroupAssetLinksModel
 	if err := s.db.NewSelect().
-		Model(&repoRows).
-		Where("repository_ref.port_group_id IN (?)", bun.List(ids)).
-		Order("repository_ref.name ASC").
+		Model(&linkRows).
+		Relation("Asset").
+		Where("asset_link.port_group_id IN (?)", bun.List(ids)).
+		Order("asset_link.relation_type ASC", "asset.name ASC").
 		Scan(ctx); err != nil {
 		return nil, err
 	}
-	for idx := range repoRows {
-		record := *utilPortsvcRepositoryRecordFromModel(&repoRows[idx])
+	for idx := range linkRows {
+		record := *utilPortsvcPortGroupAssetLinkRecordFromModel(&linkRows[idx])
 		child := children[record.PortGroupID]
-		child.Repositories = append(child.Repositories, record)
-		children[record.PortGroupID] = child
-	}
-
-	var depRows []DependenciesModel
-	if err := s.db.NewSelect().
-		Model(&depRows).
-		Where("dependency.port_group_id IN (?)", bun.List(ids)).
-		Order("dependency.name ASC").
-		Scan(ctx); err != nil {
-		return nil, err
-	}
-	for idx := range depRows {
-		record := *utilPortsvcDependencyRecordFromModel(&depRows[idx])
-		child := children[record.PortGroupID]
-		child.Dependencies = append(child.Dependencies, record)
+		child.AssetLinks = append(child.AssetLinks, record)
 		children[record.PortGroupID] = child
 	}
 
@@ -397,10 +520,7 @@ func (s *Store) ReplacePortsvcPortGroupChildren(ctx context.Context, portGroupID
 	if _, err := s.db.NewDelete().Model((*ServicesModel)(nil)).Where("port_group_id = ?", portGroupID).Exec(ctx); err != nil {
 		return err
 	}
-	if _, err := s.db.NewDelete().Model((*RepositoriesModel)(nil)).Where("port_group_id = ?", portGroupID).Exec(ctx); err != nil {
-		return err
-	}
-	if _, err := s.db.NewDelete().Model((*DependenciesModel)(nil)).Where("port_group_id = ?", portGroupID).Exec(ctx); err != nil {
+	if _, err := s.db.NewDelete().Model((*PortGroupAssetLinksModel)(nil)).Where("port_group_id = ?", portGroupID).Exec(ctx); err != nil {
 		return err
 	}
 	return nil
@@ -430,45 +550,22 @@ func (s *Store) AddPortsvcPortSlots(ctx context.Context, slots []PortsvcPortSlot
 	return err
 }
 
-func (s *Store) AddPortsvcRepositories(ctx context.Context, repos []PortsvcRepositoryRecord) error {
-	if len(repos) == 0 {
+func (s *Store) AddPortsvcPortGroupAssetLinks(ctx context.Context, links []PortsvcPortGroupAssetLinkRecord) error {
+	if len(links) == 0 {
 		return nil
 	}
-	rows := make([]RepositoriesModel, 0, len(repos))
-	for _, repo := range repos {
-		rows = append(rows, RepositoriesModel{
+	rows := make([]PortGroupAssetLinksModel, 0, len(links))
+	for _, link := range links {
+		rows = append(rows, PortGroupAssetLinksModel{
 			ID:           idgen.NewUUID7(),
-			OwnerSubject: repo.OwnerSubject,
-			PortGroupID:  repo.PortGroupID,
-			Name:         repo.Name,
-			URL:          repo.URL,
-			Kind:         repo.Kind,
-			Notes:        repo.Notes,
-			CreatedAt:    repo.CreatedAt,
-			UpdatedAt:    repo.UpdatedAt,
-		})
-	}
-	_, err := s.db.NewInsert().Model(&rows).Exec(ctx)
-	return err
-}
-
-func (s *Store) AddPortsvcDependencies(ctx context.Context, dependencies []PortsvcDependencyRecord) error {
-	if len(dependencies) == 0 {
-		return nil
-	}
-	rows := make([]DependenciesModel, 0, len(dependencies))
-	for _, dependency := range dependencies {
-		rows = append(rows, DependenciesModel{
-			ID:           idgen.NewUUID7(),
-			OwnerSubject: dependency.OwnerSubject,
-			PortGroupID:  dependency.PortGroupID,
-			Name:         dependency.Name,
-			Type:         dependency.Type,
-			URL:          dependency.URL,
-			Version:      dependency.Version,
-			Notes:        dependency.Notes,
-			CreatedAt:    dependency.CreatedAt,
-			UpdatedAt:    dependency.UpdatedAt,
+			PortGroupID:  link.PortGroupID,
+			PortSlotID:   link.PortSlotID,
+			AssetID:      link.AssetID,
+			RelationType: link.RelationType,
+			Required:     link.Required,
+			Notes:        link.Notes,
+			CreatedAt:    link.CreatedAt,
+			UpdatedAt:    link.UpdatedAt,
 		})
 	}
 	_, err := s.db.NewInsert().Model(&rows).Exec(ctx)

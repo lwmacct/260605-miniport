@@ -8,73 +8,81 @@
 
 ## APIs
 
-| Method   | Full Path                 | Mount | Operation Path            | Operation            | Tags        | Handler            | Register          | File                                  |
-| -------- | ------------------------- | ----- | ------------------------- | -------------------- | ----------- | ------------------ | ----------------- | ------------------------------------- |
-| `GET`    | `/hosts`                  | `-`   | `/hosts`                  | `list-hosts`         | hosts       | `listHosts`        | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `POST`   | `/hosts`                  | `-`   | `/hosts`                  | `create-host`        | hosts       | `createHost`       | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `DELETE` | `/hosts/{id}`             | `-`   | `/hosts/{id}`             | `delete-host`        | hosts       | `deleteHost`       | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `PUT`    | `/hosts/{id}`             | `-`   | `/hosts/{id}`             | `update-host`        | hosts       | `updateHost`       | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `GET`    | `/port-groups`            | `-`   | `/port-groups`            | `list-port-groups`   | port-groups | `listPortGroups`   | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `POST`   | `/port-groups`            | `-`   | `/port-groups`            | `create-port-group`  | port-groups | `createPortGroup`  | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `GET`    | `/port-groups/export.csv` | `-`   | `/port-groups/export.csv` | `export-port-groups` | port-groups | `exportPortGroups` | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `DELETE` | `/port-groups/{id}`       | `-`   | `/port-groups/{id}`       | `delete-port-group`  | port-groups | `deletePortGroup`  | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `GET`    | `/port-groups/{id}`       | `-`   | `/port-groups/{id}`       | `get-port-group`     | port-groups | `getPortGroup`     | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `PUT`    | `/port-groups/{id}`       | `-`   | `/port-groups/{id}`       | `update-port-group`  | port-groups | `updatePortGroup`  | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `POST`   | `/port-groups/{id}/slots` | `-`   | `/port-groups/{id}/slots` | `create-port-slot`   | port-slots  | `createPortSlot`   | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `DELETE` | `/port-slots/{id}`        | `-`   | `/port-slots/{id}`        | `delete-port-slot`   | port-slots  | `deletePortSlot`   | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `PUT`    | `/port-slots/{id}`        | `-`   | `/port-slots/{id}`        | `update-port-slot`   | port-slots  | `updatePortSlot`   | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| Method   | Full Path                 | Mount | Operation Path            | Operation                 | Tags              | Handler                 | Register          | File                                  |
+| -------- | ------------------------- | ----- | ------------------------- | ------------------------- | ----------------- | ----------------------- | ----------------- | ------------------------------------- |
+| `GET`    | `/dependency-assets`      | `-`   | `/dependency-assets`      | `list-dependency-assets`  | dependency-assets | `listDependencyAssets`  | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `POST`   | `/dependency-assets`      | `-`   | `/dependency-assets`      | `create-dependency-asset` | dependency-assets | `createDependencyAsset` | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `DELETE` | `/dependency-assets/{id}` | `-`   | `/dependency-assets/{id}` | `delete-dependency-asset` | dependency-assets | `deleteDependencyAsset` | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `PUT`    | `/dependency-assets/{id}` | `-`   | `/dependency-assets/{id}` | `update-dependency-asset` | dependency-assets | `updateDependencyAsset` | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `GET`    | `/hosts`                  | `-`   | `/hosts`                  | `list-hosts`              | hosts             | `listHosts`             | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `POST`   | `/hosts`                  | `-`   | `/hosts`                  | `create-host`             | hosts             | `createHost`            | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `DELETE` | `/hosts/{id}`             | `-`   | `/hosts/{id}`             | `delete-host`             | hosts             | `deleteHost`            | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `PUT`    | `/hosts/{id}`             | `-`   | `/hosts/{id}`             | `update-host`             | hosts             | `updateHost`            | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `GET`    | `/port-groups`            | `-`   | `/port-groups`            | `list-port-groups`        | port-groups       | `listPortGroups`        | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `POST`   | `/port-groups`            | `-`   | `/port-groups`            | `create-port-group`       | port-groups       | `createPortGroup`       | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `GET`    | `/port-groups/export.csv` | `-`   | `/port-groups/export.csv` | `export-port-groups`      | port-groups       | `exportPortGroups`      | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `DELETE` | `/port-groups/{id}`       | `-`   | `/port-groups/{id}`       | `delete-port-group`       | port-groups       | `deletePortGroup`       | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `GET`    | `/port-groups/{id}`       | `-`   | `/port-groups/{id}`       | `get-port-group`          | port-groups       | `getPortGroup`          | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `PUT`    | `/port-groups/{id}`       | `-`   | `/port-groups/{id}`       | `update-port-group`       | port-groups       | `updatePortGroup`       | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `POST`   | `/port-groups/{id}/slots` | `-`   | `/port-groups/{id}/slots` | `create-port-slot`        | port-slots        | `createPortSlot`        | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `DELETE` | `/port-slots/{id}`        | `-`   | `/port-slots/{id}`        | `delete-port-slot`        | port-slots        | `deletePortSlot`        | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `PUT`    | `/port-slots/{id}`        | `-`   | `/port-slots/{id}`        | `update-port-slot`        | port-slots        | `updatePortSlot`        | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
 
 ## Handlers
 
-| Scope     | Handler          | Register          | File                                  | Methods                                                                                                                                                                                                 |
-| --------- | ---------------- | ----------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `portsvc` | `portsvcHandler` | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` | actor, createHost, createPortGroup, createPortSlot, deleteHost, deletePortGroup, deletePortSlot, exportPortGroups, getPortGroup, listHosts, listPortGroups, updateHost, updatePortGroup, updatePortSlot |
+| Scope     | Handler          | Register          | File                                  | Methods                                                                                                                                                                                                                                                                                            |
+| --------- | ---------------- | ----------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `portsvc` | `portsvcHandler` | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` | actor, createDependencyAsset, createHost, createPortGroup, createPortSlot, deleteDependencyAsset, deleteHost, deletePortGroup, deletePortSlot, exportPortGroups, getPortGroup, listDependencyAssets, listHosts, listPortGroups, updateDependencyAsset, updateHost, updatePortGroup, updatePortSlot |
 
 ## Services
 
-| Service          | Scope     | File                                  | Constructor         | Dependencies | Methods                                                                                                                                                                                                                                                                                   |
-| ---------------- | --------- | ------------------------------------- | ------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PortsvcService` | `portsvc` | `internal/service/portsvc.service.go` | `NewPortsvcService` |              | CreateHost, CreatePortGroup, CreatePortSlot, DeleteHost, DeletePortGroup, DeletePortSlot, ExportPortGroupsCSV, GetPortGroup, ListHosts, ListPortGroups, UpdateHost, UpdatePortGroup, UpdatePortSlot, attachPortGroupOwnerNames, buildPortGroupViews, ownerNames, replacePortGroupChildren |
+| Service          | Scope     | File                                  | Constructor         | Dependencies | Methods                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ---------------- | --------- | ------------------------------------- | ------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PortsvcService` | `portsvc` | `internal/service/portsvc.service.go` | `NewPortsvcService` |              | CreateDependencyAsset, CreateHost, CreatePortGroup, CreatePortSlot, DeleteDependencyAsset, DeleteHost, DeletePortGroup, DeletePortSlot, ExportPortGroupsCSV, GetPortGroup, ListDependencyAssets, ListHosts, ListPortGroups, UpdateDependencyAsset, UpdateHost, UpdatePortGroup, UpdatePortSlot, attachDependencyAssetOwnerNames, attachPortGroupOwnerNames, buildPortGroupViews, ownerNames, replacePortGroupChildren |
 
 ## Stores
 
-| Scope     | File                                   | Methods                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| --------- | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `portsvc` | `internal/repository/portsvc.store.go` | AddPortsvcDependencies, AddPortsvcPortSlots, AddPortsvcRepositories, CountPortsvcOverlappingPortGroups, CountPortsvcPortGroupsByIDs, CreatePortsvcHost, CreatePortsvcPortGroup, CreatePortsvcPortSlot, DeletePortsvcHost, DeletePortsvcPortGroups, DeletePortsvcPortSlot, FetchPortsvcHostByID, FetchPortsvcPortGroupByID, FetchPortsvcPortSlotByID, ListPortsvcHosts, ListPortsvcPortGroupChildrenByGroupIDs, ListPortsvcPortGroupStartsByOwner, ListPortsvcPortGroups, ReplacePortsvcPortGroupChildren, UpdatePortsvcHost, UpdatePortsvcPortGroup, UpdatePortsvcPortSlot |
+| Scope     | File                                   | Methods                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| --------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `portsvc` | `internal/repository/portsvc.store.go` | AddPortsvcPortGroupAssetLinks, AddPortsvcPortSlots, CountPortsvcOverlappingPortGroups, CountPortsvcPortGroupsByIDs, CreatePortsvcDependencyAsset, CreatePortsvcHost, CreatePortsvcPortGroup, CreatePortsvcPortSlot, DeletePortsvcDependencyAsset, DeletePortsvcHost, DeletePortsvcPortGroups, DeletePortsvcPortSlot, FetchPortsvcDependencyAssetByID, FetchPortsvcHostByID, FetchPortsvcPortGroupByID, FetchPortsvcPortSlotByID, ListPortsvcDependencyAssets, ListPortsvcHosts, ListPortsvcPortGroupChildrenByGroupIDs, ListPortsvcPortGroupStartsByOwner, ListPortsvcPortGroups, ReplacePortsvcPortGroupChildren, UpdatePortsvcDependencyAsset, UpdatePortsvcHost, UpdatePortsvcPortGroup, UpdatePortsvcPortSlot |
 
 ## Tables
 
-| Table          | Model                  | Scope              | File                                             | Alias            | Fields | Foreign Keys |
-| -------------- | ---------------------- | ------------------ | ------------------------------------------------ | ---------------- | ------ | ------------ |
-| `dependencies` | `DependenciesModel`    | `dependencies`     | `internal/repository/dependencies.schema.go`     | `dependency`     | 10     | 1            |
-| `hosts`        | `HostsModel`           | `hosts`            | `internal/repository/hosts.schema.go`            | `host`           | 8      | 0            |
-| `port_groups`  | `PortAllocationsModel` | `port_allocations` | `internal/repository/port_allocations.schema.go` | `port_group`     | 16     | 1            |
-| `port_slots`   | `ServicesModel`        | `services`         | `internal/repository/services.schema.go`         | `slot`           | 12     | 1            |
-| `repositories` | `RepositoriesModel`    | `repositories`     | `internal/repository/repositories.schema.go`     | `repository_ref` | 9      | 1            |
+| Table                    | Model                      | Scope                    | File                                                   | Alias        | Fields | Foreign Keys |
+| ------------------------ | -------------------------- | ------------------------ | ------------------------------------------------------ | ------------ | ------ | ------------ |
+| `dependency_assets`      | `DependenciesModel`        | `dependencies`           | `internal/repository/dependencies.schema.go`           | `asset`      | 18     | 0            |
+| `hosts`                  | `HostsModel`               | `hosts`                  | `internal/repository/hosts.schema.go`                  | `host`       | 8      | 0            |
+| `port_group_asset_links` | `PortGroupAssetLinksModel` | `port_group_asset_links` | `internal/repository/port_group_asset_links.schema.go` | `asset_link` | 12     | 3            |
+| `port_groups`            | `PortAllocationsModel`     | `port_allocations`       | `internal/repository/port_allocations.schema.go`       | `port_group` | 16     | 1            |
+| `port_slots`             | `ServicesModel`            | `services`               | `internal/repository/services.schema.go`               | `slot`       | 12     | 1            |
 
-### `dependencies`
+### `dependency_assets`
 
 - Model: `DependenciesModel`
 - Scope: `dependencies`
 - File: `internal/repository/dependencies.schema.go`
-- Alias: `dependency`
+- Alias: `asset`
 
-| Field          | Column          | Go Type     | Attributes |
-| -------------- | --------------- | ----------- | ---------- |
-| `ID`           | `id`            | `string`    | [pk]       |
-| `OwnerSubject` | `owner_subject` | `string`    | [notnull]  |
-| `PortGroupID`  | `port_group_id` | `string`    | [notnull]  |
-| `Name`         | `name`          | `string`    | [notnull]  |
-| `Type`         | `type`          | `string`    | [notnull]  |
-| `URL`          | `url`           | `string`    |            |
-| `Version`      | `version`       | `string`    |            |
-| `Notes`        | `notes`         | `string`    |            |
-| `CreatedAt`    | `created_at`    | `time.Time` | [notnull]  |
-| `UpdatedAt`    | `updated_at`    | `time.Time` | [notnull]  |
-
-Foreign keys:
-
-- `(port_group_id) REFERENCES port_groups (id) ON DELETE CASCADE`
+| Field             | Column            | Go Type     | Attributes |
+| ----------------- | ----------------- | ----------- | ---------- |
+| `ID`              | `id`              | `string`    | [pk]       |
+| `OwnerSubject`    | `owner_subject`   | `string`    | [notnull]  |
+| `Name`            | `name`            | `string`    | [notnull]  |
+| `AssetKind`       | `asset_kind`      | `string`    | [notnull]  |
+| `AssetType`       | `asset_type`      | `string`    | [notnull]  |
+| `Provider`        | `provider`        | `string`    | [notnull]  |
+| `URL`             | `url`             | `string`    |            |
+| `FullName`        | `full_name`       | `string`    |            |
+| `ExternalID`      | `external_id`     | `string`    |            |
+| `Visibility`      | `visibility`      | `string`    | [notnull]  |
+| `Controllability` | `controllability` | `string`    | [notnull]  |
+| `Status`          | `status`          | `string`    | [notnull]  |
+| `Description`     | `description`     | `string`    |            |
+| `Metadata`        | `metadata`        | `string`    |            |
+| `LastSyncedAt`    | `last_synced_at`  | `time.Time` | [nullable] |
+| `Notes`           | `notes`           | `string`    |            |
+| `CreatedAt`       | `created_at`      | `time.Time` | [notnull]  |
+| `UpdatedAt`       | `updated_at`      | `time.Time` | [notnull]  |
 
 ### `hosts`
 
@@ -93,6 +101,34 @@ Foreign keys:
 | `Notes`     | `notes`      | `string`    |            |
 | `CreatedAt` | `created_at` | `time.Time` | [notnull]  |
 | `UpdatedAt` | `updated_at` | `time.Time` | [notnull]  |
+
+### `port_group_asset_links`
+
+- Model: `PortGroupAssetLinksModel`
+- Scope: `port_group_asset_links`
+- File: `internal/repository/port_group_asset_links.schema.go`
+- Alias: `asset_link`
+
+| Field          | Column          | Go Type                 | Attributes |
+| -------------- | --------------- | ----------------------- | ---------- |
+| `ID`           | `id`            | `string`                | [pk]       |
+| `PortGroupID`  | `port_group_id` | `string`                | [notnull]  |
+| `PortGroup`    | `port_group`    | `*PortAllocationsModel` |            |
+| `PortSlotID`   | `port_slot_id`  | `string`                | [nullable] |
+| `PortSlot`     | `port_slot`     | `*ServicesModel`        |            |
+| `AssetID`      | `asset_id`      | `string`                | [notnull]  |
+| `Asset`        | `asset`         | `*DependenciesModel`    |            |
+| `RelationType` | `relation_type` | `string`                | [notnull]  |
+| `Required`     | `required`      | `bool`                  | [notnull]  |
+| `Notes`        | `notes`         | `string`                |            |
+| `CreatedAt`    | `created_at`    | `time.Time`             | [notnull]  |
+| `UpdatedAt`    | `updated_at`    | `time.Time`             | [notnull]  |
+
+Foreign keys:
+
+- `(asset_id) REFERENCES dependency_assets (id) ON DELETE CASCADE`
+- `(port_group_id) REFERENCES port_groups (id) ON DELETE CASCADE`
+- `(port_slot_id) REFERENCES port_slots (id) ON DELETE SET NULL`
 
 ### `port_groups`
 
@@ -145,29 +181,6 @@ Foreign keys:
 | `Notes`         | `notes`          | `string`                |            |
 | `CreatedAt`     | `created_at`     | `time.Time`             | [notnull]  |
 | `UpdatedAt`     | `updated_at`     | `time.Time`             | [notnull]  |
-
-Foreign keys:
-
-- `(port_group_id) REFERENCES port_groups (id) ON DELETE CASCADE`
-
-### `repositories`
-
-- Model: `RepositoriesModel`
-- Scope: `repositories`
-- File: `internal/repository/repositories.schema.go`
-- Alias: `repository_ref`
-
-| Field          | Column          | Go Type     | Attributes |
-| -------------- | --------------- | ----------- | ---------- |
-| `ID`           | `id`            | `string`    | [pk]       |
-| `OwnerSubject` | `owner_subject` | `string`    | [notnull]  |
-| `PortGroupID`  | `port_group_id` | `string`    | [notnull]  |
-| `Name`         | `name`          | `string`    | [notnull]  |
-| `URL`          | `url`           | `string`    | [notnull]  |
-| `Kind`         | `kind`          | `string`    | [notnull]  |
-| `Notes`        | `notes`         | `string`    |            |
-| `CreatedAt`    | `created_at`    | `time.Time` | [notnull]  |
-| `UpdatedAt`    | `updated_at`    | `time.Time` | [notnull]  |
 
 Foreign keys:
 

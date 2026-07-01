@@ -1,5 +1,5 @@
 import { DownloadOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from "@ant-design/icons";
-import { Alert, Button, Flex, Form, Input, InputNumber, Modal, Select, Space, Spin, Typography, message } from "antd";
+import { Alert, Button, Flex, Form, Input, Modal, Select, Space, Spin, Typography, message } from "antd";
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
@@ -7,13 +7,22 @@ import { useAuthStateQuery } from "@/modules/auth";
 import { usePortsvcQuery, portsvcKeys } from "../model/portsvcQueries";
 import {
   exportPortGroupsURL,
+  removeDependencyAsset,
   removeHost,
   removePortGroup,
+  saveDependencyAsset,
   saveHost,
   savePortGroup,
 } from "../api/portsvcApi";
-import { statusOptions } from "../model/portsvcConstants";
-import type { HostForm, HostItem, PortGroupForm, PortGroupItem, PortsvcQuery } from "../model/portsvcTypes";
+import {
+  assetKindOptions,
+  assetProviderOptions,
+  assetTypeOptions,
+  controllabilityOptions,
+  statusOptions,
+  visibilityOptions,
+} from "../model/portsvcConstants";
+import type { DependencyAssetItem, HostForm, HostItem, PortGroupForm, PortGroupItem, PortsvcQuery } from "../model/portsvcTypes";
 import { buildStats } from "../model/portsvcUtils";
 import { OverviewSection } from "./OverviewSection";
 import { ServicesSection } from "./ServicesSection";
@@ -42,8 +51,11 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
   const [groupDrawerOpen, setGroupDrawerOpen] = useState(false);
   const [hostModalOpen, setHostModalOpen] = useState(false);
   const [editingHost, setEditingHost] = useState<HostItem | null>(null);
+  const [assetModalOpen, setAssetModalOpen] = useState(false);
+  const [editingAsset, setEditingAsset] = useState<DependencyAssetItem | null>(null);
   const [groupForm] = Form.useForm<PortGroupForm>();
   const [hostForm] = Form.useForm<HostForm>();
+  const [assetForm] = Form.useForm<Partial<DependencyAssetItem>>();
 
   const query = useMemo<PortsvcQuery>(() => {
     return {
@@ -57,9 +69,10 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
   const snapshot = portsvcQuery.data;
   const groups: PortGroupItem[] = snapshot?.portGroups ?? [];
   const hosts: HostItem[] = snapshot?.hosts ?? [];
+  const dependencyAssets: DependencyAssetItem[] = snapshot?.dependencyAssets ?? [];
   const meta = snapshot?.meta;
   const canManage = Boolean(authState.data?.session.authenticated);
-  const stats = useMemo(() => buildStats(groups, hosts), [groups, hosts]);
+  const stats = useMemo(() => buildStats(groups, hosts, dependencyAssets), [dependencyAssets, groups, hosts]);
 
   useEffect(() => {
     setSelectedGroup(null);
@@ -76,8 +89,7 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
       runtimeMode: "dind",
       status: "available",
       slots: [],
-      repositories: [],
-      dependencies: [],
+      assetLinks: [],
     });
     setGroupDrawerOpen(true);
   }
@@ -86,8 +98,7 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
     setEditingGroup(group);
     groupForm.setFieldsValue({
       ...group,
-      dependencies: group.dependencies,
-      repositories: group.repositories,
+      assetLinks: group.assetLinks,
       slots: group.slots,
     });
     setGroupDrawerOpen(true);
@@ -148,6 +159,47 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
     await refresh();
   }
 
+  function openCreateAsset() {
+    setEditingAsset(null);
+    assetForm.resetFields();
+    assetForm.setFieldsValue({
+      assetKind: "component",
+      assetType: "middleware",
+      controllability: "unknown",
+      provider: "manual",
+      status: "active",
+      visibility: "unknown",
+    });
+    setAssetModalOpen(true);
+  }
+
+  function openEditAsset(asset: DependencyAssetItem) {
+    setEditingAsset(asset);
+    assetForm.setFieldsValue(asset);
+    setAssetModalOpen(true);
+  }
+
+  async function handleSaveAsset(values: Partial<DependencyAssetItem>) {
+    setSaving(true);
+    try {
+      await saveDependencyAsset(values, editingAsset);
+      message.success("依赖资产已保存");
+      setAssetModalOpen(false);
+      await refresh();
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : "保存失败");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDeleteAsset(asset: DependencyAssetItem) {
+    await removeDependencyAsset(asset);
+    message.success("依赖资产已删除");
+    setAssetModalOpen(false);
+    await refresh();
+  }
+
   const exportURL = exportPortGroupsURL(query);
   const sortOptions = [
     { label: "端口", value: "port" },
@@ -182,16 +234,21 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
         content = <ProjectServicesSection groups={groups} onSelectGroup={setSelectedGroup} />;
         break;
       case "dependencies":
-        content = <DependenciesSection groups={groups} stats={stats} />;
+        content = (
+          <DependenciesSection
+            canManage={canManage}
+            dependencyAssets={dependencyAssets}
+            groups={groups}
+            onEditAsset={openEditAsset}
+            stats={stats}
+          />
+        );
         break;
       default:
         content = (
           <OverviewSection
             canManage={canManage}
-            groups={groups}
             onCreateGroup={openCreateGroup}
-            onEditGroup={openEditGroup}
-            onSelectGroup={setSelectedGroup}
             stats={stats}
           />
         );
@@ -240,6 +297,9 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
             <Button icon={<PlusOutlined />} onClick={openCreateHost} disabled={!canManage}>
               宿主机
             </Button>
+            <Button icon={<PlusOutlined />} onClick={openCreateAsset} disabled={!canManage}>
+              依赖资产
+            </Button>
             <Button type="primary" icon={<PlusOutlined />} onClick={openCreateGroup} disabled={!canManage}>
               端口组
             </Button>
@@ -260,6 +320,7 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
         }}
       />
       <ServiceDrawer
+        dependencyAssets={dependencyAssets}
         editingGroup={editingGroup}
         form={groupForm}
         hosts={hosts}
@@ -268,6 +329,55 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
         open={groupDrawerOpen}
         saving={saving}
       />
+      <Modal
+        title={editingAsset ? "编辑依赖资产" : "新建依赖资产"}
+        open={assetModalOpen}
+        onCancel={() => setAssetModalOpen(false)}
+        onOk={() => assetForm.submit()}
+        confirmLoading={saving}
+      >
+        <Form form={assetForm} layout="vertical" onFinish={(values) => void handleSaveAsset(values)}>
+          <Form.Item name="name" label="名称" rules={[{ required: true, message: "请填写资产名称" }]}>
+            <Input placeholder="miniport / Redis / 闭源支付服务" />
+          </Form.Item>
+          <Space.Compact block>
+            <Form.Item name="assetKind" label="资产类别" rules={[{ required: true }]} style={{ width: "50%" }}>
+              <Select options={assetKindOptions} />
+            </Form.Item>
+            <Form.Item name="assetType" label="资产类型" rules={[{ required: true }]} style={{ width: "50%" }}>
+              <Select options={assetTypeOptions} />
+            </Form.Item>
+          </Space.Compact>
+          <Space.Compact block>
+            <Form.Item name="provider" label="Provider" rules={[{ required: true }]} style={{ width: "50%" }}>
+              <Select options={assetProviderOptions} />
+            </Form.Item>
+            <Form.Item name="visibility" label="可见性" rules={[{ required: true }]} style={{ width: "50%" }}>
+              <Select options={visibilityOptions} />
+            </Form.Item>
+          </Space.Compact>
+          <Form.Item name="controllability" label="可控性" rules={[{ required: true }]}>
+            <Select options={controllabilityOptions} />
+          </Form.Item>
+          <Form.Item name="url" label="URL">
+            <Input placeholder="Git URL / 服务地址 / 文档地址" />
+          </Form.Item>
+          <Form.Item name="fullName" label="仓库全名">
+            <Input placeholder="org/repo" />
+          </Form.Item>
+          <Form.Item name="description" label="描述">
+            <Input.TextArea rows={2} />
+          </Form.Item>
+          <Form.Item name="notes" label="备注">
+            <Input.TextArea rows={3} />
+          </Form.Item>
+          {editingAsset ? (
+            <Button danger onClick={() => void handleDeleteAsset(editingAsset)}>
+              删除依赖资产
+            </Button>
+          ) : null}
+        </Form>
+      </Modal>
       <Modal
         title={editingHost ? "编辑宿主机" : "新建宿主机"}
         open={hostModalOpen}
