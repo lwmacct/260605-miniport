@@ -47,23 +47,23 @@ type PortsvcHostRecord struct {
 }
 
 type PortsvcPortGroupRecord struct {
-	ID           string
-	OwnerSubject string
-	OwnerName    string
-	HostID       string
-	Host         *PortsvcHostRecord
-	PortStart    int
-	PortEnd      int
-	ProjectName  string
-	ProjectOwner string
-	RuntimeMode  string
-	RuntimeName  string
-	ServiceIP    string
-	Status       string
-	Tags         string
-	Notes        string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID               string
+	OwnerSubject     string
+	OwnerName        string
+	HostID           string
+	Host             *PortsvcHostRecord
+	PortStart        int
+	PortEnd          int
+	EnvironmentName  string
+	EnvironmentOwner string
+	RuntimeMode      string
+	RuntimeName      string
+	ServiceIP        string
+	Status           string
+	Tags             string
+	Notes            string
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
 }
 
 type PortsvcPortSlotRecord struct {
@@ -171,21 +171,21 @@ func utilPortsvcPortGroupRecordFromModel(model *PortAllocationsModel) *PortsvcPo
 		return nil
 	}
 	out := &PortsvcPortGroupRecord{
-		ID:           model.ID,
-		OwnerSubject: model.OwnerSubject,
-		HostID:       model.HostID,
-		PortStart:    model.PortStart,
-		PortEnd:      model.PortEnd,
-		ProjectName:  model.ProjectName,
-		ProjectOwner: model.ProjectOwner,
-		RuntimeMode:  model.RuntimeMode,
-		RuntimeName:  model.RuntimeName,
-		ServiceIP:    model.ServiceIP,
-		Status:       model.Status,
-		Tags:         model.Tags,
-		Notes:        model.Notes,
-		CreatedAt:    model.CreatedAt,
-		UpdatedAt:    model.UpdatedAt,
+		ID:               model.ID,
+		OwnerSubject:     model.OwnerSubject,
+		HostID:           model.HostID,
+		PortStart:        model.PortStart,
+		PortEnd:          model.PortEnd,
+		EnvironmentName:  model.EnvironmentName,
+		EnvironmentOwner: model.EnvironmentOwner,
+		RuntimeMode:      model.RuntimeMode,
+		RuntimeName:      model.RuntimeName,
+		ServiceIP:        model.ServiceIP,
+		Status:           model.Status,
+		Tags:             model.Tags,
+		Notes:            model.Notes,
+		CreatedAt:        model.CreatedAt,
+		UpdatedAt:        model.UpdatedAt,
 	}
 	out.Host = utilPortsvcHostRecordFromModel(model.Host)
 	return out

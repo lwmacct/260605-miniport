@@ -298,7 +298,7 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
   const showProjectFilters = view === "projects" || view === "dependencies" || view === "serviceGroups";
   const sortOptions = [
     { label: "端口", value: "port" },
-    { label: "运行环境", value: "project" },
+    { label: "运行环境", value: "environment" },
     { label: "状态", value: "status" },
     { label: "最近更新", value: "updated_desc" },
   ];
@@ -335,6 +335,7 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
             onDeleteGroup={(group) => void handleDeleteGroup(group)}
             onEditGroup={openEditGroup}
             onSelectGroup={setSelectedGroup}
+            serviceGroups={serviceGroups}
           />
         );
         break;
@@ -560,7 +561,7 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
                         optionFilterProp="label"
                         options={groups.map((group) => ({
                           value: group.id,
-                          label: `${group.portStart} · ${group.projectName || group.serviceIp || group.runtimeMode}`,
+                          label: `${group.portStart} · ${group.environmentName || group.serviceIp || group.runtimeMode}`,
                         }))}
                       />
                     </Form.Item>

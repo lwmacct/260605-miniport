@@ -86,8 +86,8 @@ export type PortGroupItem = {
   host?: HostItem;
   portStart: number;
   portEnd: number;
-  projectName: string;
-  projectOwner: string;
+  environmentName: string;
+  environmentOwner: string;
   runtimeMode: string;
   runtimeName: string;
   serviceIp: string;
@@ -99,7 +99,7 @@ export type PortGroupItem = {
 };
 
 export type PortGroupForm = Partial<Omit<PortGroupItem, "id" | "ownerName" | "host">> & {
-  projectName?: string;
+  environmentName?: string;
 };
 
 export type HostForm = Partial<HostItem> & {

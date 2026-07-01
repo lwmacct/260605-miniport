@@ -58,7 +58,7 @@ export function ServiceDrawer({
               children: (
                 <Row gutter={14}>
                   <Col xs={24} md={12}>
-                    <Form.Item name="projectName" label="运行环境">
+                    <Form.Item name="environmentName" label="运行环境">
                       <Input placeholder="miniport-dind-01 / 4h4g-host-env" />
                     </Form.Item>
                   </Col>
@@ -99,7 +99,7 @@ export function ServiceDrawer({
                     </Form.Item>
                   </Col>
                   <Col xs={24} md={12}>
-                    <Form.Item name="projectOwner" label="负责人">
+                    <Form.Item name="environmentOwner" label="负责人">
                       <Input placeholder="platform" />
                     </Form.Item>
                   </Col>

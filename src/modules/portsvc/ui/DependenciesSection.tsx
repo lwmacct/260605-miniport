@@ -37,7 +37,7 @@ export function DependenciesSection({ canManage, dependencyAssets, groups, onEdi
   ];
 
   const groupColumns: ColumnsType<PortGroupItem> = [
-    { title: "运行环境", dataIndex: "projectName", render: (value) => value || "-" },
+    { title: "运行环境", dataIndex: "environmentName", render: (value) => value || "-" },
     {
       title: "服务组件",
       render: (_, item) => (

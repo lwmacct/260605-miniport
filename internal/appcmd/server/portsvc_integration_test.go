@@ -18,7 +18,7 @@ func TestPortsvcWriteAllowsAuthenticatedUser(t *testing.T) {
 	app, handler := setupPortsvcTestApp(t)
 	cookie := createTestSessionCookie(t, app, "member")
 
-	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/api/port-groups", strings.NewReader(`{"projectName":"miniport","runtimeMode":"dind","runtimeName":"miniport-dind-01","serviceIp":"172.22.11.12","slots":[{"port":10000,"name":"redis","kind":"cache","protocol":"redis"}]}`))
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/api/port-groups", strings.NewReader(`{"environmentName":"miniport","runtimeMode":"dind","runtimeName":"miniport-dind-01","serviceIp":"172.22.11.12","slots":[{"port":10000,"name":"redis","kind":"cache","protocol":"redis"}]}`))
 	req.Header.Set("Content-Type", "application/json")
 	req.RemoteAddr = "127.0.0.1:12345"
 	req.AddCookie(cookie)
@@ -27,17 +27,17 @@ func TestPortsvcWriteAllowsAuthenticatedUser(t *testing.T) {
 	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
 
 	var body struct {
-		OwnerSubject string `json:"ownerSubject"`
-		OwnerName    string `json:"ownerName"`
-		ProjectName  string `json:"projectName"`
-		Slots        []struct {
+		OwnerSubject    string `json:"ownerSubject"`
+		OwnerName       string `json:"ownerName"`
+		EnvironmentName string `json:"environmentName"`
+		Slots           []struct {
 			Name string `json:"name"`
 		} `json:"slots"`
 	}
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
 	require.NotEmpty(t, body.OwnerSubject)
 	require.Equal(t, "member", body.OwnerName)
-	require.Equal(t, "miniport", body.ProjectName)
+	require.Equal(t, "miniport", body.EnvironmentName)
 	require.Len(t, body.Slots, 1)
 	require.Equal(t, "redis", body.Slots[0].Name)
 }

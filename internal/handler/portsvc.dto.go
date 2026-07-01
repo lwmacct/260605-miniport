@@ -46,20 +46,20 @@ type PortGroupAssetLinkPayloadDTO struct {
 }
 
 type PortGroupPayloadDTO struct {
-	OwnerSubject string                         `json:"ownerSubject,omitempty"`
-	HostID       string                         `json:"hostId,omitempty"`
-	PortStart    int                            `json:"portStart,omitempty"`
-	PortEnd      int                            `json:"portEnd,omitempty"`
-	ProjectName  string                         `json:"projectName,omitempty"`
-	ProjectOwner string                         `json:"projectOwner,omitempty"`
-	RuntimeMode  string                         `json:"runtimeMode,omitempty"`
-	RuntimeName  string                         `json:"runtimeName,omitempty"`
-	ServiceIP    string                         `json:"serviceIp,omitempty"`
-	Status       string                         `json:"status,omitempty"`
-	Tags         string                         `json:"tags,omitempty"`
-	Notes        string                         `json:"notes,omitempty"`
-	Slots        []PortSlotPayloadDTO           `json:"slots,omitempty"`
-	AssetLinks   []PortGroupAssetLinkPayloadDTO `json:"assetLinks,omitempty"`
+	OwnerSubject     string                         `json:"ownerSubject,omitempty"`
+	HostID           string                         `json:"hostId,omitempty"`
+	PortStart        int                            `json:"portStart,omitempty"`
+	PortEnd          int                            `json:"portEnd,omitempty"`
+	EnvironmentName  string                         `json:"environmentName,omitempty"`
+	EnvironmentOwner string                         `json:"environmentOwner,omitempty"`
+	RuntimeMode      string                         `json:"runtimeMode,omitempty"`
+	RuntimeName      string                         `json:"runtimeName,omitempty"`
+	ServiceIP        string                         `json:"serviceIp,omitempty"`
+	Status           string                         `json:"status,omitempty"`
+	Tags             string                         `json:"tags,omitempty"`
+	Notes            string                         `json:"notes,omitempty"`
+	Slots            []PortSlotPayloadDTO           `json:"slots,omitempty"`
+	AssetLinks       []PortGroupAssetLinkPayloadDTO `json:"assetLinks,omitempty"`
 }
 
 type ServiceGroupPortGroupPayloadDTO struct {
@@ -105,25 +105,25 @@ type PortSlotDTO struct {
 }
 
 type PortGroupDTO struct {
-	ID           string                  `json:"id"`
-	OwnerSubject string                  `json:"ownerSubject"`
-	OwnerName    string                  `json:"ownerName"`
-	HostID       string                  `json:"hostId"`
-	Host         *HostDTO                `json:"host,omitempty"`
-	PortStart    int                     `json:"portStart"`
-	PortEnd      int                     `json:"portEnd"`
-	ProjectName  string                  `json:"projectName"`
-	ProjectOwner string                  `json:"projectOwner"`
-	RuntimeMode  string                  `json:"runtimeMode"`
-	RuntimeName  string                  `json:"runtimeName"`
-	ServiceIP    string                  `json:"serviceIp"`
-	Status       string                  `json:"status"`
-	Tags         string                  `json:"tags"`
-	Notes        string                  `json:"notes"`
-	CreatedAt    string                  `json:"createdAt"`
-	UpdatedAt    string                  `json:"updatedAt"`
-	Slots        []PortSlotDTO           `json:"slots"`
-	AssetLinks   []PortGroupAssetLinkDTO `json:"assetLinks"`
+	ID               string                  `json:"id"`
+	OwnerSubject     string                  `json:"ownerSubject"`
+	OwnerName        string                  `json:"ownerName"`
+	HostID           string                  `json:"hostId"`
+	Host             *HostDTO                `json:"host,omitempty"`
+	PortStart        int                     `json:"portStart"`
+	PortEnd          int                     `json:"portEnd"`
+	EnvironmentName  string                  `json:"environmentName"`
+	EnvironmentOwner string                  `json:"environmentOwner"`
+	RuntimeMode      string                  `json:"runtimeMode"`
+	RuntimeName      string                  `json:"runtimeName"`
+	ServiceIP        string                  `json:"serviceIp"`
+	Status           string                  `json:"status"`
+	Tags             string                  `json:"tags"`
+	Notes            string                  `json:"notes"`
+	CreatedAt        string                  `json:"createdAt"`
+	UpdatedAt        string                  `json:"updatedAt"`
+	Slots            []PortSlotDTO           `json:"slots"`
+	AssetLinks       []PortGroupAssetLinkDTO `json:"assetLinks"`
 }
 
 type ServiceGroupPortGroupDTO struct {

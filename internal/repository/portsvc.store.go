@@ -370,8 +370,8 @@ func (s *Store) ListPortsvcPortGroups(ctx context.Context, params PortsvcPortGro
 		pattern := utilSearchPattern(keyword)
 		query = query.Where(
 			utilJoinSearchClauses([]string{
-				"port_group.project_name",
-				"port_group.project_owner",
+				"port_group.environment_name",
+				"port_group.environment_owner",
 				"port_group.runtime_name",
 				"port_group.service_ip",
 				"port_group.tags",
@@ -381,8 +381,8 @@ func (s *Store) ListPortsvcPortGroups(ctx context.Context, params PortsvcPortGro
 		)
 	}
 	switch strings.ToLower(params.Sort) {
-	case "project":
-		query = query.Order("port_group.project_name ASC", "port_group.port_start ASC")
+	case "environment":
+		query = query.Order("port_group.environment_name ASC", "port_group.port_start ASC")
 	case "status":
 		query = query.Order("port_group.status ASC", "port_group.port_start ASC")
 	case "updated_desc":
@@ -411,21 +411,21 @@ func (s *Store) FetchPortsvcPortGroupByID(ctx context.Context, id string) (*Port
 
 func (s *Store) CreatePortsvcPortGroup(ctx context.Context, group *PortsvcPortGroupRecord) (*PortsvcPortGroupRecord, error) {
 	row := &PortAllocationsModel{
-		ID:           idgen.NewUUID7(),
-		OwnerSubject: group.OwnerSubject,
-		HostID:       group.HostID,
-		PortStart:    group.PortStart,
-		PortEnd:      group.PortEnd,
-		ProjectName:  group.ProjectName,
-		ProjectOwner: group.ProjectOwner,
-		RuntimeMode:  group.RuntimeMode,
-		RuntimeName:  group.RuntimeName,
-		ServiceIP:    group.ServiceIP,
-		Status:       group.Status,
-		Tags:         group.Tags,
-		Notes:        group.Notes,
-		CreatedAt:    group.CreatedAt,
-		UpdatedAt:    group.UpdatedAt,
+		ID:               idgen.NewUUID7(),
+		OwnerSubject:     group.OwnerSubject,
+		HostID:           group.HostID,
+		PortStart:        group.PortStart,
+		PortEnd:          group.PortEnd,
+		EnvironmentName:  group.EnvironmentName,
+		EnvironmentOwner: group.EnvironmentOwner,
+		RuntimeMode:      group.RuntimeMode,
+		RuntimeName:      group.RuntimeName,
+		ServiceIP:        group.ServiceIP,
+		Status:           group.Status,
+		Tags:             group.Tags,
+		Notes:            group.Notes,
+		CreatedAt:        group.CreatedAt,
+		UpdatedAt:        group.UpdatedAt,
 	}
 	if _, err := s.db.NewInsert().Model(row).Exec(ctx); err != nil {
 		return nil, err
@@ -435,24 +435,24 @@ func (s *Store) CreatePortsvcPortGroup(ctx context.Context, group *PortsvcPortGr
 
 func (s *Store) UpdatePortsvcPortGroup(ctx context.Context, id string, group *PortsvcPortGroupRecord) (*PortsvcPortGroupRecord, error) {
 	row := &PortAllocationsModel{
-		ID:           id,
-		OwnerSubject: group.OwnerSubject,
-		HostID:       group.HostID,
-		PortStart:    group.PortStart,
-		PortEnd:      group.PortEnd,
-		ProjectName:  group.ProjectName,
-		ProjectOwner: group.ProjectOwner,
-		RuntimeMode:  group.RuntimeMode,
-		RuntimeName:  group.RuntimeName,
-		ServiceIP:    group.ServiceIP,
-		Status:       group.Status,
-		Tags:         group.Tags,
-		Notes:        group.Notes,
-		UpdatedAt:    group.UpdatedAt,
+		ID:               id,
+		OwnerSubject:     group.OwnerSubject,
+		HostID:           group.HostID,
+		PortStart:        group.PortStart,
+		PortEnd:          group.PortEnd,
+		EnvironmentName:  group.EnvironmentName,
+		EnvironmentOwner: group.EnvironmentOwner,
+		RuntimeMode:      group.RuntimeMode,
+		RuntimeName:      group.RuntimeName,
+		ServiceIP:        group.ServiceIP,
+		Status:           group.Status,
+		Tags:             group.Tags,
+		Notes:            group.Notes,
+		UpdatedAt:        group.UpdatedAt,
 	}
 	res, err := s.db.NewUpdate().
 		Model(row).
-		Column("owner_subject", "host_id", "port_start", "port_end", "project_name", "project_owner", "runtime_mode", "runtime_name", "service_ip", "status", "tags", "notes", "updated_at").
+		Column("owner_subject", "host_id", "port_start", "port_end", "environment_name", "environment_owner", "runtime_mode", "runtime_name", "service_ip", "status", "tags", "notes", "updated_at").
 		Where("id = ?", id).
 		Exec(ctx)
 	if err != nil {

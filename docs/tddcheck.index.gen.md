@@ -144,24 +144,24 @@ Foreign keys:
 - File: `internal/repository/port_allocations.schema.go`
 - Alias: `port_group`
 
-| Field          | Column          | Go Type       | Attributes |
-| -------------- | --------------- | ------------- | ---------- |
-| `ID`           | `id`            | `string`      | [pk]       |
-| `OwnerSubject` | `owner_subject` | `string`      | [notnull]  |
-| `HostID`       | `host_id`       | `string`      | [nullable] |
-| `Host`         | `host`          | `*HostsModel` |            |
-| `PortStart`    | `port_start`    | `int`         | [notnull]  |
-| `PortEnd`      | `port_end`      | `int`         | [notnull]  |
-| `ProjectName`  | `project_name`  | `string`      |            |
-| `ProjectOwner` | `project_owner` | `string`      |            |
-| `RuntimeMode`  | `runtime_mode`  | `string`      | [notnull]  |
-| `RuntimeName`  | `runtime_name`  | `string`      |            |
-| `ServiceIP`    | `service_ip`    | `string`      |            |
-| `Status`       | `status`        | `string`      | [notnull]  |
-| `Tags`         | `tags`          | `string`      |            |
-| `Notes`        | `notes`         | `string`      |            |
-| `CreatedAt`    | `created_at`    | `time.Time`   | [notnull]  |
-| `UpdatedAt`    | `updated_at`    | `time.Time`   | [notnull]  |
+| Field              | Column              | Go Type       | Attributes |
+| ------------------ | ------------------- | ------------- | ---------- |
+| `ID`               | `id`                | `string`      | [pk]       |
+| `OwnerSubject`     | `owner_subject`     | `string`      | [notnull]  |
+| `HostID`           | `host_id`           | `string`      | [nullable] |
+| `Host`             | `host`              | `*HostsModel` |            |
+| `PortStart`        | `port_start`        | `int`         | [notnull]  |
+| `PortEnd`          | `port_end`          | `int`         | [notnull]  |
+| `EnvironmentName`  | `environment_name`  | `string`      |            |
+| `EnvironmentOwner` | `environment_owner` | `string`      |            |
+| `RuntimeMode`      | `runtime_mode`      | `string`      | [notnull]  |
+| `RuntimeName`      | `runtime_name`      | `string`      |            |
+| `ServiceIP`        | `service_ip`        | `string`      |            |
+| `Status`           | `status`            | `string`      | [notnull]  |
+| `Tags`             | `tags`              | `string`      |            |
+| `Notes`            | `notes`             | `string`      |            |
+| `CreatedAt`        | `created_at`        | `time.Time`   | [notnull]  |
+| `UpdatedAt`        | `updated_at`        | `time.Time`   | [notnull]  |
 
 Foreign keys:
 

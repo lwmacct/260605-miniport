@@ -1,7 +1,7 @@
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { Button, Card, Popconfirm, Space, Table, Tag, Tooltip, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import type { PortGroupItem } from "../model/portsvcTypes";
+import type { PortGroupItem, ServiceGroupItem } from "../model/portsvcTypes";
 import { runtimeTag, statusTag } from "../model/portsvcUtils";
 
 type ProjectServicesSectionProps = {
@@ -10,6 +10,7 @@ type ProjectServicesSectionProps = {
   onDeleteGroup: (group: PortGroupItem) => void;
   onEditGroup: (group: PortGroupItem) => void;
   onSelectGroup: (group: PortGroupItem) => void;
+  serviceGroups: ServiceGroupItem[];
 };
 
 export function ProjectServicesSection({
@@ -18,15 +19,39 @@ export function ProjectServicesSection({
   onDeleteGroup,
   onEditGroup,
   onSelectGroup,
+  serviceGroups,
 }: ProjectServicesSectionProps) {
+  const serviceGroupsByPortGroup = new Map<string, ServiceGroupItem[]>();
+  for (const serviceGroup of serviceGroups) {
+    for (const link of serviceGroup.portGroups) {
+      const current = serviceGroupsByPortGroup.get(link.portGroupId) ?? [];
+      current.push(serviceGroup);
+      serviceGroupsByPortGroup.set(link.portGroupId, current);
+    }
+  }
+
   const columns: ColumnsType<PortGroupItem> = [
     {
       title: "运行环境",
       render: (_, item) => (
-        <Typography.Link onClick={() => onSelectGroup(item)}>{item.projectName || "-"}</Typography.Link>
+        <Typography.Link onClick={() => onSelectGroup(item)}>{item.environmentName || "-"}</Typography.Link>
       ),
     },
     { title: "端口组", dataIndex: "portStart", width: 110 },
+    {
+      title: "服务组",
+      width: 220,
+      render: (_, item) => {
+        const relatedGroups = serviceGroupsByPortGroup.get(item.id) ?? [];
+        return relatedGroups.length ? (
+          <Space size={[4, 4]} wrap>
+            {relatedGroups.map((group) => (
+              <Tag key={group.id ?? group.name}>{group.name}</Tag>
+            ))}
+          </Space>
+        ) : "-";
+      },
+    },
     { title: "运行", width: 120, render: (_, item) => runtimeTag(item.runtimeMode) },
     { title: "服务 IP", dataIndex: "serviceIp", width: 150 },
     { title: "宿主机", width: 160, render: (_, item) => item.host?.name || item.host?.ip || "-" },
@@ -61,7 +86,7 @@ export function ProjectServicesSection({
         columns={columns}
         dataSource={groups}
         pagination={{ pageSize: 12 }}
-        scroll={{ x: 1080 }}
+        scroll={{ x: 1280 }}
       />
     </Card>
   );

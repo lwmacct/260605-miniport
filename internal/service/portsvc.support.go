@@ -96,20 +96,20 @@ type PortGroupAssetLinkPayload struct {
 }
 
 type PortGroupPayload struct {
-	OwnerSubject string
-	HostID       string
-	PortStart    int
-	PortEnd      int
-	ProjectName  string
-	ProjectOwner string
-	RuntimeMode  string
-	RuntimeName  string
-	ServiceIP    string
-	Status       string
-	Tags         string
-	Notes        string
-	Slots        []PortSlotPayload
-	AssetLinks   []PortGroupAssetLinkPayload
+	OwnerSubject     string
+	HostID           string
+	PortStart        int
+	PortEnd          int
+	EnvironmentName  string
+	EnvironmentOwner string
+	RuntimeMode      string
+	RuntimeName      string
+	ServiceIP        string
+	Status           string
+	Tags             string
+	Notes            string
+	Slots            []PortSlotPayload
+	AssetLinks       []PortGroupAssetLinkPayload
 }
 
 type ServiceGroupPortGroupPayload struct {
@@ -310,18 +310,18 @@ func utilNormalizePortGroup(ctx context.Context, store *repository.Store, actor 
 		runtimeMode = defaultRuntimeMode
 	}
 	group := &PortGroup{
-		OwnerSubject: ownerSubject,
-		HostID:       hostID,
-		PortStart:    portStart,
-		PortEnd:      portEnd,
-		ProjectName:  strings.TrimSpace(payload.ProjectName),
-		ProjectOwner: strings.TrimSpace(payload.ProjectOwner),
-		RuntimeMode:  runtimeMode,
-		RuntimeName:  strings.TrimSpace(payload.RuntimeName),
-		ServiceIP:    strings.TrimSpace(payload.ServiceIP),
-		Status:       strings.TrimSpace(payload.Status),
-		Tags:         strings.TrimSpace(payload.Tags),
-		Notes:        strings.TrimSpace(payload.Notes),
+		OwnerSubject:     ownerSubject,
+		HostID:           hostID,
+		PortStart:        portStart,
+		PortEnd:          portEnd,
+		EnvironmentName:  strings.TrimSpace(payload.EnvironmentName),
+		EnvironmentOwner: strings.TrimSpace(payload.EnvironmentOwner),
+		RuntimeMode:      runtimeMode,
+		RuntimeName:      strings.TrimSpace(payload.RuntimeName),
+		ServiceIP:        strings.TrimSpace(payload.ServiceIP),
+		Status:           strings.TrimSpace(payload.Status),
+		Tags:             strings.TrimSpace(payload.Tags),
+		Notes:            strings.TrimSpace(payload.Notes),
 	}
 	if group.Status == "" {
 		group.Status = defaultPortGroupStatus
