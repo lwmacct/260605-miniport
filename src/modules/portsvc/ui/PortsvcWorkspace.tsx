@@ -43,6 +43,7 @@ import { DependenciesSection } from "./DependenciesSection";
 import { HostsSection } from "./HostsSection";
 import { PortGroupsUsageSection } from "./PortGroupsUsageSection";
 import { ServiceGroupsSection } from "./ServiceGroupsSection";
+import { ServiceGroupDetailDrawer } from "./ServiceGroupDetailDrawer";
 import { ServiceDetailDrawer } from "./ServiceDetailDrawer";
 import { ServiceDrawer } from "./ServiceDrawer";
 
@@ -71,6 +72,7 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
   const [editingHost, setEditingHost] = useState<HostItem | null>(null);
   const [assetModalOpen, setAssetModalOpen] = useState(false);
   const [editingAsset, setEditingAsset] = useState<DependencyAssetItem | null>(null);
+  const [selectedServiceGroup, setSelectedServiceGroup] = useState<ServiceGroupItem | null>(null);
   const [serviceGroupModalOpen, setServiceGroupModalOpen] = useState(false);
   const [editingServiceGroup, setEditingServiceGroup] = useState<ServiceGroupItem | null>(null);
   const [groupForm] = Form.useForm<PortGroupForm>();
@@ -129,6 +131,7 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
 
   useEffect(() => {
     setSelectedGroup(null);
+    setSelectedServiceGroup(null);
   }, [query]);
 
   async function refresh() {
@@ -290,6 +293,7 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
   async function handleDeleteServiceGroup(group: ServiceGroupItem) {
     await removeServiceGroup(group);
     message.success("服务组已删除");
+    setSelectedServiceGroup(null);
     setServiceGroupModalOpen(false);
     await refresh();
   }
@@ -344,6 +348,7 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
           <ServiceGroupsSection
             canManage={canManage}
             onEditServiceGroup={openEditServiceGroup}
+            onSelectServiceGroup={setSelectedServiceGroup}
             serviceGroups={filteredServiceGroups}
           />
         );
@@ -462,6 +467,18 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
         onEdit={(group) => {
           setSelectedGroup(null);
           openEditGroup(group);
+        }}
+        serviceGroups={serviceGroups}
+      />
+      <ServiceGroupDetailDrawer
+        canManage={canManage}
+        groups={groups}
+        serviceGroup={selectedServiceGroup}
+        onClose={() => setSelectedServiceGroup(null)}
+        onDelete={handleDeleteServiceGroup}
+        onEdit={(group) => {
+          setSelectedServiceGroup(null);
+          openEditServiceGroup(group);
         }}
       />
       <ServiceDrawer

@@ -1,7 +1,7 @@
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { Button, Card, Descriptions, Drawer, Modal, Space, Table, Tag, Typography } from "antd";
 import { statusOptions } from "../model/portsvcConstants";
-import type { PortGroupItem, PortSlotItem } from "../model/portsvcTypes";
+import type { PortGroupItem, PortSlotItem, ServiceGroupItem } from "../model/portsvcTypes";
 import { portRange, runtimeTag, splitTags } from "../model/portsvcUtils";
 
 type ServiceDetailDrawerProps = {
@@ -10,6 +10,7 @@ type ServiceDetailDrawerProps = {
   onClose: () => void;
   onDelete: (group: PortGroupItem) => Promise<void>;
   onEdit: (group: PortGroupItem) => void;
+  serviceGroups: ServiceGroupItem[];
 };
 
 export function ServiceDetailDrawer({
@@ -18,7 +19,17 @@ export function ServiceDetailDrawer({
   onClose,
   onDelete,
   onEdit,
+  serviceGroups,
 }: ServiceDetailDrawerProps) {
+  const relatedServiceGroups = group
+    ? serviceGroups
+      .map((serviceGroup) => {
+        const membership = serviceGroup.portGroups.find((member) => member.portGroupId === group.id);
+        return membership ? { serviceGroup, membership } : null;
+      })
+      .filter((item): item is NonNullable<typeof item> => Boolean(item))
+    : [];
+
   return (
     <Drawer
       title={group?.environmentName || group?.runtimeName || "端口组"}
@@ -91,6 +102,17 @@ export function ServiceDetailDrawer({
                 { title: "容器", dataIndex: "containerName", render: (value) => value || "-" },
               ]}
             />
+          </Card>
+          <Card title="所属服务组">
+            <Space size={[6, 6]} wrap>
+              {relatedServiceGroups.length === 0 ? <Typography.Text type="secondary">未加入服务组</Typography.Text> : null}
+              {relatedServiceGroups.map(({ serviceGroup, membership }) => (
+                <Tag key={serviceGroup.id ?? serviceGroup.name}>
+                  {serviceGroup.name}
+                  {membership.role ? ` · ${membership.role}` : ""}
+                </Tag>
+              ))}
+            </Space>
           </Card>
           <Card title="依赖资产">
             <Space size={[6, 6]} wrap>

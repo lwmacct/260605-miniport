@@ -7,12 +7,14 @@ import { statusTag } from "../model/portsvcUtils";
 type ServiceGroupsSectionProps = {
   canManage: boolean;
   onEditServiceGroup: (group: ServiceGroupItem) => void;
+  onSelectServiceGroup: (group: ServiceGroupItem) => void;
   serviceGroups: ServiceGroupItem[];
 };
 
 export function ServiceGroupsSection({
   canManage,
   onEditServiceGroup,
+  onSelectServiceGroup,
   serviceGroups,
 }: ServiceGroupsSectionProps) {
   const columns: ColumnsType<ServiceGroupItem> = [
@@ -20,7 +22,7 @@ export function ServiceGroupsSection({
       title: "服务组",
       dataIndex: "name",
       render: (value, item) => (
-        <Typography.Link onClick={() => onEditServiceGroup(item)}>{value || "-"}</Typography.Link>
+        <Typography.Link onClick={() => onSelectServiceGroup(item)}>{value || "-"}</Typography.Link>
       ),
     },
     { title: "类型", dataIndex: "kind", width: 110, render: (value) => <Tag>{value}</Tag> },
