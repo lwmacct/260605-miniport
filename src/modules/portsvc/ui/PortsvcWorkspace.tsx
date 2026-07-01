@@ -185,7 +185,9 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
           <OverviewSection
             canManage={canManage}
             onCreateService={openCreateService}
+            onEditPort={openEditPort}
             onSelectService={setSelectedService}
+            ports={ports}
             services={services}
             stats={stats}
           />

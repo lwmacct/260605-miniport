@@ -1,12 +1,15 @@
-import { PlusOutlined } from "@ant-design/icons";
-import { Button, Card, Col, Empty, Row, Space, Statistic, Tag } from "antd";
-import type { AppStats, ServiceItem } from "../model/portsvcTypes";
+import { EditOutlined, PlusOutlined } from "@ant-design/icons";
+import { Button, Card, Col, Empty, Row, Space, Statistic, Table, Tag, Tooltip, Typography } from "antd";
+import type { ColumnsType } from "antd/es/table";
+import type { AppStats, PortAllocation, ServiceItem } from "../model/portsvcTypes";
 import { portRange, statusTag } from "../model/portsvcUtils";
 
 type OverviewSectionProps = {
   canManage: boolean;
   onCreateService: () => void;
+  onEditPort: (port: PortAllocation) => void;
   onSelectService: (service: ServiceItem) => void;
+  ports: PortAllocation[];
   services: ServiceItem[];
   stats: AppStats;
 };
@@ -14,10 +17,40 @@ type OverviewSectionProps = {
 export function OverviewSection({
   canManage,
   onCreateService,
+  onEditPort,
   onSelectService,
+  ports,
   services,
   stats,
 }: OverviewSectionProps) {
+  const portColumns: ColumnsType<PortAllocation> = [
+    {
+      title: "端口组",
+      width: 150,
+      render: (_, item) => `${item.portStart}-${item.portEnd}`,
+    },
+    {
+      title: "状态",
+      width: 110,
+      render: (_, item) => statusTag(item.status),
+    },
+    {
+      title: "备注",
+      dataIndex: "notes",
+      render: (value) => value || "-",
+    },
+    {
+      title: "操作",
+      width: 90,
+      render: (_, item) =>
+        canManage ? (
+          <Tooltip title="编辑端口组">
+            <Button size="small" icon={<EditOutlined />} onClick={() => onEditPort(item)} />
+          </Tooltip>
+        ) : null,
+    },
+  ];
+
   return (
     <Space direction="vertical" size={16} className="content-stack">
       <Row gutter={[12, 12]}>
@@ -61,6 +94,22 @@ export function OverviewSection({
           ))}
         </Row>
       )}
+      <Card
+        title="端口组"
+        extra={
+          <Typography.Text type="secondary">
+            {ports.length} 组
+          </Typography.Text>
+        }
+      >
+        <Table<PortAllocation>
+          rowKey="id"
+          columns={portColumns}
+          dataSource={ports}
+          pagination={{ pageSize: 12, showSizeChanger: true }}
+          scroll={{ x: 720 }}
+        />
+      </Card>
     </Space>
   );
 }

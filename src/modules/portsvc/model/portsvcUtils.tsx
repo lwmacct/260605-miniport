@@ -4,12 +4,13 @@ import type { PortAllocation, ServiceItem } from "./portsvcTypes";
 
 export function statusTag(status: string) {
   const colorMap: Record<string, string> = {
+    available: "default",
     planned: "blue",
     reserved: "gold",
     running: "green",
     stopped: "default",
   };
-  const label = statusOptions.find((item) => item.value === status)?.label ?? status;
+  const label = status === "available" ? "可用" : (statusOptions.find((item) => item.value === status)?.label ?? status);
   return <Tag color={colorMap[status] ?? "default"}>{label}</Tag>;
 }
 
