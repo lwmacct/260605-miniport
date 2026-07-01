@@ -1,7 +1,9 @@
 import {
+  WorkbenchLanguageToggle,
   WorkbenchShell,
   WorkbenchThemeToggle,
   WorkbenchUserMenu,
+  useWorkbenchLocale,
   type WorkbenchNavEntry,
 } from "@lwmacct/260627-antd-workbench";
 import { Space } from "antd";
@@ -11,13 +13,14 @@ import { appPaths, topNavFromPathname, type TopNavKey } from "../router/navigati
 import { APP_NAME, DISPLAY_VERSION } from "@/shared/config/appConfig";
 import { useAuthStateQuery, useLogoutMutation } from "@/modules/auth";
 
-function navItems(admin: boolean): WorkbenchNavEntry[] {
+function navItems(admin: boolean, locale: string): WorkbenchNavEntry[] {
+  const isZh = locale.startsWith("zh");
   const items: WorkbenchNavEntry[] = [
-    { key: "console", label: "Console" },
-    { key: "settings", label: "Settings" },
+    { key: "console", label: isZh ? "控制台" : "Console" },
+    { key: "settings", label: isZh ? "设置" : "Settings" },
   ];
   if (admin) {
-    items.push({ key: "admin", label: "Admin" });
+    items.push({ key: "admin", label: isZh ? "管理" : "Admin" });
   }
   return items;
 }
@@ -33,6 +36,7 @@ export function AppShell() {
   const location = useLocation();
   const authState = useAuthStateQuery();
   const logoutMutation = useLogoutMutation();
+  const { locale } = useWorkbenchLocale();
   const activeNavKey = topNavFromPathname(location.pathname);
   const isFlushContent = activeNavKey === "admin" || activeNavKey === "console" || activeNavKey === "settings";
   const [optimisticActiveKey, setOptimisticActiveKey] = useState<TopNavKey>();
@@ -60,6 +64,9 @@ export function AppShell() {
       actions={
         <Space>
           <WorkbenchThemeToggle />
+          <WorkbenchLanguageToggle
+            labels={{ switchLanguage: locale.startsWith("zh") ? "切换语言" : "Switch language" }}
+          />
           <WorkbenchUserMenu
             user={{ name: user?.username, username: user?.username }}
             onLogout={() => void logoutMutation.mutateAsync()}
@@ -74,7 +81,7 @@ export function AppShell() {
         version: DISPLAY_VERSION,
       }}
       flushContent={isFlushContent}
-      nav={navItems(Boolean(user?.admin))}
+      nav={navItems(Boolean(user?.admin), locale)}
       selectedNavKey={visibleActiveKey}
       onSelectNav={handleNavigate}
     >
