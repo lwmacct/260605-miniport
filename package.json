@@ -8,7 +8,7 @@
     "typecheck": "tsc -b"
   },
   "type": "module",
-  "version": "0.26.260701",
+  "version": "0.27.260702",
   "dependencies": {
     "@ant-design/icons": "^6.3.2",
     "@lwmacct/260627-antd-workbench": "^0.40.260701",
