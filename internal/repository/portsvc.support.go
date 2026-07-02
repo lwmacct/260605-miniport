@@ -52,8 +52,7 @@ type PortsvcPortGroupRecord struct {
 	OwnerName        string
 	HostID           string
 	Host             *PortsvcHostRecord
-	PortStart        int
-	PortEnd          int
+	PortPrefix       int
 	EnvironmentName  string
 	EnvironmentOwner string
 	RuntimeMode      string
@@ -174,8 +173,7 @@ func utilPortsvcPortGroupRecordFromModel(model *PortAllocationsModel) *PortsvcPo
 		ID:               model.ID,
 		OwnerSubject:     model.OwnerSubject,
 		HostID:           model.HostID,
-		PortStart:        model.PortStart,
-		PortEnd:          model.PortEnd,
+		PortPrefix:       model.PortPrefix,
 		EnvironmentName:  model.EnvironmentName,
 		EnvironmentOwner: model.EnvironmentOwner,
 		RuntimeMode:      model.RuntimeMode,

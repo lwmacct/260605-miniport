@@ -37,7 +37,7 @@ export function ProjectServicesSection({
         <Typography.Link onClick={() => onSelectGroup(item)}>{item.environmentName || "-"}</Typography.Link>
       ),
     },
-    { title: "端口组", dataIndex: "portStart", width: 110 },
+    { title: "端口组", dataIndex: "portPrefix", width: 110 },
     {
       title: "服务组",
       width: 220,

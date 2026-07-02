@@ -22,19 +22,19 @@ func TestListPortsvcPortGroupsSortsByPort(t *testing.T) {
 	now := time.Now().UTC()
 
 	_, err := store.CreatePortsvcPortGroup(ctx, &PortsvcPortGroupRecord{
-		OwnerSubject: ownerSubject, PortStart: 10020, PortEnd: 10029, RuntimeMode: "dind", Status: "running", CreatedAt: now, UpdatedAt: now,
+		OwnerSubject: ownerSubject, PortPrefix: 1002, RuntimeMode: "dind", Status: "running", CreatedAt: now, UpdatedAt: now,
 	})
 	require.NoError(t, err)
 	_, err = store.CreatePortsvcPortGroup(ctx, &PortsvcPortGroupRecord{
-		OwnerSubject: ownerSubject, PortStart: 10000, PortEnd: 10009, RuntimeMode: "dind", Status: "running", CreatedAt: now, UpdatedAt: now,
+		OwnerSubject: ownerSubject, PortPrefix: 1000, RuntimeMode: "dind", Status: "running", CreatedAt: now, UpdatedAt: now,
 	})
 	require.NoError(t, err)
 
 	groups, err := store.ListPortsvcPortGroups(ctx, PortsvcPortGroupListFilter{OwnerSubject: ownerSubject})
 	require.NoError(t, err)
 	require.Len(t, groups, 2)
-	require.Equal(t, 10000, groups[0].PortStart)
-	require.Equal(t, 10020, groups[1].PortStart)
+	require.Equal(t, 1000, groups[0].PortPrefix)
+	require.Equal(t, 1002, groups[1].PortPrefix)
 }
 
 func TestPortGroupsAreUniquePerUser(t *testing.T) {
@@ -46,15 +46,15 @@ func TestPortGroupsAreUniquePerUser(t *testing.T) {
 	now := time.Now().UTC()
 
 	_, err := store.CreatePortsvcPortGroup(ctx, &PortsvcPortGroupRecord{
-		OwnerSubject: first, PortStart: 10000, PortEnd: 10009, RuntimeMode: "dind", Status: "available", CreatedAt: now, UpdatedAt: now,
+		OwnerSubject: first, PortPrefix: 1000, RuntimeMode: "dind", Status: "available", CreatedAt: now, UpdatedAt: now,
 	})
 	require.NoError(t, err)
 	_, err = store.CreatePortsvcPortGroup(ctx, &PortsvcPortGroupRecord{
-		OwnerSubject: second, PortStart: 10000, PortEnd: 10009, RuntimeMode: "dind", Status: "available", CreatedAt: now, UpdatedAt: now,
+		OwnerSubject: second, PortPrefix: 1000, RuntimeMode: "dind", Status: "available", CreatedAt: now, UpdatedAt: now,
 	})
 	require.NoError(t, err)
 	_, err = store.CreatePortsvcPortGroup(ctx, &PortsvcPortGroupRecord{
-		OwnerSubject: first, PortStart: 10000, PortEnd: 10009, RuntimeMode: "dind", Status: "available", CreatedAt: now, UpdatedAt: now,
+		OwnerSubject: first, PortPrefix: 1000, RuntimeMode: "dind", Status: "available", CreatedAt: now, UpdatedAt: now,
 	})
 	require.Error(t, err)
 }
@@ -66,7 +66,7 @@ func TestPortSlotsAreUniqueInsideGroup(t *testing.T) {
 	ownerSubject := "018f2f9c-1111-7000-8000-000000000001"
 	now := time.Now().UTC()
 	group, err := store.CreatePortsvcPortGroup(ctx, &PortsvcPortGroupRecord{
-		OwnerSubject: ownerSubject, PortStart: 10000, PortEnd: 10009, RuntimeMode: "dind", Status: "available", CreatedAt: now, UpdatedAt: now,
+		OwnerSubject: ownerSubject, PortPrefix: 1000, RuntimeMode: "dind", Status: "available", CreatedAt: now, UpdatedAt: now,
 	})
 	require.NoError(t, err)
 	_, err = store.CreatePortsvcPortSlot(ctx, &PortsvcPortSlotRecord{

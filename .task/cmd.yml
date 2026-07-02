@@ -1,0 +1,8 @@
+version: "3"
+
+tasks:
+  pg:dump:
+    desc: pg_dump
+    cmds:
+      - mkdir -p .local/database/
+      - pg_dump -f ".local/database/pg_dump-$(date +%y%m%d-%H%M%S).sql"

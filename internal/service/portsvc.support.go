@@ -13,9 +13,8 @@ import (
 )
 
 const (
-	allocationPortMin         = 10000
-	allocationPortMax         = 59999
-	allocationPortMaxStart    = 59990
+	allocationPortPrefixMin   = 1000
+	allocationPortPrefixMax   = 5999
 	allocationGroupSize       = 10
 	defaultHostStatus         = "active"
 	defaultPortGroupStatus    = "available"
@@ -98,8 +97,7 @@ type PortGroupAssetLinkPayload struct {
 type PortGroupPayload struct {
 	OwnerSubject     string
 	HostID           string
-	PortStart        int
-	PortEnd          int
+	PortPrefix       int
 	EnvironmentName  string
 	EnvironmentOwner string
 	RuntimeMode      string
@@ -292,17 +290,13 @@ func utilNormalizePortGroup(ctx context.Context, store *repository.Store, actor 
 		}
 	}
 
-	portStart := payload.PortStart
-	if portStart == 0 {
-		allocated, err := utilNextAvailablePortStart(ctx, store, ownerSubject, utilCurrentPortGroupID(current))
+	portPrefix := payload.PortPrefix
+	if portPrefix == 0 {
+		allocated, err := utilNextAvailablePortPrefix(ctx, store, ownerSubject, utilCurrentPortGroupID(current))
 		if err != nil {
 			return nil, err
 		}
-		portStart = allocated
-	}
-	portEnd := portStart + allocationGroupSize - 1
-	if payload.PortEnd > 0 && payload.PortEnd != portEnd {
-		return nil, utilBadPortsvcRequest("portEnd must equal portStart + 9")
+		portPrefix = allocated
 	}
 
 	runtimeMode := strings.TrimSpace(payload.RuntimeMode)
@@ -312,8 +306,7 @@ func utilNormalizePortGroup(ctx context.Context, store *repository.Store, actor 
 	group := &PortGroup{
 		OwnerSubject:     ownerSubject,
 		HostID:           hostID,
-		PortStart:        portStart,
-		PortEnd:          portEnd,
+		PortPrefix:       portPrefix,
 		EnvironmentName:  strings.TrimSpace(payload.EnvironmentName),
 		EnvironmentOwner: strings.TrimSpace(payload.EnvironmentOwner),
 		RuntimeMode:      runtimeMode,
@@ -372,17 +365,8 @@ func utilCurrentPortGroupID(group *PortGroup) string {
 }
 
 func utilValidatePortGroup(ctx context.Context, store *repository.Store, currentID string, group *PortGroup) error {
-	if group.PortStart < allocationPortMin || group.PortStart > allocationPortMaxStart {
-		return utilBadPortsvcRequest("portStart must be between 10000 and 59990")
-	}
-	if group.PortStart%allocationGroupSize != 0 {
-		return utilBadPortsvcRequest("portStart must align to a 10-port group")
-	}
-	if group.PortEnd != group.PortStart+allocationGroupSize-1 {
-		return utilBadPortsvcRequest("port group must contain exactly 10 ports")
-	}
-	if group.PortEnd > allocationPortMax {
-		return utilBadPortsvcRequest("portEnd must be less than or equal to 59999")
+	if group.PortPrefix < allocationPortPrefixMin || group.PortPrefix > allocationPortPrefixMax {
+		return utilBadPortsvcRequest("portPrefix must be between 1000 and 5999")
 	}
 	if group.RuntimeMode != runtimeModeDind && group.RuntimeMode != runtimeModeHost {
 		return utilBadPortsvcRequest("runtimeMode must be dind or host")
@@ -400,18 +384,18 @@ func utilValidatePortGroup(ctx context.Context, store *repository.Store, current
 	return nil
 }
 
-func utilNextAvailablePortStart(ctx context.Context, store *repository.Store, ownerSubject string, excludeID string) (int, error) {
-	used, err := store.ListPortsvcPortGroupStartsByOwner(ctx, ownerSubject, excludeID)
+func utilNextAvailablePortPrefix(ctx context.Context, store *repository.Store, ownerSubject string, excludeID string) (int, error) {
+	used, err := store.ListPortsvcPortGroupPrefixesByOwner(ctx, ownerSubject, excludeID)
 	if err != nil {
 		return 0, err
 	}
 	usedSet := map[int]struct{}{}
-	for _, portStart := range used {
-		usedSet[portStart] = struct{}{}
+	for _, portPrefix := range used {
+		usedSet[portPrefix] = struct{}{}
 	}
-	for portStart := allocationPortMin; portStart <= allocationPortMaxStart; portStart += allocationGroupSize {
-		if _, exists := usedSet[portStart]; !exists {
-			return portStart, nil
+	for portPrefix := allocationPortPrefixMin; portPrefix <= allocationPortPrefixMax; portPrefix++ {
+		if _, exists := usedSet[portPrefix]; !exists {
+			return portPrefix, nil
 		}
 	}
 	return 0, utilBadPortsvcRequest("no available port groups for this user")
@@ -431,8 +415,9 @@ func utilNormalizePortSlot(group PortGroup, payload PortSlotPayload) (*PortSlot,
 	if slot.Name == "" {
 		return nil, utilBadPortsvcRequest("slot name is required")
 	}
-	if slot.Port < group.PortStart || slot.Port > group.PortEnd {
-		return nil, utilBadPortsvcRequest("slot port must be inside the port group range")
+	portMin, portMax := utilPortGroupBounds(group.PortPrefix)
+	if slot.Port < portMin || slot.Port > portMax {
+		return nil, utilBadPortsvcRequest("slot port must be inside the port group")
 	}
 	if slot.Kind == "" {
 		slot.Kind = defaultSlotKind
@@ -580,8 +565,13 @@ func utilCSVBytes(records [][]string) ([]byte, error) {
 	return []byte(builder.String()), nil
 }
 
-func utilPortRange(group PortGroup) string {
-	return strconv.Itoa(group.PortStart) + "-" + strconv.Itoa(group.PortEnd)
+func utilPortGroupLabel(group PortGroup) string {
+	return strconv.Itoa(group.PortPrefix)
+}
+
+func utilPortGroupBounds(portPrefix int) (int, int) {
+	portMin := portPrefix * allocationGroupSize
+	return portMin, portMin + allocationGroupSize - 1
 }
 
 func utilWrapNotFound(err error, message string) error {

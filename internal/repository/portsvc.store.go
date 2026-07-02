@@ -382,13 +382,13 @@ func (s *Store) ListPortsvcPortGroups(ctx context.Context, params PortsvcPortGro
 	}
 	switch strings.ToLower(params.Sort) {
 	case "environment":
-		query = query.Order("port_group.environment_name ASC", "port_group.port_start ASC")
+		query = query.Order("port_group.environment_name ASC", "port_group.port_prefix ASC")
 	case "status":
-		query = query.Order("port_group.status ASC", "port_group.port_start ASC")
+		query = query.Order("port_group.status ASC", "port_group.port_prefix ASC")
 	case "updated_desc":
-		query = query.Order("port_group.updated_at DESC", "port_group.port_start ASC")
+		query = query.Order("port_group.updated_at DESC", "port_group.port_prefix ASC")
 	default:
-		query = query.Order("port_group.port_start ASC")
+		query = query.Order("port_group.port_prefix ASC")
 	}
 	if err := query.Scan(ctx); err != nil {
 		return nil, err
@@ -414,8 +414,7 @@ func (s *Store) CreatePortsvcPortGroup(ctx context.Context, group *PortsvcPortGr
 		ID:               idgen.NewUUID7(),
 		OwnerSubject:     group.OwnerSubject,
 		HostID:           group.HostID,
-		PortStart:        group.PortStart,
-		PortEnd:          group.PortEnd,
+		PortPrefix:       group.PortPrefix,
 		EnvironmentName:  group.EnvironmentName,
 		EnvironmentOwner: group.EnvironmentOwner,
 		RuntimeMode:      group.RuntimeMode,
@@ -438,8 +437,7 @@ func (s *Store) UpdatePortsvcPortGroup(ctx context.Context, id string, group *Po
 		ID:               id,
 		OwnerSubject:     group.OwnerSubject,
 		HostID:           group.HostID,
-		PortStart:        group.PortStart,
-		PortEnd:          group.PortEnd,
+		PortPrefix:       group.PortPrefix,
 		EnvironmentName:  group.EnvironmentName,
 		EnvironmentOwner: group.EnvironmentOwner,
 		RuntimeMode:      group.RuntimeMode,
@@ -452,7 +450,7 @@ func (s *Store) UpdatePortsvcPortGroup(ctx context.Context, id string, group *Po
 	}
 	res, err := s.db.NewUpdate().
 		Model(row).
-		Column("owner_subject", "host_id", "port_start", "port_end", "environment_name", "environment_owner", "runtime_mode", "runtime_name", "service_ip", "status", "tags", "notes", "updated_at").
+		Column("owner_subject", "host_id", "port_prefix", "environment_name", "environment_owner", "runtime_mode", "runtime_name", "service_ip", "status", "tags", "notes", "updated_at").
 		Where("id = ?", id).
 		Exec(ctx)
 	if err != nil {
@@ -489,18 +487,18 @@ func (s *Store) CountPortsvcOverlappingPortGroups(ctx context.Context, currentID
 	query := s.db.NewSelect().
 		Model((*PortAllocationsModel)(nil)).
 		Where("owner_subject = ?", group.OwnerSubject).
-		Where("port_start = ?", group.PortStart)
+		Where("port_prefix = ?", group.PortPrefix)
 	if currentID != "" {
 		query = query.Where("id != ?", currentID)
 	}
 	return query.Count(ctx)
 }
 
-func (s *Store) ListPortsvcPortGroupStartsByOwner(ctx context.Context, ownerSubject string, excludeID string) ([]int, error) {
+func (s *Store) ListPortsvcPortGroupPrefixesByOwner(ctx context.Context, ownerSubject string, excludeID string) ([]int, error) {
 	var rows []struct {
-		PortStart int `bun:"port_start"`
+		PortPrefix int `bun:"port_prefix"`
 	}
-	query := s.db.NewSelect().Model((*PortAllocationsModel)(nil)).Column("port_start").Where("owner_subject = ?", ownerSubject)
+	query := s.db.NewSelect().Model((*PortAllocationsModel)(nil)).Column("port_prefix").Where("owner_subject = ?", ownerSubject)
 	if excludeID != "" {
 		query = query.Where("id != ?", excludeID)
 	}
@@ -509,7 +507,7 @@ func (s *Store) ListPortsvcPortGroupStartsByOwner(ctx context.Context, ownerSubj
 	}
 	out := make([]int, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, row.PortStart)
+		out = append(out, row.PortPrefix)
 	}
 	return out, nil
 }
@@ -526,7 +524,7 @@ func (s *Store) ListPortsvcServiceGroupChildrenByGroupIDs(ctx context.Context, i
 		Relation("PortGroup").
 		Relation("PortGroup.Host").
 		Where("service_group_port_group.service_group_id IN (?)", bun.List(ids)).
-		Order("port_group.port_start ASC").
+		Order("port_group.port_prefix ASC").
 		Scan(ctx); err != nil {
 		return nil, err
 	}

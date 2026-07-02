@@ -18,7 +18,7 @@ func TestPortsvcWriteAllowsAuthenticatedUser(t *testing.T) {
 	app, handler := setupPortsvcTestApp(t)
 	cookie := createTestSessionCookie(t, app, "member")
 
-	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/api/port-groups", strings.NewReader(`{"environmentName":"miniport","runtimeMode":"dind","runtimeName":"miniport-dind-01","serviceIp":"172.22.11.12","slots":[{"port":10000,"name":"redis","kind":"cache","protocol":"redis"}]}`))
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/api/port-groups", strings.NewReader(`{"portPrefix":1000,"environmentName":"miniport","runtimeMode":"dind","runtimeName":"miniport-dind-01","serviceIp":"172.22.11.12","slots":[{"port":10000,"name":"redis","kind":"cache","protocol":"redis"}]}`))
 	req.Header.Set("Content-Type", "application/json")
 	req.RemoteAddr = "127.0.0.1:12345"
 	req.AddCookie(cookie)

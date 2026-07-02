@@ -29,8 +29,8 @@ export function splitTags(tags: string) {
     .filter(Boolean);
 }
 
-export function portRange(group?: Pick<PortGroupItem, "portStart" | "portEnd"> | null) {
-  return group ? `${group.portStart}-${group.portEnd}` : "-";
+export function portGroupLabel(group?: Pick<PortGroupItem, "portPrefix"> | null) {
+  return group ? String(group.portPrefix) : "-";
 }
 
 export function buildStats(groups: PortGroupItem[], hosts: unknown[], assets: DependencyAssetItem[], serviceGroups: ServiceGroupItem[] = []) {

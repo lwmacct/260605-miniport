@@ -400,7 +400,7 @@ func (s *PortsvcService) ExportPortGroupsCSV(ctx context.Context, params PortGro
 		return nil, err
 	}
 	records := [][]string{{
-		"ownerName", "environment_name", "status", "port_range", "runtime_mode", "runtime_name", "service_ip",
+		"ownerName", "environment_name", "status", "port_prefix", "runtime_mode", "runtime_name", "service_ip",
 		"host_name", "host_ip", "environment_owner", "tags", "slots", "asset_links", "notes",
 	}}
 	for _, group := range groups {
@@ -414,7 +414,7 @@ func (s *PortsvcService) ExportPortGroupsCSV(ctx context.Context, params PortGro
 			group.OwnerName,
 			group.EnvironmentName,
 			group.Status,
-			utilPortRange(group.PortGroup),
+			utilPortGroupLabel(group.PortGroup),
 			group.RuntimeMode,
 			group.RuntimeName,
 			group.ServiceIP,

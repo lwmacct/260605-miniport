@@ -49,7 +49,7 @@ import { ServiceDrawer } from "./ServiceDrawer";
 
 type PortsvcView = "dependencies" | "hosts" | "overview" | "portGroups" | "projects" | "serviceGroups";
 
-const portSegmentOptions = [10000, 20000, 30000, 40000, 50000] as const;
+const portSegmentOptions = [1000, 2000, 3000, 4000, 5000] as const;
 
 type PortsvcWorkspaceProps = {
   description: string;
@@ -109,8 +109,8 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
       return groups;
     }
 
-    const segmentEnd = portSegment + 9999;
-    return groups.filter((group) => group.portStart >= portSegment && group.portStart <= segmentEnd);
+    const segmentEnd = portSegment + 999;
+    return groups.filter((group) => group.portPrefix >= portSegment && group.portPrefix <= segmentEnd);
   }, [groups, portSegment, view]);
   const filteredServiceGroups = useMemo(() => {
     if (view !== "serviceGroups") {
@@ -578,7 +578,7 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
                         optionFilterProp="label"
                         options={groups.map((group) => ({
                           value: group.id,
-                          label: `${group.portStart} · ${group.environmentName || group.serviceIp || group.runtimeMode}`,
+                          label: `${group.portPrefix} · ${group.environmentName || group.serviceIp || group.runtimeMode}`,
                         }))}
                       />
                     </Form.Item>

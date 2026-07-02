@@ -37,7 +37,7 @@ export function ServiceGroupDetailDrawer({
     {
       title: "端口组",
       width: 100,
-      render: (_, item) => item.resolvedPortGroup?.portStart ?? item.portGroup?.portStart ?? "-",
+      render: (_, item) => item.resolvedPortGroup?.portPrefix ?? item.portGroup?.portPrefix ?? "-",
     },
     {
       title: "运行环境",

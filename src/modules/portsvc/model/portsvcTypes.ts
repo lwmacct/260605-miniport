@@ -84,8 +84,7 @@ export type PortGroupItem = {
   ownerName: string;
   hostId: string;
   host?: HostItem;
-  portStart: number;
-  portEnd: number;
+  portPrefix: number;
   environmentName: string;
   environmentOwner: string;
   runtimeMode: string;

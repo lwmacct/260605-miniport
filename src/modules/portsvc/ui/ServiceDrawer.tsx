@@ -30,8 +30,8 @@ export function ServiceDrawer({
   open,
   saving,
 }: ServiceDrawerProps) {
-  const portStart = Form.useWatch("portStart", form);
-  const start = typeof portStart === "number" && portStart > 0 ? portStart : 10000;
+  const portPrefix = Form.useWatch("portPrefix", form);
+  const start = typeof portPrefix === "number" && portPrefix > 0 ? portPrefix * 10 : 10000;
   const portOptions = Array.from({ length: 10 }, (_, idx) => {
     const port = start + idx;
     return { value: port, label: String(port) };
@@ -68,8 +68,8 @@ export function ServiceDrawer({
                     </Form.Item>
                   </Col>
                   <Col xs={24} md={12}>
-                    <Form.Item name="portStart" label="起始端口">
-                      <InputNumber min={10000} max={59990} step={10} style={{ width: "100%" }} placeholder="自动分配" />
+                    <Form.Item name="portPrefix" label="端口组">
+                      <InputNumber min={1000} max={5999} step={1} style={{ width: "100%" }} placeholder="自动分配" />
                     </Form.Item>
                   </Col>
                   <Col xs={24} md={12}>

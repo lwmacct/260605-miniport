@@ -3,11 +3,10 @@ import { Button, Card, Col, Progress, Row, Space, Statistic, Table } from "antd"
 import type { ColumnsType } from "antd/es/table";
 import type { PortGroupItem } from "../model/portsvcTypes";
 
-const PORT_MIN = 10000;
-const PORT_MAX = 59999;
-const GROUP_SIZE = 10;
-const SEGMENT_SIZE = 10000;
-const SEGMENT_STARTS = [10000, 20000, 30000, 40000, 50000] as const;
+const PORT_PREFIX_MIN = 1000;
+const PORT_PREFIX_MAX = 5999;
+const SEGMENT_SIZE = 1000;
+const SEGMENT_STARTS = [1000, 2000, 3000, 4000, 5000] as const;
 
 type SegmentUsage = {
   key: number;
@@ -26,37 +25,33 @@ type PortGroupsUsageSectionProps = {
   onCreateGroup: () => void;
 };
 
-function normalizeGroupStart(portStart: number) {
-  return Math.floor(portStart / GROUP_SIZE) * GROUP_SIZE;
-}
-
-function findFirstAvailable(start: number, end: number, usedStarts: Set<number>) {
-  for (let port = start; port <= end; port += GROUP_SIZE) {
-    if (!usedStarts.has(port)) {
-      return port;
+function findFirstAvailable(start: number, end: number, usedPrefixes: Set<number>) {
+  for (let portPrefix = start; portPrefix <= end; portPrefix++) {
+    if (!usedPrefixes.has(portPrefix)) {
+      return portPrefix;
     }
   }
   return undefined;
 }
 
 function buildSegmentUsage(groups: PortGroupItem[]): SegmentUsage[] {
-  const usedStarts = new Set(
+  const usedPrefixes = new Set(
     groups
-      .map((group) => normalizeGroupStart(group.portStart))
-      .filter((port) => port >= PORT_MIN && port <= PORT_MAX),
+      .map((group) => group.portPrefix)
+      .filter((portPrefix) => portPrefix >= PORT_PREFIX_MIN && portPrefix <= PORT_PREFIX_MAX),
   );
 
   return SEGMENT_STARTS.map((start) => {
-    const end = start + SEGMENT_SIZE - 1;
-    const totalGroups = SEGMENT_SIZE / GROUP_SIZE;
-    const usedGroups = [...usedStarts].filter((portStart) => portStart >= start && portStart <= end).length;
+    const end = Math.min(start + SEGMENT_SIZE - 1, PORT_PREFIX_MAX);
+    const totalGroups = end - start + 1;
+    const usedGroups = [...usedPrefixes].filter((portPrefix) => portPrefix >= start && portPrefix <= end).length;
     const freeGroups = totalGroups - usedGroups;
     const usagePercent = Number(((usedGroups / totalGroups) * 100).toFixed(1));
-    const firstAvailable = findFirstAvailable(start, end, usedStarts);
+    const firstAvailable = findFirstAvailable(start, end, usedPrefixes);
 
     return {
       key: start,
-      segment: `${start / 10000}xxxx`,
+      segment: `${start}-${end}`,
       range: `${start}-${end}`,
       totalGroups,
       usedGroups,
@@ -75,8 +70,8 @@ export function PortGroupsUsageSection({ canManage, groups, onCreateGroup }: Por
   const usagePercent = Number(((usedGroups / totalGroups) * 100).toFixed(1));
 
   const columns: ColumnsType<SegmentUsage> = [
-    { title: "大段", dataIndex: "segment", width: 110 },
-    { title: "端口范围", dataIndex: "range", width: 180 },
+    { title: "端口组段", dataIndex: "segment", width: 120 },
+    { title: "端口组范围", dataIndex: "range", width: 180 },
     { title: "总端口组", dataIndex: "totalGroups", width: 120 },
     { title: "已使用", dataIndex: "usedGroups", width: 110 },
     { title: "剩余可用", dataIndex: "freeGroups", width: 120 },

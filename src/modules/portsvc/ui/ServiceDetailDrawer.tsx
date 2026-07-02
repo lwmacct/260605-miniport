@@ -2,7 +2,7 @@ import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { Button, Card, Descriptions, Drawer, Modal, Space, Table, Tag, Typography } from "antd";
 import { statusOptions } from "../model/portsvcConstants";
 import type { PortGroupItem, PortSlotItem, ServiceGroupItem } from "../model/portsvcTypes";
-import { portRange, runtimeTag, splitTags } from "../model/portsvcUtils";
+import { portGroupLabel, runtimeTag, splitTags } from "../model/portsvcUtils";
 
 type ServiceDetailDrawerProps = {
   canManage: boolean;
@@ -48,7 +48,7 @@ export function ServiceDetailDrawer({
               onClick={() => {
                 Modal.confirm({
                   title: "删除端口组",
-                  content: portRange(group),
+                  content: portGroupLabel(group),
                   onOk: () => onDelete(group),
                 });
               }}
@@ -68,7 +68,7 @@ export function ServiceDetailDrawer({
               items={[
                 { key: "user", label: "用户", children: group.ownerName || group.ownerSubject },
                 { key: "project", label: "运行环境", children: group.environmentName || "-" },
-                { key: "ports", label: "端口组", children: portRange(group) },
+                { key: "ports", label: "端口组", children: portGroupLabel(group) },
                 { key: "runtime", label: "运行模式", children: runtimeTag(group.runtimeMode) },
                 { key: "serviceIp", label: "服务 IP", children: group.serviceIp || "-" },
                 { key: "runtimeName", label: "运行标识", children: group.runtimeName || "-" },

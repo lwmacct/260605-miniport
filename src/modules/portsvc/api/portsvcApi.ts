@@ -68,7 +68,7 @@ export function savePortGroup(group: PortGroupForm, editingGroup?: PortGroupItem
     hostId: group.hostId ?? "",
     notes: group.notes ?? "",
     ownerSubject: group.ownerSubject ?? "",
-    portStart: group.portStart ?? 0,
+    portPrefix: group.portPrefix ?? 0,
     environmentName: group.environmentName ?? "",
     environmentOwner: group.environmentOwner ?? "",
     runtimeMode: group.runtimeMode ?? "dind",

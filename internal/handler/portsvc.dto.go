@@ -48,8 +48,7 @@ type PortGroupAssetLinkPayloadDTO struct {
 type PortGroupPayloadDTO struct {
 	OwnerSubject     string                         `json:"ownerSubject,omitempty"`
 	HostID           string                         `json:"hostId,omitempty"`
-	PortStart        int                            `json:"portStart,omitempty"`
-	PortEnd          int                            `json:"portEnd,omitempty"`
+	PortPrefix       int                            `json:"portPrefix,omitempty"`
 	EnvironmentName  string                         `json:"environmentName,omitempty"`
 	EnvironmentOwner string                         `json:"environmentOwner,omitempty"`
 	RuntimeMode      string                         `json:"runtimeMode,omitempty"`
@@ -110,8 +109,7 @@ type PortGroupDTO struct {
 	OwnerName        string                  `json:"ownerName"`
 	HostID           string                  `json:"hostId"`
 	Host             *HostDTO                `json:"host,omitempty"`
-	PortStart        int                     `json:"portStart"`
-	PortEnd          int                     `json:"portEnd"`
+	PortPrefix       int                     `json:"portPrefix"`
 	EnvironmentName  string                  `json:"environmentName"`
 	EnvironmentOwner string                  `json:"environmentOwner"`
 	RuntimeMode      string                  `json:"runtimeMode"`

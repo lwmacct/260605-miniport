@@ -33,7 +33,7 @@ export function ServiceGroupsSection({
           {item.portGroups.length === 0 ? <Typography.Text type="secondary">-</Typography.Text> : null}
           {item.portGroups.map((link) => (
             <Tag key={link.id ?? link.portGroupId}>
-              {link.portGroup?.portStart ?? link.portGroupId}
+              {link.portGroup?.portPrefix ?? link.portGroupId}
               {link.role ? ` · ${link.role}` : ""}
             </Tag>
           ))}
