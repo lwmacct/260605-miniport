@@ -12,6 +12,16 @@ Miniport 是一个端口服务资产管理应用，用来管理宿主机、固�
 - `internal/infra/*`: portsvc schema 辅助和前端静态资源托管
 - `src/app|src/pages|src/domains|src/shared`: 前端应用壳、页面、领域和共享层
 
+<!--TOC-->
+
+## Table of Contents
+
+- [数据模型](#数据模型) `:25+8`
+- [本地运行](#本地运行) `:33+27`
+- [API](#api) `:60+32`
+
+<!--TOC-->
+
 ## 数据模型
 
 - 宿主机：承载端口组的物理机、云主机或小规格设备，例如 `4h4g`。
