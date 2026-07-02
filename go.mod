@@ -5,7 +5,7 @@ go 1.26.4
 require (
 	github.com/danielgtaylor/huma/v2 v2.38.0
 	github.com/go-chi/chi/v5 v5.3.0
-	github.com/lwmacct/251207-go-pkg-cfgm v0.24.260702
+	github.com/lwmacct/251207-go-pkg-cfgm v0.25.260702
 	github.com/lwmacct/251207-go-pkg-version v0.2.260526
 	github.com/lwmacct/251219-go-pkg-logm v0.9.260413
 	github.com/lwmacct/260614-go-pkg-tlsreload v0.7.260626

@@ -36,6 +36,8 @@ github.com/lwmacct/251207-go-pkg-cfgm v0.22.260625 h1:1aW35ttaj6W+t+4Mioi5cp79yj
 github.com/lwmacct/251207-go-pkg-cfgm v0.22.260625/go.mod h1:aalTvgmBfD2uwJ6mgMcVUVzNXbjpxH9JmvPxaxSY1oI=
 github.com/lwmacct/251207-go-pkg-cfgm v0.24.260702 h1:lPyoKh9uDdU6MnxjAdTC5TUZpWEVKbAdALUDjksvgXU=
 github.com/lwmacct/251207-go-pkg-cfgm v0.24.260702/go.mod h1:5YQg1JWxFYywI31vBEEkxTPH8cOS3BV45gNARrx+r24=
+github.com/lwmacct/251207-go-pkg-cfgm v0.25.260702 h1:pe7P9BDHNS2sUXGkZC7rKmMRddBN9XrpNBaEKemcqsM=
+github.com/lwmacct/251207-go-pkg-cfgm v0.25.260702/go.mod h1:5YQg1JWxFYywI31vBEEkxTPH8cOS3BV45gNARrx+r24=
 github.com/lwmacct/251207-go-pkg-version v0.2.260526 h1:XSo9wDWqppewU/qSDSWFoLs1tQmBwCeO7s2k8x7rR+w=
 github.com/lwmacct/251207-go-pkg-version v0.2.260526/go.mod h1:rJYQzaw0YJ3ZLKl+8AXwHl+a8YA9ClXrv9Ce7lje9jk=
 github.com/lwmacct/251219-go-pkg-logm v0.9.260413 h1:NcW1XeXH/7N2RhUoeR6FP1cEPkgbMf7uaOurTD8vZUM=
