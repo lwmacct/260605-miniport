@@ -11,7 +11,7 @@
   "version": "0.26.260701",
   "dependencies": {
     "@ant-design/icons": "^6.3.2",
-    "@lwmacct/260627-antd-workbench": "^0.39.260630",
+    "@lwmacct/260627-antd-workbench": "^0.40.260701",
     "@tanstack/react-query": "^5.101.2",
     "antd": "^6.5.0",
     "react": "^19.2.7",
@@ -19,11 +19,11 @@
     "react-router-dom": "^7.18.1"
   },
   "devDependencies": {
-    "@types/node": "^26.0.1",
+    "@types/node": "^26.1.0",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "typescript": "^6.0.3",
-    "vite": "^8.1.1"
+    "vite": "^8.1.3"
   }
 }

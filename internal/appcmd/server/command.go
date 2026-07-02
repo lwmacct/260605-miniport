@@ -196,6 +196,6 @@ var Command = &cli.Command{
 }
 
 func action(ctx context.Context, cmd *cli.Command) error {
-	cfg := cfgm.MustLoadCmd(cmd, config.DefaultConfig(), "")
+	cfg := cfgm.MustLoad(ctx, config.DefaultConfig(), cfgm.Command(cmd))
 	return NewApp(cfg).Run(ctx)
 }
