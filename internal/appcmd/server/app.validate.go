@@ -1,7 +1,7 @@
 package server
 
 import (
-	"errors"
+	"github.com/lwmacct/260614-go-pkg-tlsreload/pkg/tlsreload"
 
 	"github.com/lwmacct/260605-miniport/internal/config"
 )
@@ -15,11 +15,10 @@ func (app *App) validateHTTPTLS() error {
 }
 
 func validateHTTPTLSRefs(cfg config.ServerHTTPTLS) error {
-	if (cfg.CertFile == "") != (cfg.KeyFile == "") {
-		return errors.New("http tls.cert-file and tls.key-file must be configured together")
-	}
-	if cfg.ReloadInterval < 0 {
-		return errors.New("http tls.reload-interval must not be negative")
-	}
-	return nil
+	return tlsreload.Config{
+		Enabled:      cfg.Enabled,
+		CertFile:     cfg.CertFile,
+		KeyFile:      cfg.KeyFile,
+		PollInterval: cfg.PollInterval,
+	}.Validate()
 }

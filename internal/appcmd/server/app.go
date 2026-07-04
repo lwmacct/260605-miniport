@@ -20,7 +20,7 @@ type dependencies struct {
 	auth        *AuthModule
 	portsvc     *PortsvcModule
 	requests    requestctx.Middleware
-	tlsReloader *tlsreload.Reloader
+	tlsReloader *tlsreload.Manager
 }
 
 func NewApp(cfg *config.Config) *App {

@@ -79,10 +79,10 @@ type ServerAuthSessionCookie struct {
 }
 
 type ServerHTTPTLS struct {
-	Enabled        bool          `json:"enabled" desc:"是否启用 HTTPS TLS"`
-	CertFile       string        `json:"cert-file" desc:"TLS 证书文件路径"`
-	KeyFile        string        `json:"key-file" desc:"TLS 私钥文件路径"`
-	ReloadInterval time.Duration `json:"reload-interval" desc:"TLS 证书文件事件监听之外的兜底轮询间隔，0 表示禁用兜底轮询"`
+	Enabled      bool          `json:"enabled" desc:"是否启用 HTTPS TLS"`
+	CertFile     string        `json:"cert-file" desc:"TLS 证书文件路径或 URI"`
+	KeyFile      string        `json:"key-file" desc:"TLS 私钥文件路径或 URI"`
+	PollInterval time.Duration `json:"poll-interval" desc:"TLS 证书文件重载兜底轮询间隔，未配置时使用默认间隔"`
 }
 
 func DefaultConfig() Config {
@@ -129,10 +129,10 @@ func DefaultConfig() Config {
 				Listen:  ":40238",
 				WebRoot: "${WEB_ROOT:-dist}",
 				TLS: ServerHTTPTLS{
-					Enabled:        false,
-					CertFile:       "${APP_DATA:-.local/data}/ssl/fullchain.pem",
-					KeyFile:        "${APP_DATA:-.local/data}/ssl/privkey.pem",
-					ReloadInterval: 3 * time.Second,
+					Enabled:      false,
+					CertFile:     "${APP_DATA:-.local/data}/ssl/fullchain.pem",
+					KeyFile:      "${APP_DATA:-.local/data}/ssl/privkey.pem",
+					PollInterval: 3 * time.Second,
 				},
 				TrustedProxies:  nil,
 				ReadTimeout:     15 * time.Second,

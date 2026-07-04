@@ -163,9 +163,9 @@ var Command = &cli.Command{
 			Value: defaults.Server.HTTP.TLS.KeyFile,
 		},
 		&cli.DurationFlag{
-			Name:  "http.tls.reload-interval",
-			Usage: usage.MustUsage("http.tls.reload-interval"),
-			Value: defaults.Server.HTTP.TLS.ReloadInterval,
+			Name:  "http.tls.poll-interval",
+			Usage: usage.MustUsage("http.tls.poll-interval"),
+			Value: defaults.Server.HTTP.TLS.PollInterval,
 		},
 		&cli.DurationFlag{
 			Name:  "http.read-timeout",

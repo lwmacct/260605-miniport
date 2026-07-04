@@ -4,13 +4,11 @@
 
 ## Table of Contents
 
-- [服务运行](#服务运行) `:17+4`
-- [结构](#结构) `:21+12`
-- [常用命令](#常用命令) `:33+5`
-- [Language Rules](#language-rules) `:38+7`
-- [后端规则](#后端规则) `:45+8`
-- [数据模型](#数据模型) `:53+6`
-- [前端规则](#前端规则) `:59+8`
+- [服务运行](#服务运行) `:15+4`
+- [常用命令](#常用命令) `:19+5`
+- [后端规则](#后端规则) `:24+8`
+- [数据模型](#数据模型) `:32+6`
+- [前端规则](#前端规则) `:38+8`
 
 <!--TOC-->
 
@@ -18,29 +16,10 @@
 
 - 工作区已启动 `npm run dev`, `go run ...` 相关热重载 不需要重复启动。
 
-## 结构
-
-- Go 服务模块: `github.com/lwmacct/260605-miniport`。
-- 服务入口在 `main.go`; 后端启动、命令和运行时组装代码放 `internal/appcmd/`。
-- HTTP 协议适配、DTO 和响应转换放 `internal/handler/`。
-- 业务规则和应用服务放 `internal/service/`。
-- 数据访问、record 和 schema 放 `internal/repository/`。
-- 基础设施能力放 `internal/infra/`。
-- 仅明确要对外复用的共享包放 `pkg/`。
-- 前端是 React/Vite, 代码在 `src/`, 静态资源在 `public/`, 不提交构建产物。
-- 测试文件放在被测代码旁边, 命名为 `*_test.go`。
-
 ## 常用命令
 
 - `psql -c 'select 1;'`: 验证默认 PostgreSQL 连接。
 - "sqlite3,litecli,sqlite-utils" 命令可用于操作 sqlite 数据库
-
-## Language Rules
-
-- Shell 命名规则:
-  - 函数名使用双下划线前缀, 例如 `__func_name`。
-  - 普通局部变量使用单下划线前缀, 例如 `_var_name`。
-  - 全大写环境变量不受此规则约束。
 
 ## 后端规则
 

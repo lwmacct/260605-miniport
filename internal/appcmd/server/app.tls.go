@@ -16,12 +16,14 @@ func (app *App) bootstrapTLSManager(ctx context.Context) error {
 
 	httpTLS := app.cfg.Server.HTTP.TLS
 	reloader, err := tlsreload.New(ctx, tlsreload.Config{
-		CertFile:       httpTLS.CertFile,
-		KeyFile:        httpTLS.KeyFile,
-		ReloadInterval: httpTLS.ReloadInterval,
-		MinVersion:     tls.VersionTLS12,
-		RetryInterval:  2 * time.Second,
-		Logger:         slog.Default(),
+		Enabled:      httpTLS.Enabled,
+		CertFile:     httpTLS.CertFile,
+		KeyFile:      httpTLS.KeyFile,
+		PollInterval: httpTLS.PollInterval,
+	}, tlsreload.Options{
+		MinVersion:    tls.VersionTLS12,
+		RetryInterval: 2 * time.Second,
+		Logger:        slog.Default(),
 	})
 	if err != nil {
 		return err
