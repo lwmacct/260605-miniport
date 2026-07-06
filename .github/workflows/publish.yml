@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   prepare:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     outputs:
       sha: ${{ steps.release-ref.outputs.sha }}
     permissions:
