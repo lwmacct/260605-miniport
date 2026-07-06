@@ -32,7 +32,7 @@ repos:
 
       - id: update-markdown-toc
         name: Update Markdown TOC
-        entry: bash -c 'fd -e md | mdtoc -i'
+        entry: bash -c 'fd -e md | 251202-mdtoc -i'
         language: unsupported
         always_run: true
         pass_filenames: false
