@@ -79,25 +79,15 @@ jobs:
         with:
           ref: ${{ needs.prepare.outputs.sha }}
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
       - name: Setup Node.js
         uses: actions/setup-node@v6.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Resolve pnpm store path
-        run: echo "PNPM_STORE_PATH=$(pnpm store path --silent)" >> "${GITHUB_ENV}"
-
-      - name: Restore pnpm cache
-        id: pnpm-cache
-        uses: actions/cache/restore@v6.1.0
-        with:
-          path: ${{ env.PNPM_STORE_PATH }}
-          key: cache-warmup-${{ runner.os }}-${{ runner.arch }}-pnpm11-node${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            cache-warmup-${{ runner.os }}-${{ runner.arch }}-pnpm11-node${{ env.NODE_VERSION }}-
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Build frontend assets
         env:
@@ -107,14 +97,6 @@ jobs:
           set -euo pipefail
           pnpm install --frozen-lockfile
           pnpm run build
-
-      - name: Save pnpm cache
-        if: steps.pnpm-cache.outputs.cache-hit != 'true'
-        continue-on-error: true
-        uses: actions/cache/save@v6.1.0
-        with:
-          path: ${{ env.PNPM_STORE_PATH }}
-          key: ${{ steps.pnpm-cache.outputs.cache-primary-key }}
 
       - name: Upload frontend assets
         uses: actions/upload-artifact@v7.0.1
