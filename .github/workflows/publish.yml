@@ -102,6 +102,7 @@ jobs:
       - name: Build frontend assets
         env:
           VITE_APP_VERSION: ${{ inputs.tag }}
+          PNPM_CONFIG_MINIMUM_RELEASE_AGE_EXCLUDE: '["@lwmacct/*"]'
         run: |
           set -euo pipefail
           pnpm install --frozen-lockfile
