@@ -118,29 +118,11 @@ jobs:
           ref: ${{ needs.prepare.outputs.sha }}
 
       - name: Setup Go
-        id: setup-go
         uses: actions/setup-go@v6.5.0
         with:
           go-version-file: go.mod
-          cache: false
-
-      - name: Restore Go modules and build cache
-        id: go-cache
-        uses: actions/cache/restore@v6.1.0
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: cache-warmup-${{ runner.os }}-${{ runner.arch }}-go-${{ steps.setup-go.outputs.go-version }}-${{ hashFiles('go.sum') }}
-          restore-keys: |
-            cache-warmup-${{ runner.os }}-${{ runner.arch }}-go-${{ steps.setup-go.outputs.go-version }}-
-
-      - name: Restore CI bin cache
-        id: ci-bin-cache
-        uses: actions/cache/restore@v6.1.0
-        with:
-          path: .cache/ci-bin
-          key: cache-warmup-${{ runner.os }}-${{ runner.arch }}-ci-bin-${{ hashFiles('.github/scripts/install-ci-bin.sh') }}
+          cache: true
+          cache-dependency-path: go.sum
 
       - name: Build backend binary
         run: |
@@ -151,32 +133,22 @@ jobs:
             -ldflags='-s -w -linkmode external -extldflags "-static"' \
             -o bin/app .
 
-      - name: Install CI binaries
-        run: bash .github/scripts/install-ci-bin.sh .cache/ci-bin
+      - name: Install UPX
+        uses: jaxxstorm/action-install-gh-release@v1.10.0
+        with:
+          repo: upx/upx
+          tag: v5.1.1
+          asset-name: upx
+          platform: linux
+          arch: amd64
+          cache: enable
+          chmod: 0755
 
       - name: Compress backend binary
         run: |
           set -euo pipefail
-          .cache/ci-bin/upx -9 bin/app
+          upx -9 bin/app
           bin/app version
-
-      - name: Save Go modules and build cache
-        if: steps.go-cache.outputs.cache-hit != 'true'
-        continue-on-error: true
-        uses: actions/cache/save@v6.1.0
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ steps.go-cache.outputs.cache-primary-key }}
-
-      - name: Save CI bin cache
-        if: steps.ci-bin-cache.outputs.cache-hit != 'true'
-        continue-on-error: true
-        uses: actions/cache/save@v6.1.0
-        with:
-          path: .cache/ci-bin
-          key: ${{ steps.ci-bin-cache.outputs.cache-primary-key }}
 
       - name: Upload backend binary
         uses: actions/upload-artifact@v7.0.1
