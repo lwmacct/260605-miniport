@@ -8,6 +8,9 @@
     "preview": "vite preview",
     "typecheck": "tsc -b"
   },
+  "engines": {
+    "npm": "please-use-pnpm"
+  },
   "type": "module",
   "version": "0.28.260704",
   "dependencies": {
