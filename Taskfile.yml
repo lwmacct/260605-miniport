@@ -29,7 +29,7 @@ tasks:
   install:
     desc: Install frontend dependencies
     cmds:
-      - npm install
+      - pnpm install
 
   dev:server:
     desc: Start the Go backend
@@ -39,7 +39,7 @@ tasks:
   dev:web:
     desc: Start the Vite frontend
     cmds:
-      - npm run dev -- --port 40239 --strictPort
+      - pnpm run dev -- --port 40239 --strictPort
 
   build:server:
     desc: Build backend binary
@@ -50,7 +50,7 @@ tasks:
   build:web:
     desc: Build frontend
     cmds:
-      - npm run build
+      - pnpm run build
 
   build:
     desc: Build frontend and backend

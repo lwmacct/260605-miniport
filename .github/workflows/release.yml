@@ -15,38 +15,36 @@ jobs:
   build-frontend:
     runs-on: ubuntu-latest
     outputs:
-      npm-cache-hit: ${{ steps.npm-cache.outputs.cache-hit }}
+      pnpm-cache-hit: ${{ steps.pnpm-cache.outputs.cache-hit }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.0
-
-      - name: Prepare npm cache key
-        if: github.ref == 'refs/heads/main' || github.ref_type == 'tag'
-        run: |
-          set -euo pipefail
-          mkdir -p .cache/npm
-          jq 'del(.version) | del(.packages[""].version) | del(.packages[""].name)' \
-            package-lock.json > .cache/npm/package-lock.json
 
       - name: Setup Node.js
         uses: actions/setup-node@v6.4.0
         with:
           node-version: 24
 
-      - name: Restore npm cache
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Resolve pnpm store path
+        run: echo "PNPM_STORE_PATH=$(pnpm store path --silent)" >> "${GITHUB_ENV}"
+
+      - name: Restore pnpm cache
         if: github.ref == 'refs/heads/main' || github.ref_type == 'tag'
-        id: npm-cache
+        id: pnpm-cache
         uses: actions/cache/restore@v6.1.0
         with:
-          path: ~/.npm
-          key: cache-warmup-${{ runner.os }}-${{ runner.arch }}-npm-node24-${{ hashFiles('.cache/npm/package-lock.json') }}
+          path: ${{ env.PNPM_STORE_PATH }}
+          key: cache-warmup-${{ runner.os }}-${{ runner.arch }}-pnpm11-node24-${{ hashFiles('pnpm-lock.yaml') }}
 
       - name: Build frontend assets
         env:
           VITE_APP_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || format('dev-{0}', github.sha) }}
         run: |
-          npm ci
-          npm run build
+          pnpm install --frozen-lockfile
+          pnpm run build
 
       - name: Upload frontend assets
         uses: actions/upload-artifact@v7.0.1
@@ -124,7 +122,7 @@ jobs:
     needs:
       - build-frontend
       - build-backend
-    if: github.ref_type == 'tag' && (needs.build-frontend.outputs.npm-cache-hit != 'true' || needs.build-backend.outputs.go-cache-hit != 'true' || needs.build-backend.outputs.ci-bin-cache-hit != 'true')
+    if: github.ref_type == 'tag' && (needs.build-frontend.outputs.pnpm-cache-hit != 'true' || needs.build-backend.outputs.go-cache-hit != 'true' || needs.build-backend.outputs.ci-bin-cache-hit != 'true')
     permissions:
       actions: write
       contents: read
@@ -132,14 +130,14 @@ jobs:
       - name: Trigger warm cache workflows
         env:
           GH_TOKEN: ${{ github.token }}
-          NPM_CACHE_HIT: ${{ needs.build-frontend.outputs.npm-cache-hit }}
+          PNPM_CACHE_HIT: ${{ needs.build-frontend.outputs.pnpm-cache-hit }}
           GO_CACHE_HIT: ${{ needs.build-backend.outputs.go-cache-hit }}
           CI_BIN_CACHE_HIT: ${{ needs.build-backend.outputs.ci-bin-cache-hit }}
         run: |
           set -euo pipefail
 
-          if [[ "${NPM_CACHE_HIT}" != "true" ]]; then
-            gh workflow run cache-warmup-npm.yml --repo "${GITHUB_REPOSITORY}" --ref main
+          if [[ "${PNPM_CACHE_HIT}" != "true" ]]; then
+            gh workflow run cache-warmup-pnpm.yml --repo "${GITHUB_REPOSITORY}" --ref main
           fi
 
           if [[ "${GO_CACHE_HIT}" != "true" ]]; then

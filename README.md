@@ -17,8 +17,8 @@ Miniport 是一个端口服务资产管理应用，用来管理宿主机、固�
 ## Table of Contents
 
 - [数据模型](#数据模型) `:25+8`
-- [本地运行](#本地运行) `:33+27`
-- [API](#api) `:60+32`
+- [本地运行](#本地运行) `:33+28`
+- [API](#api) `:61+32`
 
 <!--TOC-->
 
@@ -34,8 +34,9 @@ Miniport 是一个端口服务资产管理应用，用来管理宿主机、固�
 
 ```bash
 go run . server
-npm install
-npm run dev
+corepack enable
+pnpm install
+pnpm run dev
 ```
 
 后端默认监听 `:40238`。Vite 默认监听 `:40239`，并把 `/api` 代理到后端。
@@ -54,7 +55,7 @@ http://127.0.0.1:40239/#/dependencies
 如果需要让 Vite 代理到其他后端地址：
 
 ```bash
-API_PROXY_TARGET=http://127.0.0.1:40240 npm run dev
+API_PROXY_TARGET=http://127.0.0.1:40240 pnpm run dev
 ```
 
 ## API

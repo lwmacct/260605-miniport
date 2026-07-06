@@ -1,0 +1,47 @@
+name: cache-warmup-pnpm
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: cache-warmup-pnpm-main
+  cancel-in-progress: true
+
+jobs:
+  warm:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.0
+        with:
+          ref: main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6.4.0
+        with:
+          node-version: 24
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Resolve pnpm store path
+        run: echo "PNPM_STORE_PATH=$(pnpm store path --silent)" >> "${GITHUB_ENV}"
+
+      - name: Restore pnpm cache
+        id: pnpm-cache
+        uses: actions/cache/restore@v6.1.0
+        with:
+          path: ${{ env.PNPM_STORE_PATH }}
+          key: cache-warmup-${{ runner.os }}-${{ runner.arch }}-pnpm11-node24-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install pnpm dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Save pnpm cache
+        if: steps.pnpm-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6.1.0
+        with:
+          path: ${{ env.PNPM_STORE_PATH }}
+          key: ${{ steps.pnpm-cache.outputs.cache-primary-key }}
