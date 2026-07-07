@@ -134,15 +134,12 @@ jobs:
             -o bin/app .
 
       - name: Install UPX
-        uses: jaxxstorm/action-install-gh-release@v1.10.0
+        uses: lwmacct/260706-action-gh-release@v0.11.260707
         with:
-          repo: upx/upx
-          tag: v5.1.1
-          asset-name: upx
-          platform: linux
-          arch: amd64
-          cache: enable
-          chmod: 0755
+          repository: upx/upx
+          tag: v5.2.0
+          binary: upx
+          cache: "true"
 
       - name: Compress backend binary
         run: |
