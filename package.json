@@ -12,7 +12,7 @@
     "npm": "please-use-pnpm"
   },
   "type": "module",
-  "version": "0.33.260707",
+  "version": "0.34.260707",
   "dependencies": {
     "@ant-design/icons": "^6.3.2",
     "@lwmacct/260627-antd-workbench": "^0.43.260707",

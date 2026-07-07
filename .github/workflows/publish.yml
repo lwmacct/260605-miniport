@@ -1,5 +1,5 @@
 name: publish
-run-name: publish ${{ inputs.tag }}
+run-name: publish ${{ inputs.source-tag }}
 
 env:
   REGISTRY: ghcr.io
@@ -9,17 +9,17 @@ env:
 on:
   workflow_dispatch:
     inputs:
-      tag:
-        description: Release tag to publish, for example v0.28.260704
+      source-tag:
+        description: Release tag to publish.
         required: true
         type: string
-      sha:
-        description: Optional commit SHA that the release tag must point to
+      source-sha:
+        description: Optional commit SHA that the release tag must point to.
         required: false
         type: string
 
 concurrency:
-  group: publish-${{ inputs.tag }}
+  group: publish-${{ inputs.source-tag }}
   cancel-in-progress: false
 
 jobs:
@@ -33,40 +33,15 @@ jobs:
       - name: Checkout release commit
         uses: actions/checkout@v7.0.0
         with:
-          ref: ${{ inputs.sha || inputs.tag }}
+          ref: ${{ inputs.source-sha || inputs.source-tag }}
           fetch-depth: 0
 
       - name: Validate release ref
         id: release-ref
-        env:
-          RELEASE_TAG: ${{ inputs.tag }}
-          RELEASE_SHA: ${{ inputs.sha }}
-        run: |
-          set -euo pipefail
-
-          git fetch --force --tags origin "refs/tags/${RELEASE_TAG}:refs/tags/${RELEASE_TAG}"
-          git fetch --force origin "main:refs/remotes/origin/main"
-
-          _tag_sha="$(git rev-parse "${RELEASE_TAG}^{commit}")"
-          _head_sha="$(git rev-parse HEAD)"
-          _release_sha="${RELEASE_SHA:-${_tag_sha}}"
-
-          if [[ "${_tag_sha}" != "${_release_sha}" ]]; then
-            echo "${RELEASE_TAG} points to ${_tag_sha}, not ${_release_sha}" >&2
-            exit 1
-          fi
-
-          if [[ "${_head_sha}" != "${_release_sha}" ]]; then
-            echo "Checked out ${_head_sha}, not ${_release_sha}" >&2
-            exit 1
-          fi
-
-          if ! git merge-base --is-ancestor "${_release_sha}" refs/remotes/origin/main; then
-            echo "${RELEASE_TAG} commit ${_release_sha} is not reachable from origin/main" >&2
-            exit 1
-          fi
-
-          echo "sha=${_release_sha}" >> "${GITHUB_OUTPUT}"
+        uses: lwmacct/260707-action-verified-tag-ref@v0.8.260707
+        with:
+          tag: ${{ inputs.source-tag }}
+          sha: ${{ inputs.source-sha }}
 
   build-frontend:
     runs-on: ubuntu-latest
@@ -91,7 +66,7 @@ jobs:
 
       - name: Build frontend assets
         env:
-          VITE_APP_VERSION: ${{ inputs.tag }}
+          VITE_APP_VERSION: ${{ inputs.source-tag }}
           PNPM_CONFIG_MINIMUM_RELEASE_AGE_EXCLUDE: '["@lwmacct/*"]'
         run: |
           set -euo pipefail
@@ -207,7 +182,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=${{ inputs.tag }}
+            type=raw,value=${{ inputs.source-tag }}
             type=raw,value=latest
 
       - name: Setup Docker Buildx
@@ -231,11 +206,11 @@ jobs:
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ needs.prepare.outputs.sha }}
-            org.opencontainers.image.version=${{ inputs.tag }}
+            org.opencontainers.image.version=${{ inputs.source-tag }}
 
       - name: Print summary
         env:
-          RELEASE_TAG: ${{ inputs.tag }}
+          RELEASE_TAG: ${{ inputs.source-tag }}
           RELEASE_SHA: ${{ needs.prepare.outputs.sha }}
           IMAGE_TAGS: ${{ steps.docker-meta.outputs.tags }}
         run: |
@@ -261,7 +236,7 @@ jobs:
     steps:
       - name: Execute remote SSH command
         env:
-          DOCKER_IMAGE: ghcr.io/${{ github.repository }}:${{ inputs.tag }}
+          DOCKER_IMAGE: ghcr.io/${{ github.repository }}:${{ inputs.source-tag }}
         uses: appleboy/ssh-action@v1.2.5
         with:
           host: ${{ vars.DEPLOY_SSH_HOST }}

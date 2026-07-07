@@ -8,11 +8,11 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Release tag to publish, for example v0.28.260704
+        description: Release tag to dispatch.
         required: true
         type: string
       sha:
-        description: Optional commit SHA. When empty, the tag target is resolved by publish.
+        description: Optional commit SHA that the release tag must point to.
         required: false
         type: string
 
@@ -27,52 +27,10 @@ jobs:
       actions: write
       contents: read
     steps:
-      - name: Resolve release inputs
-        id: release-ref
-        env:
-          INPUT_TAG: ${{ inputs.tag }}
-          INPUT_SHA: ${{ inputs.sha }}
-        run: |
-          set -euo pipefail
-
-          if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
-            _release_tag="${GITHUB_REF_NAME}"
-            _release_sha="${GITHUB_SHA}"
-          else
-            _release_tag="${INPUT_TAG}"
-            _release_sha="${INPUT_SHA}"
-          fi
-
-          if [[ -z "${_release_tag}" ]]; then
-            echo "Release tag is required" >&2
-            exit 1
-          fi
-
-          {
-            echo "tag=${_release_tag}"
-            echo "sha=${_release_sha}"
-          } >> "${GITHUB_OUTPUT}"
-
       - name: Dispatch main-scoped publish
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ steps.release-ref.outputs.tag }}
-          RELEASE_SHA: ${{ steps.release-ref.outputs.sha }}
-        run: |
-          set -euo pipefail
-
-          gh workflow run publish.yml \
-            --repo "${GITHUB_REPOSITORY}" \
-            --ref main \
-            -f "tag=${RELEASE_TAG}" \
-            -f "sha=${RELEASE_SHA}"
-
-          {
-            echo "## Publish dispatched"
-            echo
-            echo "| Item | Value |"
-            echo "| --- | --- |"
-            echo "| Tag | \`${RELEASE_TAG}\` |"
-            echo "| Input commit | \`${RELEASE_SHA:-resolved by publish}\` |"
-            echo "| Workflow ref | \`main\` |"
-          } >> "${GITHUB_STEP_SUMMARY}"
+        id: release-ref
+        uses: lwmacct/260707-action-workflow-dispatch@v0.8.260707
+        with:
+          workflow: publish.yml
+          source-tag: ${{ inputs.tag }}
+          source-sha: ${{ inputs.sha }}
