@@ -109,11 +109,13 @@ jobs:
             -o bin/app .
 
       - name: Install UPX
-        uses: lwmacct/260706-action-gh-release@v0.11.260707
+        uses: lwmacct/260706-action-gh-release@main
         with:
           repository: upx/upx
           tag: v5.2.0
+          asset: upx-5.2.0-amd64_linux.tar.xz
           binary: upx
+          checksum: sha256:3db5d3294707439db97866feab8d75d800f028f48481a40547411824da4288a1
           cache: "true"
 
       - name: Compress backend binary

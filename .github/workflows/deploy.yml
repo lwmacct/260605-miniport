@@ -27,6 +27,7 @@ jobs:
           repository: appleboy/drone-ssh
           tag: v1.8.2
           asset: drone-ssh-1.8.2-linux-amd64
+          checksum: sha256:1e10a9972eef167d9ddbc39e1ba80f7d44a011b4a6bc4f6149434154d9b6bb24
           cache: "true"
 
       - name: Execute remote SSH command
