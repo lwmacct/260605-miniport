@@ -1,5 +1,6 @@
 import { EditOutlined } from "@ant-design/icons";
-import { Button, Card, Space, Table, Tag, Tooltip, Typography } from "antd";
+import { Button, Space, Table, Tag, Tooltip, Typography } from "antd";
+import Card from "antd/es/card/Card";
 import type { ColumnsType } from "antd/es/table";
 import type { ServiceGroupItem } from "../model/portsvcTypes";
 import { statusTag } from "../model/portsvcUtils";
@@ -62,7 +63,7 @@ export function ServiceGroupsSection({
   return (
     <Card>
       <Table<ServiceGroupItem>
-        rowKey={(item) => item.id ?? item.name}
+        rowKey={(item: ServiceGroupItem) => item.id ?? item.name}
         columns={columns}
         dataSource={serviceGroups}
         pagination={{ pageSize: 12 }}

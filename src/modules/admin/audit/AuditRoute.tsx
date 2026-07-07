@@ -1,4 +1,5 @@
-import { Card, Descriptions, Typography } from "antd";
+import { Descriptions, Typography } from "antd";
+import Card from "antd/es/card/Card";
 import styles from "@/shared/ui/SectionPage.module.css";
 
 export function AuditRoute() {

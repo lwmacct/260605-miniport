@@ -15,7 +15,7 @@
   "version": "0.33.260707",
   "dependencies": {
     "@ant-design/icons": "^6.3.2",
-    "@lwmacct/260627-antd-workbench": "^0.42.260706",
+    "@lwmacct/260627-antd-workbench": "^0.43.260707",
     "@tanstack/react-query": "^5.101.2",
     "antd": "^6.5.0",
     "react": "^19.2.7",

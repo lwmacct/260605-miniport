@@ -1,5 +1,6 @@
 import { EditOutlined } from "@ant-design/icons";
-import { Button, Card, Col, Row, Space, Statistic, Table, Tag, Tooltip, Typography } from "antd";
+import { Button, Col, Row, Space, Statistic, Table, Tag, Tooltip, Typography } from "antd";
+import Card from "antd/es/card/Card";
 import type { ColumnsType } from "antd/es/table";
 import type { AppStats, DependencyAssetItem, PortGroupItem } from "../model/portsvcTypes";
 
@@ -78,7 +79,7 @@ export function DependenciesSection({ canManage, dependencyAssets, groups, onEdi
       </Row>
       <Card title="依赖资产">
         <Table<DependencyAssetItem>
-          rowKey={(item) => item.id ?? item.name}
+          rowKey={(item: DependencyAssetItem) => item.id ?? item.name}
           columns={assetColumns}
           dataSource={dependencyAssets}
           pagination={{ pageSize: 10 }}

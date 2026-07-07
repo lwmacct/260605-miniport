@@ -1,5 +1,6 @@
 import { PlusOutlined } from "@ant-design/icons";
-import { Button, Card, Col, Empty, Row, Space, Statistic } from "antd";
+import { Button, Col, Empty, Row, Space, Statistic } from "antd";
+import Card from "antd/es/card/Card";
 import type { AppStats } from "../model/portsvcTypes";
 
 type OverviewSectionProps = {

@@ -2,7 +2,8 @@ import { DownloadOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from "
 import { Alert, Button, Flex, Form, Input, Modal, Select, Space, Spin, Typography, message } from "antd";
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import type { ReactNode } from "react";
+import type { ChangeEvent, ReactNode } from "react";
+import type { FormListFieldData, FormListOperation } from "antd/es/form";
 import { useAuthStateQuery } from "@/modules/auth";
 import { usePortsvcQuery } from "../model/portsvcQueries";
 import {
@@ -399,7 +400,7 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
                   className="page-search"
                   placeholder={view === "serviceGroups" ? "搜索服务组" : "搜索运行环境、服务 IP、宿主机、仓库"}
                   value={search}
-                  onChange={(event) => setSearch(event.target.value)}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => setSearch(event.target.value)}
                 />
                 <Select
                   allowClear
@@ -498,7 +499,7 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
         onOk={() => assetForm.submit()}
         confirmLoading={saving}
       >
-        <Form form={assetForm} layout="vertical" onFinish={(values) => void handleSaveAsset(values)}>
+        <Form form={assetForm} layout="vertical" onFinish={(values: Partial<DependencyAssetItem>) => void handleSaveAsset(values)}>
           <Form.Item name="name" label="名称" rules={[{ required: true, message: "请填写资产名称" }]}>
             <Input placeholder="miniport / Redis / 闭源支付服务" />
           </Form.Item>
@@ -548,7 +549,7 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
         confirmLoading={saving}
         width={860}
       >
-        <Form form={serviceGroupForm} layout="vertical" onFinish={(values) => void handleSaveServiceGroup(values)}>
+        <Form form={serviceGroupForm} layout="vertical" onFinish={(values: ServiceGroupForm) => void handleSaveServiceGroup(values)}>
           <Form.Item name="name" label="名称" rules={[{ required: true, message: "请填写服务组名称" }]}>
             <Input placeholder="etcd 集群 / kafka 集群" />
           </Form.Item>
@@ -564,12 +565,12 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
             <Input.TextArea rows={2} />
           </Form.Item>
           <Form.List name="portGroups">
-            {(fields, { add, remove }) => (
+            {(fields: FormListFieldData[], { add, remove }: FormListOperation) => (
               <Space direction="vertical" className="content-stack">
                 <Button icon={<PlusOutlined />} onClick={() => add({ role: "" })}>
                   添加运行环境
                 </Button>
-                {fields.map((field) => (
+                {fields.map((field: FormListFieldData) => (
                   <Space.Compact key={field.key} block>
                     <Form.Item name={[field.name, "portGroupId"]} rules={[{ required: true }]} style={{ width: "48%" }}>
                       <Select
@@ -613,7 +614,7 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
         onOk={() => hostForm.submit()}
         confirmLoading={saving}
       >
-        <Form form={hostForm} layout="vertical" onFinish={(values) => void handleSaveHost(values)}>
+        <Form form={hostForm} layout="vertical" onFinish={(values: HostForm) => void handleSaveHost(values)}>
           <Form.Item name="name" label="名称" rules={[{ required: true, message: "请填写宿主机名称" }]}>
             <Input placeholder="miniport-host-01" />
           </Form.Item>

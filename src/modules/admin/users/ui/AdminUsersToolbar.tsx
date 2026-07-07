@@ -27,7 +27,7 @@ export function AdminUsersToolbar({
         className={styles.search}
         enterButton={<SearchOutlined />}
         placeholder="搜索用户名、显示名称"
-        onSearch={(keyword) => onFiltersChange({ keyword })}
+        onSearch={(keyword: string) => onFiltersChange({ keyword })}
       />
       <Select
         allowClear

@@ -1,5 +1,6 @@
 import { PlusOutlined } from "@ant-design/icons";
-import { Button, Card, Col, Progress, Row, Space, Statistic, Table } from "antd";
+import { Button, Col, Progress, Row, Space, Statistic, Table } from "antd";
+import Card from "antd/es/card/Card";
 import type { ColumnsType } from "antd/es/table";
 import type { PortGroupItem } from "../model/portsvcTypes";
 

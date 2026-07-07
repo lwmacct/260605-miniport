@@ -59,7 +59,7 @@ export function AdminUsersTable({ data, loading }: AdminUsersTableProps) {
       pagination={{
         pageSize: 20,
         showSizeChanger: true,
-        showTotal: (total) => `共 ${total} 个用户`,
+        showTotal: (total: number) => `共 ${total} 个用户`,
       }}
       rowKey="id"
       scroll={{ x: 900 }}

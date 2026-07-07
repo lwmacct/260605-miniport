@@ -1,10 +1,15 @@
-import { Alert, Result, Spin } from "antd";
+import { Alert, Spin } from "antd";
+import Result from "antd/es/result";
+import type { ResultProps } from "antd/es/result";
+import type { ComponentType, ReactNode } from "react";
 import { WorkbenchCenterState } from "@lwmacct/260627-antd-workbench";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuthStateQuery } from "@/modules/auth";
 import { appPaths } from "./navigation";
 
-function CenterState({ children }: { children: React.ReactNode }) {
+const ResultView = Result as unknown as ComponentType<ResultProps>;
+
+function CenterState({ children }: { children: ReactNode }) {
   return <WorkbenchCenterState>{children}</WorkbenchCenterState>;
 }
 
@@ -82,7 +87,7 @@ export function AdminBoundary() {
   if (!authState.data.session.user?.admin) {
     return (
       <CenterState>
-        <Result status="403" title="403" subTitle="当前账号没有管理员权限。" />
+        <ResultView status="403" title="403" subTitle="当前账号没有管理员权限。" />
       </CenterState>
     );
   }

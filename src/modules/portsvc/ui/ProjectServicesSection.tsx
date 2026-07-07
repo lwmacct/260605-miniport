@@ -1,5 +1,6 @@
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
-import { Button, Card, Popconfirm, Space, Table, Tag, Tooltip, Typography } from "antd";
+import { Button, Popconfirm, Space, Table, Tag, Tooltip, Typography } from "antd";
+import Card from "antd/es/card/Card";
 import type { ColumnsType } from "antd/es/table";
 import type { PortGroupItem, ServiceGroupItem } from "../model/portsvcTypes";
 import { runtimeTag, statusTag } from "../model/portsvcUtils";

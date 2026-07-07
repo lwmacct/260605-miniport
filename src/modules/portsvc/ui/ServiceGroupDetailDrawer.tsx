@@ -1,5 +1,6 @@
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
-import { Button, Card, Descriptions, Drawer, Modal, Space, Table, Tag, Typography } from "antd";
+import { Button, Descriptions, Drawer, Modal, Space, Table, Tag, Typography } from "antd";
+import Card from "antd/es/card/Card";
 import type { ColumnsType } from "antd/es/table";
 import type { PortGroupItem, ServiceGroupItem, ServiceGroupPortGroupItem } from "../model/portsvcTypes";
 import { statusTag } from "../model/portsvcUtils";
@@ -134,7 +135,7 @@ export function ServiceGroupDetailDrawer({
           </Card>
           <Card title="运行环境">
             <Table<ServiceGroupMember>
-              rowKey={(item) => item.id ?? item.portGroupId}
+              rowKey={(item: ServiceGroupMember) => item.id ?? item.portGroupId}
               size="small"
               columns={columns}
               dataSource={members}

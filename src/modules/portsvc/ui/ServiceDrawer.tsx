@@ -1,6 +1,6 @@
 import { DeleteOutlined, PlusOutlined, SaveOutlined } from "@ant-design/icons";
 import { Button, Col, Drawer, Form, Input, InputNumber, Row, Select, Space, Tabs } from "antd";
-import type { FormInstance } from "antd";
+import type { FormInstance, FormListFieldData, FormListOperation } from "antd/es/form";
 import {
   relationTypeOptions,
   runtimeModeOptions,
@@ -121,12 +121,12 @@ export function ServiceDrawer({
               label: "端口槽位",
               children: (
                 <Form.List name="slots">
-                  {(fields, { add, remove }) => (
+                  {(fields: FormListFieldData[], { add, remove }: FormListOperation) => (
                     <Space direction="vertical" className="content-stack">
                       <Button icon={<PlusOutlined />} onClick={() => add({ kind: "app", protocol: "tcp", status: "planned" })}>
                         添加槽位
                       </Button>
-                      {fields.map((field) => (
+                      {fields.map((field: FormListFieldData) => (
                         <Row key={field.key} gutter={10} className="compact-form-row">
                           <Col xs={24} md={4}>
                             <Form.Item name={[field.name, "port"]} rules={[{ required: true }]}>
@@ -168,12 +168,12 @@ export function ServiceDrawer({
               label: "依赖资产",
               children: (
                 <Form.List name="assetLinks">
-                  {(fields, { add, remove }) => (
+                  {(fields: FormListFieldData[], { add, remove }: FormListOperation) => (
                     <Space direction="vertical" className="content-stack">
                       <Button icon={<PlusOutlined />} onClick={() => add({ relationType: "runtime", required: true })}>
                         添加资产关系
                       </Button>
-                      {fields.map((field) => (
+                      {fields.map((field: FormListFieldData) => (
                         <Row key={field.key} gutter={10} className="compact-form-row">
                           <Col xs={24} md={9}>
                             <Form.Item name={[field.name, "assetId"]} rules={[{ required: true }]}>

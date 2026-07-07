@@ -1,5 +1,6 @@
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
-import { Button, Card, Descriptions, Drawer, Modal, Space, Table, Tag, Typography } from "antd";
+import { Button, Descriptions, Drawer, Modal, Space, Table, Tag, Typography } from "antd";
+import Card from "antd/es/card/Card";
 import { statusOptions } from "../model/portsvcConstants";
 import type { PortGroupItem, PortSlotItem, ServiceGroupItem } from "../model/portsvcTypes";
 import { portGroupLabel, runtimeTag, splitTags } from "../model/portsvcUtils";
@@ -90,7 +91,7 @@ export function ServiceDetailDrawer({
           </Card>
           <Card title="端口槽位">
             <Table<PortSlotItem>
-              rowKey={(slot) => slot.id ?? String(slot.port)}
+              rowKey={(slot: PortSlotItem) => slot.id ?? String(slot.port)}
               size="small"
               pagination={false}
               dataSource={group.slots}
@@ -99,7 +100,7 @@ export function ServiceDetailDrawer({
                 { title: "名称", dataIndex: "name" },
                 { title: "类型", dataIndex: "kind", width: 120 },
                 { title: "协议", dataIndex: "protocol", width: 120 },
-                { title: "容器", dataIndex: "containerName", render: (value) => value || "-" },
+                { title: "容器", dataIndex: "containerName", render: (value?: string) => value || "-" },
               ]}
             />
           </Card>

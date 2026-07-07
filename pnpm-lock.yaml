@@ -12,8 +12,8 @@ importers:
         specifier: ^6.3.2
         version: 6.3.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@lwmacct/260627-antd-workbench':
-        specifier: ^0.42.260706
-        version: 0.42.260706(@ant-design/icons@6.3.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(antd@6.5.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        specifier: ^0.43.260707
+        version: 0.43.260707(@ant-design/icons@6.3.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(antd@6.5.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@tanstack/react-query':
         specifier: ^5.101.2
         version: 5.101.2(react@19.2.7)
@@ -105,8 +105,9 @@ packages:
   '@emotion/unitless@0.7.5':
     resolution: {integrity: sha512-OWORNpfjMsSSUBVrRBVGECkhWcULOAJz9ZW8uK9qgxD+87M7jHRcvh/A96XXNhXTLmKcoYSQtBEX7lHMO7YRwg==}
 
-  '@lwmacct/260627-antd-workbench@0.42.260706':
-    resolution: {integrity: sha512-0XHfy46u22garGXtlJLJDBUMpHh7bebnZlAxBi4LripSgNGkHhkh6+h9rGaMJs0rCXYsyBpfxy9L97j575jF0w==}
+  '@lwmacct/260627-antd-workbench@0.43.260707':
+    resolution: {integrity: sha512-/0TWpFkMsQSyIJkHhGrtGgE4FTTvQgTwiZqrPTLJ0vBn5+rbIjddKl/aFGQd8G/POcNEaY2nRy6wwJzHtIkW6Q==}
+    engines: {npm: please-use-pnpm}
     peerDependencies:
       '@ant-design/icons': ^6.0.0
       antd: ^6.0.0
@@ -854,7 +855,7 @@ snapshots:
 
   '@emotion/unitless@0.7.5': {}
 
-  '@lwmacct/260627-antd-workbench@0.42.260706(@ant-design/icons@6.3.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(antd@6.5.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
+  '@lwmacct/260627-antd-workbench@0.43.260707(@ant-design/icons@6.3.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(antd@6.5.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
       '@ant-design/icons': 6.3.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       antd: 6.5.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
