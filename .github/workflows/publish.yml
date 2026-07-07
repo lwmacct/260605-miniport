@@ -231,17 +231,8 @@ jobs:
           } >> "${GITHUB_STEP_SUMMARY}"
 
   deploy:
-    runs-on: ubuntu-slim
     needs: build-image
-    steps:
-      - name: Execute remote SSH command
-        env:
-          DOCKER_IMAGE: ghcr.io/${{ github.repository }}:${{ inputs.source-tag }}
-        uses: appleboy/ssh-action@v1.2.5
-        with:
-          host: ${{ vars.DEPLOY_SSH_HOST }}
-          port: ${{ vars.DEPLOY_SSH_PORT }}
-          username: ${{ vars.DEPLOY_SSH_USERNAME }}
-          key: ${{ secrets.DEPLOY_SSH_PRIVATE }}
-          envs: DOCKER_IMAGE
-          script: bash ${{ vars.DEPLOY_SCRIPT }}
+    uses: ./.github/workflows/deploy.yml
+    with:
+      source-tag: ${{ inputs.source-tag }}
+    secrets: inherit
