@@ -1,9 +1,36 @@
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { Button, Popconfirm, Space, Table, Tag, Tooltip, Typography } from "antd";
 import Card from "antd/es/card/Card";
+import type { CSSProperties } from "react";
 import type { ColumnsType } from "antd/es/table";
 import type { PortGroupItem, ServiceGroupItem } from "../model/portsvcTypes";
 import { runtimeTag, statusTag } from "../model/portsvcUtils";
+
+const environmentNameStyle: CSSProperties = {
+  display: "inline-block",
+  maxWidth: 260,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  verticalAlign: "bottom",
+  whiteSpace: "nowrap",
+};
+
+const hostNameStyle: CSSProperties = {
+  display: "inline-block",
+  maxWidth: 180,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  verticalAlign: "bottom",
+  whiteSpace: "nowrap",
+};
+
+const serviceGroupTagsStyle: CSSProperties = {
+  maxWidth: 260,
+};
+
+const serviceSlotTagsStyle: CSSProperties = {
+  maxWidth: 360,
+};
 
 type ProjectServicesSectionProps = {
   canManage: boolean;
@@ -34,18 +61,26 @@ export function ProjectServicesSection({
   const columns: ColumnsType<PortGroupItem> = [
     {
       title: "运行环境",
-      render: (_, item) => (
-        <Typography.Link onClick={() => onSelectGroup(item)}>{item.environmentName || "-"}</Typography.Link>
-      ),
+      minWidth: 120,
+      render: (_, item) => {
+        const environmentName = item.environmentName || "-";
+        return (
+          <Tooltip title={environmentName === "-" ? undefined : environmentName}>
+            <Typography.Link style={environmentNameStyle} onClick={() => onSelectGroup(item)}>
+              {environmentName}
+            </Typography.Link>
+          </Tooltip>
+        );
+      },
     },
     { title: "端口组", dataIndex: "portPrefix", width: 110 },
     {
       title: "服务组",
-      width: 220,
+      minWidth: 120,
       render: (_, item) => {
         const relatedGroups = serviceGroupsByPortGroup.get(item.id) ?? [];
         return relatedGroups.length ? (
-          <Space size={[4, 4]} wrap>
+          <Space size={[4, 4]} style={serviceGroupTagsStyle} wrap>
             {relatedGroups.map((group) => (
               <Tag key={group.id ?? group.name}>{group.name}</Tag>
             ))}
@@ -55,11 +90,29 @@ export function ProjectServicesSection({
     },
     { title: "运行", width: 120, render: (_, item) => runtimeTag(item.runtimeMode) },
     { title: "服务 IP", dataIndex: "serviceIp", width: 150 },
-    { title: "宿主机", width: 160, render: (_, item) => item.host?.name || item.host?.ip || "-" },
+    {
+      title: "宿主机",
+      minWidth: 100,
+      render: (_, item) => {
+        const hostName = item.host?.name || item.host?.ip || "-";
+        return (
+          <Tooltip title={hostName === "-" ? undefined : hostName}>
+            <Typography.Text style={hostNameStyle}>{hostName}</Typography.Text>
+          </Tooltip>
+        );
+      },
+    },
     {
       title: "服务组件",
+      minWidth: 160,
       render: (_, item) =>
-        item.slots.length ? item.slots.map((slot) => <Tag key={slot.id ?? slot.port}>{slot.name}:{slot.port}</Tag>) : "-",
+        item.slots.length ? (
+          <Space size={[4, 4]} style={serviceSlotTagsStyle} wrap>
+            {item.slots.map((slot) => (
+              <Tag key={slot.id ?? slot.port}>{slot.name}:{slot.port}</Tag>
+            ))}
+          </Space>
+        ) : "-",
     },
     { title: "状态", width: 110, render: (_, item) => statusTag(item.status) },
     { title: "用户", dataIndex: "ownerName", width: 120 },
@@ -87,7 +140,8 @@ export function ProjectServicesSection({
         columns={columns}
         dataSource={groups}
         pagination={{ pageSize: 12 }}
-        scroll={{ x: 1280 }}
+        scroll={{ x: "max-content" }}
+        tableLayout="auto"
       />
     </Card>
   );
