@@ -1,6 +1,6 @@
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { WorkbenchPanel } from "@lwmacct/260627-antd-workbench";
 import { Button, Descriptions, Drawer, Modal, Space, Table, Tag, Typography } from "antd";
-import Card from "antd/es/card/Card";
 import type { ColumnsType } from "antd/es/table";
 import type { PortGroupItem, ServiceGroupItem, ServiceGroupPortGroupItem } from "../model/portsvcTypes";
 import { statusTag } from "../model/portsvcUtils";
@@ -119,7 +119,7 @@ export function ServiceGroupDetailDrawer({
     >
       {serviceGroup ? (
         <Space direction="vertical" size={16} className="content-stack">
-          <Card>
+          <WorkbenchPanel>
             <Descriptions
               size="small"
               column={{ xs: 1, sm: 2 }}
@@ -132,8 +132,8 @@ export function ServiceGroupDetailDrawer({
             />
             {serviceGroup.description ? <Typography.Paragraph style={{ marginTop: 12 }}>{serviceGroup.description}</Typography.Paragraph> : null}
             {serviceGroup.notes ? <Typography.Paragraph type="secondary">{serviceGroup.notes}</Typography.Paragraph> : null}
-          </Card>
-          <Card title="运行环境">
+          </WorkbenchPanel>
+          <WorkbenchPanel title="运行环境">
             <Table<ServiceGroupMember>
               rowKey={(item: ServiceGroupMember) => item.id ?? item.portGroupId}
               size="small"
@@ -142,7 +142,7 @@ export function ServiceGroupDetailDrawer({
               pagination={false}
               scroll={{ x: 1200 }}
             />
-          </Card>
+          </WorkbenchPanel>
         </Space>
       ) : null}
     </Drawer>

@@ -29,7 +29,7 @@ jobs:
     steps:
       - name: Dispatch main-scoped publish
         id: release-ref
-        uses: lwmacct/260707-action-workflow-dispatch@v0.8.260707
+        uses: lwmacct/260707-action-workflow-dispatch@main
         with:
           workflow: publish.yml
           source-tag: ${{ inputs.tag }}

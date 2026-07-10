@@ -1,6 +1,6 @@
 import { PlusOutlined } from "@ant-design/icons";
+import { WorkbenchPanel } from "@lwmacct/260627-antd-workbench";
 import { Button, Col, Empty, Row, Space, Statistic } from "antd";
-import Card from "antd/es/card/Card";
 import type { AppStats } from "../model/portsvcTypes";
 
 type OverviewSectionProps = {
@@ -18,30 +18,30 @@ export function OverviewSection({
     <Space direction="vertical" size={16} className="content-stack">
       <Row gutter={[12, 12]}>
         <Col xs={24} sm={12} xl={6}>
-          <Card><Statistic title="端口组" value={stats.groups} /></Card>
+          <WorkbenchPanel><Statistic title="端口组" value={stats.groups} /></WorkbenchPanel>
         </Col>
         <Col xs={24} sm={12} xl={6}>
-          <Card><Statistic title="宿主机" value={stats.hosts} /></Card>
+          <WorkbenchPanel><Statistic title="宿主机" value={stats.hosts} /></WorkbenchPanel>
         </Col>
         <Col xs={24} sm={12} xl={6}>
-          <Card><Statistic title="运行中" value={stats.runningGroups} /></Card>
+          <WorkbenchPanel><Statistic title="运行中" value={stats.runningGroups} /></WorkbenchPanel>
         </Col>
         <Col xs={24} sm={12} xl={6}>
-          <Card><Statistic title="服务组件" value={stats.slots} /></Card>
+          <WorkbenchPanel><Statistic title="服务组件" value={stats.slots} /></WorkbenchPanel>
         </Col>
       </Row>
       <Row gutter={[12, 12]}>
         <Col xs={24} sm={12} xl={6}>
-          <Card><Statistic title="空闲端口组" value={stats.freeGroups} /></Card>
+          <WorkbenchPanel><Statistic title="空闲端口组" value={stats.freeGroups} /></WorkbenchPanel>
         </Col>
         <Col xs={24} sm={12} xl={6}>
-          <Card><Statistic title="依赖资产" value={stats.dependencyAssets} /></Card>
+          <WorkbenchPanel><Statistic title="依赖资产" value={stats.dependencyAssets} /></WorkbenchPanel>
         </Col>
         <Col xs={24} sm={12} xl={6}>
-          <Card><Statistic title="服务组" value={stats.serviceGroups} /></Card>
+          <WorkbenchPanel><Statistic title="服务组" value={stats.serviceGroups} /></WorkbenchPanel>
         </Col>
         <Col xs={24} sm={12} xl={6}>
-          <Card><Statistic title="资产关系" value={stats.assetLinks} /></Card>
+          <WorkbenchPanel><Statistic title="资产关系" value={stats.assetLinks} /></WorkbenchPanel>
         </Col>
       </Row>
       {stats.groups === 0 ? (
@@ -51,9 +51,9 @@ export function OverviewSection({
           </Button>
         </Empty>
       ) : (
-        <Card>
+        <WorkbenchPanel>
           <Statistic title="已管理端口" value={stats.groups * 10} suffix="个" />
-        </Card>
+        </WorkbenchPanel>
       )}
     </Space>
   );

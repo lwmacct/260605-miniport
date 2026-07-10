@@ -1,6 +1,6 @@
 import { EditOutlined } from "@ant-design/icons";
+import { WorkbenchPanel } from "@lwmacct/260627-antd-workbench";
 import { Button, Col, Row, Space, Statistic, Table, Tag, Tooltip, Typography } from "antd";
-import Card from "antd/es/card/Card";
 import type { ColumnsType } from "antd/es/table";
 import type { AppStats, DependencyAssetItem, PortGroupItem } from "../model/portsvcTypes";
 
@@ -68,16 +68,16 @@ export function DependenciesSection({ canManage, dependencyAssets, groups, onEdi
     <Space direction="vertical" size={16} className="content-stack">
       <Row gutter={[12, 12]}>
         <Col xs={24} sm={8}>
-          <Card><Statistic title="服务组件" value={stats.slots} /></Card>
+          <WorkbenchPanel><Statistic title="服务组件" value={stats.slots} /></WorkbenchPanel>
         </Col>
         <Col xs={24} sm={8}>
-          <Card><Statistic title="依赖资产" value={stats.dependencyAssets} /></Card>
+          <WorkbenchPanel><Statistic title="依赖资产" value={stats.dependencyAssets} /></WorkbenchPanel>
         </Col>
         <Col xs={24} sm={8}>
-          <Card><Statistic title="资产关系" value={stats.assetLinks} /></Card>
+          <WorkbenchPanel><Statistic title="资产关系" value={stats.assetLinks} /></WorkbenchPanel>
         </Col>
       </Row>
-      <Card title="依赖资产">
+      <WorkbenchPanel title="依赖资产">
         <Table<DependencyAssetItem>
           rowKey={(item: DependencyAssetItem) => item.id ?? item.name}
           columns={assetColumns}
@@ -85,8 +85,8 @@ export function DependenciesSection({ canManage, dependencyAssets, groups, onEdi
           pagination={{ pageSize: 10 }}
           scroll={{ x: 1000 }}
         />
-      </Card>
-      <Card title="端口组依赖关系">
+      </WorkbenchPanel>
+      <WorkbenchPanel title="端口组依赖关系">
         <Table<PortGroupItem>
           rowKey="id"
           columns={groupColumns}
@@ -94,7 +94,7 @@ export function DependenciesSection({ canManage, dependencyAssets, groups, onEdi
           pagination={{ pageSize: 12 }}
           scroll={{ x: 900 }}
         />
-      </Card>
+      </WorkbenchPanel>
     </Space>
   );
 }

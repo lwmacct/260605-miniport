@@ -1,6 +1,6 @@
 import { EditOutlined } from "@ant-design/icons";
+import { WorkbenchPanel } from "@lwmacct/260627-antd-workbench";
 import { Button, Space, Table, Tag, Tooltip, Typography } from "antd";
-import Card from "antd/es/card/Card";
 import type { ColumnsType } from "antd/es/table";
 import type { ServiceGroupItem } from "../model/portsvcTypes";
 import { statusTag } from "../model/portsvcUtils";
@@ -61,7 +61,7 @@ export function ServiceGroupsSection({
   ];
 
   return (
-    <Card>
+    <WorkbenchPanel>
       <Table<ServiceGroupItem>
         rowKey={(item: ServiceGroupItem) => item.id ?? item.name}
         columns={columns}
@@ -69,6 +69,6 @@ export function ServiceGroupsSection({
         pagination={{ pageSize: 12 }}
         scroll={{ x: 1000 }}
       />
-    </Card>
+    </WorkbenchPanel>
   );
 }

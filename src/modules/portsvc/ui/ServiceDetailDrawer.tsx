@@ -1,6 +1,6 @@
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { WorkbenchPanel } from "@lwmacct/260627-antd-workbench";
 import { Button, Descriptions, Drawer, Modal, Space, Table, Tag, Typography } from "antd";
-import Card from "antd/es/card/Card";
 import { statusOptions } from "../model/portsvcConstants";
 import type { PortGroupItem, PortSlotItem, ServiceGroupItem } from "../model/portsvcTypes";
 import { portGroupLabel, runtimeTag, splitTags } from "../model/portsvcUtils";
@@ -62,7 +62,7 @@ export function ServiceDetailDrawer({
     >
       {group ? (
         <Space direction="vertical" size={16} className="content-stack">
-          <Card>
+          <WorkbenchPanel>
             <Descriptions
               size="small"
               column={{ xs: 1, sm: 2 }}
@@ -88,8 +88,8 @@ export function ServiceDetailDrawer({
               ))}
             </Space>
             {group.notes ? <Typography.Paragraph>{group.notes}</Typography.Paragraph> : null}
-          </Card>
-          <Card title="端口槽位">
+          </WorkbenchPanel>
+          <WorkbenchPanel title="端口槽位">
             <Table<PortSlotItem>
               rowKey={(slot: PortSlotItem) => slot.id ?? String(slot.port)}
               size="small"
@@ -103,8 +103,8 @@ export function ServiceDetailDrawer({
                 { title: "容器", dataIndex: "containerName", render: (value?: string) => value || "-" },
               ]}
             />
-          </Card>
-          <Card title="所属服务组">
+          </WorkbenchPanel>
+          <WorkbenchPanel title="所属服务组">
             <Space size={[6, 6]} wrap>
               {relatedServiceGroups.length === 0 ? <Typography.Text type="secondary">未加入服务组</Typography.Text> : null}
               {relatedServiceGroups.map(({ serviceGroup, membership }) => (
@@ -114,8 +114,8 @@ export function ServiceDetailDrawer({
                 </Tag>
               ))}
             </Space>
-          </Card>
-          <Card title="依赖资产">
+          </WorkbenchPanel>
+          <WorkbenchPanel title="依赖资产">
             <Space size={[6, 6]} wrap>
               {group.assetLinks.length === 0 ? <Typography.Text type="secondary">未记录依赖资产</Typography.Text> : null}
               {group.assetLinks.map((link) => (
@@ -124,7 +124,7 @@ export function ServiceDetailDrawer({
                 </Tag>
               ))}
             </Space>
-          </Card>
+          </WorkbenchPanel>
         </Space>
       ) : null}
     </Drawer>

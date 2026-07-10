@@ -1,5 +1,5 @@
+import { WorkbenchPanel } from "@lwmacct/260627-antd-workbench";
 import { Descriptions, Typography } from "antd";
-import Card from "antd/es/card/Card";
 import styles from "@/shared/ui/SectionPage.module.css";
 
 export function SystemRoute() {
@@ -11,7 +11,7 @@ export function SystemRoute() {
           预留服务运行参数、注册开关、会话策略和数据库状态入口。
         </Typography.Paragraph>
       </div>
-      <Card className={styles.panel} title="功能占位">
+      <WorkbenchPanel title="功能占位">
         <Descriptions
           bordered
           column={1}
@@ -34,7 +34,7 @@ export function SystemRoute() {
             },
           ]}
         />
-      </Card>
+      </WorkbenchPanel>
     </section>
   );
 }

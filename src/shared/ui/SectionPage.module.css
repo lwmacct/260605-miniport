@@ -9,24 +9,6 @@
   overflow-wrap: anywhere;
 }
 
-.panel {
-  min-width: 0;
-  background: var(--app-card-bg);
-  border-color: var(--app-border);
-  border-radius: 4px;
-  box-shadow: none;
-}
-
-.panel :global(.ant-card-head) {
-  min-height: 40px;
-  padding: 0 12px;
-  border-bottom-color: var(--app-border);
-}
-
-.panel :global(.ant-card-body) {
-  padding: 12px;
-}
-
 .narrowForm {
   width: min(420px, 100%);
 }

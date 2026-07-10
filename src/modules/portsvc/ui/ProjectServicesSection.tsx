@@ -1,6 +1,6 @@
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { WorkbenchPanel } from "@lwmacct/260627-antd-workbench";
 import { Button, Popconfirm, Space, Table, Tag, Tooltip, Typography } from "antd";
-import Card from "antd/es/card/Card";
 import type { CSSProperties } from "react";
 import type { ColumnsType } from "antd/es/table";
 import type { PortGroupItem, ServiceGroupItem } from "../model/portsvcTypes";
@@ -134,7 +134,7 @@ export function ProjectServicesSection({
   ];
 
   return (
-    <Card>
+    <WorkbenchPanel>
       <Table<PortGroupItem>
         rowKey="id"
         columns={columns}
@@ -143,6 +143,6 @@ export function ProjectServicesSection({
         scroll={{ x: "max-content" }}
         tableLayout="auto"
       />
-    </Card>
+    </WorkbenchPanel>
   );
 }

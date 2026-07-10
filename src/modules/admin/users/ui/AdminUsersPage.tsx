@@ -1,3 +1,4 @@
+import { WorkbenchPanel } from "@lwmacct/260627-antd-workbench";
 import { Alert, Space, Typography } from "antd";
 import { useMemo, useState } from "react";
 import type { AdminUser } from "../api/adminUsersApi";
@@ -29,14 +30,16 @@ export function AdminUsersPage() {
 
       {users.isError ? <Alert showIcon type="error" message={users.error.message} /> : null}
 
-      <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
-        <AdminUsersToolbar
-          loading={users.isFetching}
-          onFiltersChange={updateFilters}
-          onRefresh={() => void users.refetch()}
-        />
-        <AdminUsersTable data={filteredUsers} loading={users.isPending} />
-      </Space>
+      <WorkbenchPanel>
+        <Space orientation="vertical" size="middle" style={{ width: "100%" }}>
+          <AdminUsersToolbar
+            loading={users.isFetching}
+            onFiltersChange={updateFilters}
+            onRefresh={() => void users.refetch()}
+          />
+          <AdminUsersTable data={filteredUsers} loading={users.isPending} />
+        </Space>
+      </WorkbenchPanel>
     </section>
   );
 }

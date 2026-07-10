@@ -1,6 +1,6 @@
 import { EditOutlined } from "@ant-design/icons";
+import { WorkbenchPanel } from "@lwmacct/260627-antd-workbench";
 import { Button, Space, Table, Tooltip, Typography } from "antd";
-import Card from "antd/es/card/Card";
 import type { ColumnsType } from "antd/es/table";
 import type { HostItem, PortGroupItem } from "../model/portsvcTypes";
 import { statusTag } from "../model/portsvcUtils";
@@ -70,7 +70,7 @@ export function HostsSection({ canManage, groups, hosts, onEditHost }: HostsSect
   ];
 
   return (
-    <Card>
+    <WorkbenchPanel>
       <Table<HostItem>
         rowKey="id"
         columns={columns}
@@ -78,6 +78,6 @@ export function HostsSection({ canManage, groups, hosts, onEditHost }: HostsSect
         pagination={{ pageSize: 12 }}
         scroll={{ x: 900 }}
       />
-    </Card>
+    </WorkbenchPanel>
   );
 }

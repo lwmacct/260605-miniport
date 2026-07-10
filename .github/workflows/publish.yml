@@ -38,7 +38,7 @@ jobs:
 
       - name: Validate release ref
         id: release-ref
-        uses: lwmacct/260707-action-verified-tag-ref@v0.8.260707
+        uses: lwmacct/260707-action-verified-tag-ref@main
         with:
           tag: ${{ inputs.source-tag }}
           sha: ${{ inputs.source-sha }}
@@ -67,7 +67,7 @@ jobs:
       - name: Build frontend assets
         env:
           VITE_APP_VERSION: ${{ inputs.source-tag }}
-          PNPM_CONFIG_MINIMUM_RELEASE_AGE_EXCLUDE: '["@lwmacct/*"]'
+          PNPM_CONFIG_MINIMUM_RELEASE_AGE: "0"
         run: |
           set -euo pipefail
           pnpm install --frozen-lockfile

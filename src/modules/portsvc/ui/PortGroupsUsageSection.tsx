@@ -1,6 +1,6 @@
 import { PlusOutlined } from "@ant-design/icons";
+import { WorkbenchPanel } from "@lwmacct/260627-antd-workbench";
 import { Button, Col, Progress, Row, Space, Statistic, Table } from "antd";
-import Card from "antd/es/card/Card";
 import type { ColumnsType } from "antd/es/table";
 import type { PortGroupItem } from "../model/portsvcTypes";
 
@@ -94,19 +94,19 @@ export function PortGroupsUsageSection({ canManage, groups, onCreateGroup }: Por
     <Space direction="vertical" size={16} className="content-stack">
       <Row gutter={[12, 12]}>
         <Col xs={24} sm={12} xl={6}>
-          <Card><Statistic title="端口组容量" value={totalGroups} /></Card>
+          <WorkbenchPanel><Statistic title="端口组容量" value={totalGroups} /></WorkbenchPanel>
         </Col>
         <Col xs={24} sm={12} xl={6}>
-          <Card><Statistic title="已使用端口组" value={usedGroups} /></Card>
+          <WorkbenchPanel><Statistic title="已使用端口组" value={usedGroups} /></WorkbenchPanel>
         </Col>
         <Col xs={24} sm={12} xl={6}>
-          <Card><Statistic title="剩余端口组" value={freeGroups} /></Card>
+          <WorkbenchPanel><Statistic title="剩余端口组" value={freeGroups} /></WorkbenchPanel>
         </Col>
         <Col xs={24} sm={12} xl={6}>
-          <Card><Statistic title="整体占用率" value={usagePercent} suffix="%" /></Card>
+          <WorkbenchPanel><Statistic title="整体占用率" value={usagePercent} suffix="%" /></WorkbenchPanel>
         </Col>
       </Row>
-      <Card
+      <WorkbenchPanel
         title="端口组使用情况"
         extra={
           <Button type="primary" icon={<PlusOutlined />} onClick={onCreateGroup} disabled={!canManage}>
@@ -121,7 +121,7 @@ export function PortGroupsUsageSection({ canManage, groups, onCreateGroup }: Por
           pagination={false}
           scroll={{ x: 1000 }}
         />
-      </Card>
+      </WorkbenchPanel>
     </Space>
   );
 }

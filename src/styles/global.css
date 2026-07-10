@@ -49,16 +49,16 @@
   align-items: center;
   gap: 6px 12px;
   padding: 10px 12px;
-  border: 1px solid var(--app-border);
+  border: 1px solid var(--wb-border);
   border-radius: 4px;
-  background: var(--app-card-muted-bg);
+  background: var(--wb-card-muted-bg);
   color: inherit;
   cursor: pointer;
   text-align: left;
 }
 
 .group-tile:hover {
-  border-color: var(--app-accent-hover);
+  border-color: var(--wb-accent-hover);
 }
 
 .host-groups {
@@ -66,7 +66,7 @@
 }
 
 .group-range {
-  color: var(--app-text-strong);
+  color: var(--wb-text-strong);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   font-weight: 700;
 }
@@ -86,7 +86,7 @@
 }
 
 .group-main small {
-  color: var(--app-text-muted);
+  color: var(--wb-text-muted);
 }
 
 .slot-strip {
@@ -124,7 +124,7 @@
 
 .ant-descriptions .ant-descriptions-item-label,
 .ant-typography.ant-typography-secondary {
-  color: var(--app-text-muted) !important;
+  color: var(--wb-text-muted) !important;
 }
 
 @media (max-width: 1180px) {
