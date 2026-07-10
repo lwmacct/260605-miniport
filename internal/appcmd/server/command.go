@@ -137,6 +137,51 @@ var Command = &cli.Command{
 			Usage: usage.MustUsage("auth.session.cookie.secure"),
 			Value: defaults.Server.Auth.Session.Cookie.Secure,
 		},
+		&cli.BoolFlag{
+			Name:  "github.enabled",
+			Usage: usage.MustUsage("github.enabled"),
+			Value: defaults.Server.GitHub.Enabled,
+		},
+		&cli.Int64Flag{
+			Name:  "github.app-id",
+			Usage: usage.MustUsage("github.app-id"),
+			Value: defaults.Server.GitHub.AppID,
+		},
+		&cli.StringFlag{
+			Name:  "github.app-slug",
+			Usage: usage.MustUsage("github.app-slug"),
+			Value: defaults.Server.GitHub.AppSlug,
+		},
+		&cli.StringFlag{
+			Name:  "github.private-key-file",
+			Usage: usage.MustUsage("github.private-key-file"),
+			Value: defaults.Server.GitHub.PrivateKeyFile,
+		},
+		&cli.StringFlag{
+			Name:  "github.webhook-secret",
+			Usage: usage.MustUsage("github.webhook-secret"),
+			Value: defaults.Server.GitHub.WebhookSecret,
+		},
+		&cli.StringFlag{
+			Name:  "github.api-url",
+			Usage: usage.MustUsage("github.api-url"),
+			Value: defaults.Server.GitHub.APIURL,
+		},
+		&cli.StringFlag{
+			Name:  "github.web-url",
+			Usage: usage.MustUsage("github.web-url"),
+			Value: defaults.Server.GitHub.WebURL,
+		},
+		&cli.StringFlag{
+			Name:  "github.setup-return-url",
+			Usage: usage.MustUsage("github.setup-return-url"),
+			Value: defaults.Server.GitHub.SetupReturnURL,
+		},
+		&cli.DurationFlag{
+			Name:  "github.reconcile-interval",
+			Usage: usage.MustUsage("github.reconcile-interval"),
+			Value: defaults.Server.GitHub.ReconcileInterval,
+		},
 		&cli.StringFlag{
 			Name:  "http.listen",
 			Usage: usage.MustUsage("http.listen"),

@@ -401,7 +401,7 @@ func (s *PortsvcService) ExportPortGroupsCSV(ctx context.Context, params PortGro
 	}
 	records := [][]string{{
 		"ownerName", "environment_name", "status", "port_prefix", "runtime_mode", "runtime_name", "service_ip",
-		"host_name", "host_ip", "environment_owner", "tags", "slots", "asset_links", "notes",
+		"host_name", "host_ip", "environment_owner", "tags", "slots", "asset_links", "repository_links", "notes",
 	}}
 	for _, group := range groups {
 		hostName := ""
@@ -424,6 +424,7 @@ func (s *PortsvcService) ExportPortGroupsCSV(ctx context.Context, params PortGro
 			group.Tags,
 			utilPortSlots(group.Slots),
 			utilAssetLinks(group.AssetLinks),
+			utilRepositoryLinks(group.RepositoryLinks),
 			group.Notes,
 		})
 	}
@@ -495,6 +496,7 @@ func (s *PortsvcService) buildPortGroupViews(ctx context.Context, groups []PortG
 		child := children[views[idx].ID]
 		views[idx].Slots = child.Slots
 		views[idx].AssetLinks = child.AssetLinks
+		views[idx].RepositoryLinks = child.RepositoryLinks
 	}
 	if err := s.attachPortGroupOwnerNames(ctx, views); err != nil {
 		return nil, err
@@ -508,6 +510,10 @@ func (s *PortsvcService) replacePortGroupChildren(ctx context.Context, group Por
 		return err
 	}
 	links, err := utilNormalizeAssetLinks(ctx, s.store, group, payload.AssetLinks)
+	if err != nil {
+		return err
+	}
+	repositoryLinks, err := utilNormalizeRepositoryLinks(ctx, s.store, group, payload.RepositoryLinks)
 	if err != nil {
 		return err
 	}
@@ -525,7 +531,14 @@ func (s *PortsvcService) replacePortGroupChildren(ctx context.Context, group Por
 		links[idx].CreatedAt = now
 		links[idx].UpdatedAt = now
 	}
-	return s.store.AddPortsvcPortGroupAssetLinks(ctx, links)
+	if err := s.store.AddPortsvcPortGroupAssetLinks(ctx, links); err != nil {
+		return err
+	}
+	for idx := range repositoryLinks {
+		repositoryLinks[idx].CreatedAt = now
+		repositoryLinks[idx].UpdatedAt = now
+	}
+	return s.store.AddPortsvcPortGroupRepositoryLinks(ctx, repositoryLinks)
 }
 
 func (s *PortsvcService) attachPortGroupOwnerNames(ctx context.Context, views []PortGroupView) error {

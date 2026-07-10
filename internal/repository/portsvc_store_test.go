@@ -79,6 +79,50 @@ func TestPortSlotsAreUniqueInsideGroup(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestPortGroupRepositoryLinksLoadRepositoryAndPreserveSlotID(t *testing.T) {
+	ctx := t.Context()
+	db := newPortsvcTestDB(t, ctx)
+	store := NewStore(db)
+	now := time.Now().UTC()
+	ownerSubject := "018f2f9c-1111-7000-8000-000000000001"
+
+	installation, err := store.UpsertGithubInstallation(ctx, GithubInstallationRecord{
+		GithubInstallationID: 42, AccountID: 7, AccountLogin: "acme", AccountType: "Organization",
+		RepositorySelection: "all", Permissions: `{"metadata":"read"}`, Status: "active", CreatedAt: now, UpdatedAt: now,
+	})
+	require.NoError(t, err)
+	require.NoError(t, store.AddGithubInstallationSubject(ctx, installation.ID, ownerSubject, now))
+	require.NoError(t, store.ReplaceGithubRepositories(ctx, installation.ID, []GithubRepositoryRecord{{
+		GithubRepositoryID: 99, OwnerLogin: "acme", Name: "api", FullName: "acme/api",
+		HTMLURL: "https://github.com/acme/api", Visibility: "private", Private: true,
+	}}, now))
+	repositories, err := store.ListGithubRepositoriesForSubject(ctx, ownerSubject, "", "")
+	require.NoError(t, err)
+	require.Len(t, repositories, 1)
+
+	group, err := store.CreatePortsvcPortGroup(ctx, &PortsvcPortGroupRecord{
+		OwnerSubject: ownerSubject, PortPrefix: 1000, RuntimeMode: "dind", Status: "running", CreatedAt: now, UpdatedAt: now,
+	})
+	require.NoError(t, err)
+	slotID := "018f2f9c-2222-7000-8000-000000000001"
+	require.NoError(t, store.AddPortsvcPortSlots(ctx, []PortsvcPortSlotRecord{{
+		ID: slotID, PortGroupID: group.ID, Port: 10000, Name: "api", Kind: "app", Protocol: "http",
+		Status: "running", CreatedAt: now, UpdatedAt: now,
+	}}))
+	require.NoError(t, store.AddPortsvcPortGroupRepositoryLinks(ctx, []PortsvcPortGroupRepositoryLinkRecord{{
+		PortGroupID: group.ID, PortSlotID: slotID, RepositoryID: repositories[0].ID,
+		RelationType: "source", Required: true, CreatedAt: now, UpdatedAt: now,
+	}}))
+
+	children, err := store.ListPortsvcPortGroupChildrenByGroupIDs(ctx, []string{group.ID})
+	require.NoError(t, err)
+	require.Len(t, children, 1)
+	require.Len(t, children[0].Slots, 1)
+	require.Equal(t, slotID, children[0].Slots[0].ID)
+	require.Len(t, children[0].RepositoryLinks, 1)
+	require.Equal(t, "acme/api", children[0].RepositoryLinks[0].Repository.FullName)
+}
+
 func newPortsvcTestDB(t *testing.T, ctx context.Context) *bun.DB {
 	t.Helper()
 	sqldb, err := sql.Open(sqliteshim.ShimName, ":memory:")
@@ -87,6 +131,7 @@ func newPortsvcTestDB(t *testing.T, ctx context.Context) *bun.DB {
 	t.Cleanup(func() {
 		require.NoError(t, db.Close())
 	})
+	require.NoError(t, dbschema.Apply(ctx, db, GithubSchema(), GithubIndexesSchema()))
 	require.NoError(t, dbschema.Apply(ctx, db, PortsvcSchema(), PortsvcIndexesSchema()))
 	return db
 }

@@ -10,6 +10,7 @@ export const appPaths = {
   login: "/login",
   register: "/register",
   settings: "/settings/appearance",
+  settingsGitHub: "/settings/github",
 } as const;
 
 export type TopNavKey = "admin" | "console" | "settings";

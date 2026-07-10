@@ -1,6 +1,7 @@
 import { apiGet, apiSend } from "@/shared/api/client";
 import type {
   DependencyAssetItem,
+  GitHubRepositoryItem,
   HostForm,
   HostItem,
   Meta,
@@ -37,21 +38,24 @@ export async function loadPortsvc(query: PortsvcQuery): Promise<PortsvcSnapshot>
     ownerSubject: query.ownerSubject,
   });
 
-  const [meta, hosts, portGroups, dependencyAssets, serviceGroups] = await Promise.all([
+  const [meta, hosts, portGroups, dependencyAssets, serviceGroups, repositories] = await Promise.all([
     apiGet<Meta>("/api/meta"),
     apiGet<HostItem[]>("/api/hosts"),
     apiGet<PortGroupItem[]>(groupsPath),
     apiGet<DependencyAssetItem[]>("/api/dependency-assets"),
     apiGet<ServiceGroupItem[]>(serviceGroupsPath),
+    apiGet<GitHubRepositoryItem[]>("/api/github/repositories"),
   ]);
 
   return {
     meta,
     hosts: hosts ?? [],
     dependencyAssets: dependencyAssets ?? [],
+    repositories: repositories ?? [],
     portGroups: (portGroups ?? []).map((item) => ({
       ...item,
       assetLinks: item.assetLinks ?? [],
+      repositoryLinks: item.repositoryLinks ?? [],
       slots: item.slots ?? [],
       tags: item.tags ?? "",
     })),
@@ -65,6 +69,7 @@ export async function loadPortsvc(query: PortsvcQuery): Promise<PortsvcSnapshot>
 export function savePortGroup(group: PortGroupForm, editingGroup?: PortGroupItem | null) {
   const payload = {
     assetLinks: group.assetLinks ?? [],
+    repositoryLinks: group.repositoryLinks ?? [],
     hostId: group.hostId ?? "",
     notes: group.notes ?? "",
     ownerSubject: group.ownerSubject ?? "",

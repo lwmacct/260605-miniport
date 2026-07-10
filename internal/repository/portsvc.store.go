@@ -679,6 +679,22 @@ func (s *Store) ListPortsvcPortGroupChildrenByGroupIDs(ctx context.Context, ids 
 		children[record.PortGroupID] = child
 	}
 
+	var repositoryLinkRows []PortGroupRepositoryLinksModel
+	if err := s.db.NewSelect().
+		Model(&repositoryLinkRows).
+		Relation("Repository").
+		Where("repository_link.port_group_id IN (?)", bun.List(ids)).
+		Order("repository_link.relation_type ASC", "repository.full_name ASC").
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+	for idx := range repositoryLinkRows {
+		record := *utilPortsvcPortGroupRepositoryLinkRecordFromModel(&repositoryLinkRows[idx])
+		child := children[record.PortGroupID]
+		child.RepositoryLinks = append(child.RepositoryLinks, record)
+		children[record.PortGroupID] = child
+	}
+
 	out := make([]PortsvcPortGroupChildrenRecord, 0, len(children))
 	for _, id := range ids {
 		out = append(out, children[id])
@@ -687,10 +703,13 @@ func (s *Store) ListPortsvcPortGroupChildrenByGroupIDs(ctx context.Context, ids 
 }
 
 func (s *Store) ReplacePortsvcPortGroupChildren(ctx context.Context, portGroupID string) error {
-	if _, err := s.db.NewDelete().Model((*ServicesModel)(nil)).Where("port_group_id = ?", portGroupID).Exec(ctx); err != nil {
+	if _, err := s.db.NewDelete().Model((*PortGroupRepositoryLinksModel)(nil)).Where("port_group_id = ?", portGroupID).Exec(ctx); err != nil {
 		return err
 	}
 	if _, err := s.db.NewDelete().Model((*PortGroupAssetLinksModel)(nil)).Where("port_group_id = ?", portGroupID).Exec(ctx); err != nil {
+		return err
+	}
+	if _, err := s.db.NewDelete().Model((*ServicesModel)(nil)).Where("port_group_id = ?", portGroupID).Exec(ctx); err != nil {
 		return err
 	}
 	return nil
@@ -702,8 +721,12 @@ func (s *Store) AddPortsvcPortSlots(ctx context.Context, slots []PortsvcPortSlot
 	}
 	rows := make([]ServicesModel, 0, len(slots))
 	for _, slot := range slots {
+		id := slot.ID
+		if id == "" {
+			id = idgen.NewUUID7()
+		}
 		rows = append(rows, ServicesModel{
-			ID:            idgen.NewUUID7(),
+			ID:            id,
 			PortGroupID:   slot.PortGroupID,
 			Port:          slot.Port,
 			Name:          slot.Name,
@@ -740,4 +763,26 @@ func (s *Store) AddPortsvcPortGroupAssetLinks(ctx context.Context, links []Ports
 	}
 	_, err := s.db.NewInsert().Model(&rows).Exec(ctx)
 	return err
+}
+
+func (s *Store) AddPortsvcPortGroupRepositoryLinks(ctx context.Context, links []PortsvcPortGroupRepositoryLinkRecord) error {
+	if len(links) == 0 {
+		return nil
+	}
+	rows := make([]PortGroupRepositoryLinksModel, 0, len(links))
+	for _, link := range links {
+		rows = append(rows, PortGroupRepositoryLinksModel{
+			ID: idgen.NewUUID7(), PortGroupID: link.PortGroupID, PortSlotID: link.PortSlotID,
+			RepositoryID: link.RepositoryID, RelationType: link.RelationType, Required: link.Required,
+			Notes: link.Notes, CreatedAt: link.CreatedAt, UpdatedAt: link.UpdatedAt,
+		})
+	}
+	_, err := s.db.NewInsert().Model(&rows).Exec(ctx)
+	return err
+}
+
+func (s *Store) ExistsPortsvcPortGroupRepositoryLink(ctx context.Context, portGroupID, repositoryID string) (bool, error) {
+	count, err := s.db.NewSelect().Model((*PortGroupRepositoryLinksModel)(nil)).
+		Where("port_group_id = ?", portGroupID).Where("repository_id = ?", repositoryID).Count(ctx)
+	return count > 0, err
 }

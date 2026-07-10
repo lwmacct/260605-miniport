@@ -44,12 +44,16 @@ func ToPortGroupPayload(input PortGroupPayloadDTO) service.PortGroupPayload {
 		Notes:            input.Notes,
 		Slots:            make([]service.PortSlotPayload, 0, len(input.Slots)),
 		AssetLinks:       make([]service.PortGroupAssetLinkPayload, 0, len(input.AssetLinks)),
+		RepositoryLinks:  make([]service.PortGroupRepositoryLinkPayload, 0, len(input.RepositoryLinks)),
 	}
 	for _, slot := range input.Slots {
 		out.Slots = append(out.Slots, service.PortSlotPayload(slot))
 	}
 	for _, link := range input.AssetLinks {
 		out.AssetLinks = append(out.AssetLinks, service.PortGroupAssetLinkPayload(link))
+	}
+	for _, link := range input.RepositoryLinks {
+		out.RepositoryLinks = append(out.RepositoryLinks, service.PortGroupRepositoryLinkPayload(link))
 	}
 	return out
 }
@@ -174,6 +178,27 @@ func ToPortGroupAssetLinkDTOs(links []service.PortGroupAssetLink) []PortGroupAss
 	return out
 }
 
+func ToPortGroupRepositoryLinkDTO(link service.PortGroupRepositoryLink) PortGroupRepositoryLinkDTO {
+	out := PortGroupRepositoryLinkDTO{
+		ID: link.ID, PortGroupID: link.PortGroupID, PortSlotID: link.PortSlotID,
+		RepositoryID: link.RepositoryID, RelationType: link.RelationType, Required: link.Required,
+		Notes: link.Notes, CreatedAt: utilHTTPTime(link.CreatedAt), UpdatedAt: utilHTTPTime(link.UpdatedAt),
+	}
+	if link.Repository != nil {
+		repository := ToGithubRepositoryDTO(*link.Repository)
+		out.Repository = &repository
+	}
+	return out
+}
+
+func ToPortGroupRepositoryLinkDTOs(links []service.PortGroupRepositoryLink) []PortGroupRepositoryLinkDTO {
+	out := make([]PortGroupRepositoryLinkDTO, 0, len(links))
+	for _, link := range links {
+		out = append(out, ToPortGroupRepositoryLinkDTO(link))
+	}
+	return out
+}
+
 func ToPortGroupDTO(group service.PortGroupView) PortGroupDTO {
 	out := PortGroupDTO{
 		ID:               group.ID,
@@ -193,6 +218,7 @@ func ToPortGroupDTO(group service.PortGroupView) PortGroupDTO {
 		UpdatedAt:        utilHTTPTime(group.UpdatedAt),
 		Slots:            ToPortSlotDTOs(group.Slots),
 		AssetLinks:       ToPortGroupAssetLinkDTOs(group.AssetLinks),
+		RepositoryLinks:  ToPortGroupRepositoryLinkDTOs(group.RepositoryLinks),
 	}
 	if group.Host != nil {
 		host := ToHostDTO(*group.Host)

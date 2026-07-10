@@ -1,4 +1,4 @@
-import { DeleteOutlined, PlusOutlined, SaveOutlined } from "@ant-design/icons";
+import { DeleteOutlined, GithubOutlined, PlusOutlined, SaveOutlined } from "@ant-design/icons";
 import { Button, Col, Drawer, Form, Input, InputNumber, Row, Select, Space, Tabs } from "antd";
 import type { FormInstance, FormListFieldData, FormListOperation } from "antd/es/form";
 import {
@@ -7,13 +7,14 @@ import {
   slotKindOptions,
   statusOptions,
 } from "../model/portsvcConstants";
-import type { DependencyAssetItem, HostItem, PortGroupForm, PortGroupItem } from "../model/portsvcTypes";
+import type { DependencyAssetItem, GitHubRepositoryItem, HostItem, PortGroupForm, PortGroupItem } from "../model/portsvcTypes";
 
 type ServiceDrawerProps = {
   editingGroup: PortGroupItem | null;
   dependencyAssets: DependencyAssetItem[];
   form: FormInstance<PortGroupForm>;
   hosts: HostItem[];
+  repositories: GitHubRepositoryItem[];
   onClose: () => void;
   onSave: (values: PortGroupForm) => void;
   open: boolean;
@@ -25,6 +26,7 @@ export function ServiceDrawer({
   dependencyAssets,
   form,
   hosts,
+  repositories,
   onClose,
   onSave,
   open,
@@ -36,6 +38,12 @@ export function ServiceDrawer({
     const port = start + idx;
     return { value: port, label: String(port) };
   });
+  const repositoryOptions = new Map(repositories.map((repository) => [repository.id, repository]));
+  for (const link of editingGroup?.repositoryLinks ?? []) {
+    if (link.repository) {
+      repositoryOptions.set(link.repository.id, link.repository);
+    }
+  }
 
   return (
     <Drawer
@@ -151,6 +159,56 @@ export function ServiceDrawer({
                           <Col xs={24} md={6}>
                             <Form.Item name={[field.name, "containerName"]}>
                               <Input placeholder="容器名" />
+                            </Form.Item>
+                          </Col>
+                          <Col xs={24} md={1}>
+                            <Button danger icon={<DeleteOutlined />} onClick={() => remove(field.name)} />
+                          </Col>
+                        </Row>
+                      ))}
+                    </Space>
+                  )}
+                </Form.List>
+              ),
+            },
+            {
+              key: "repositoryLinks",
+              label: <Space size={6}><GithubOutlined />GitHub 仓库</Space>,
+              children: (
+                <Form.List name="repositoryLinks">
+                  {(fields: FormListFieldData[], { add, remove }: FormListOperation) => (
+                    <Space direction="vertical" className="content-stack">
+                      <Button icon={<PlusOutlined />} onClick={() => add({ relationType: "source", required: true })}>
+                        添加仓库关系
+                      </Button>
+                      {fields.map((field: FormListFieldData) => (
+                        <Row key={field.key} gutter={10} className="compact-form-row">
+                          <Col xs={24} md={9}>
+                            <Form.Item name={[field.name, "repositoryId"]} rules={[{ required: true }]}>
+                              <Select
+                                showSearch
+                                placeholder="选择 GitHub 仓库"
+                                optionFilterProp="label"
+                                options={[...repositoryOptions.values()].map((repository) => ({
+                                  value: repository.id,
+                                  label: `${repository.fullName} · ${repository.visibility}${repository.state === "active" ? "" : ` · ${repository.state}`}`,
+                                }))}
+                              />
+                            </Form.Item>
+                          </Col>
+                          <Col xs={24} md={5}>
+                            <Form.Item name={[field.name, "relationType"]}>
+                              <Select options={relationTypeOptions} />
+                            </Form.Item>
+                          </Col>
+                          <Col xs={24} md={3}>
+                            <Form.Item name={[field.name, "required"]}>
+                              <Select options={[{ value: true, label: "必需" }, { value: false, label: "可选" }]} />
+                            </Form.Item>
+                          </Col>
+                          <Col xs={24} md={6}>
+                            <Form.Item name={[field.name, "notes"]}>
+                              <Input placeholder="备注" />
                             </Form.Item>
                           </Col>
                           <Col xs={24} md={1}>

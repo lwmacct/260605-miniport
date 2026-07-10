@@ -40,6 +40,7 @@ type PortGroup = repository.PortsvcPortGroupRecord
 type PortSlot = repository.PortsvcPortSlotRecord
 type DependencyAsset = repository.PortsvcDependencyAssetRecord
 type PortGroupAssetLink = repository.PortsvcPortGroupAssetLinkRecord
+type PortGroupRepositoryLink = repository.PortsvcPortGroupRepositoryLinkRecord
 type ServiceGroup = repository.PortsvcServiceGroupRecord
 type ServiceGroupPortGroup = repository.PortsvcServiceGroupPortGroupRecord
 
@@ -94,6 +95,15 @@ type PortGroupAssetLinkPayload struct {
 	Notes        string
 }
 
+type PortGroupRepositoryLinkPayload struct {
+	ID           string
+	PortSlotID   string
+	RepositoryID string
+	RelationType string
+	Required     bool
+	Notes        string
+}
+
 type PortGroupPayload struct {
 	OwnerSubject     string
 	HostID           string
@@ -108,6 +118,7 @@ type PortGroupPayload struct {
 	Notes            string
 	Slots            []PortSlotPayload
 	AssetLinks       []PortGroupAssetLinkPayload
+	RepositoryLinks  []PortGroupRepositoryLinkPayload
 }
 
 type ServiceGroupPortGroupPayload struct {
@@ -130,8 +141,9 @@ type ServiceGroupPayload struct {
 type PortGroupView struct {
 	PortGroup
 
-	Slots      []PortSlot
-	AssetLinks []PortGroupAssetLink
+	Slots           []PortSlot
+	AssetLinks      []PortGroupAssetLink
+	RepositoryLinks []PortGroupRepositoryLink
 }
 
 type ServiceGroupView struct {
@@ -403,6 +415,7 @@ func utilNextAvailablePortPrefix(ctx context.Context, store *repository.Store, o
 
 func utilNormalizePortSlot(group PortGroup, payload PortSlotPayload) (*PortSlot, error) {
 	slot := &PortSlot{
+		ID:            strings.TrimSpace(payload.ID),
 		PortGroupID:   group.ID,
 		Port:          payload.Port,
 		Name:          strings.TrimSpace(payload.Name),
@@ -492,6 +505,57 @@ func utilNormalizeAssetLinks(ctx context.Context, store *repository.Store, group
 			RelationType: relationType,
 			Required:     payload.Required,
 			Notes:        strings.TrimSpace(payload.Notes),
+		})
+	}
+	return out, nil
+}
+
+func utilNormalizeRepositoryLinks(ctx context.Context, store *repository.Store, group PortGroup, payloads []PortGroupRepositoryLinkPayload) ([]PortGroupRepositoryLink, error) {
+	out := make([]PortGroupRepositoryLink, 0, len(payloads))
+	seen := map[string]struct{}{}
+	for _, payload := range payloads {
+		repositoryID := strings.TrimSpace(payload.RepositoryID)
+		if repositoryID == "" {
+			continue
+		}
+		if _, err := store.FetchGithubRepositoryByID(ctx, repositoryID); err != nil {
+			return nil, err
+		}
+		accessible, err := store.ExistsGithubRepositorySubject(ctx, repositoryID, group.OwnerSubject)
+		if err != nil {
+			return nil, err
+		}
+		if !accessible {
+			alreadyLinked, linkErr := store.ExistsPortsvcPortGroupRepositoryLink(ctx, group.ID, repositoryID)
+			if linkErr != nil {
+				return nil, linkErr
+			}
+			if !alreadyLinked {
+				return nil, utilBadPortsvcRequest("repository must be accessible to the port group owner")
+			}
+		}
+		portSlotID := strings.TrimSpace(payload.PortSlotID)
+		if portSlotID != "" {
+			slot, err := store.FetchPortsvcPortSlotByID(ctx, portSlotID)
+			if err != nil {
+				return nil, err
+			}
+			if slot.PortGroupID != group.ID {
+				return nil, utilBadPortsvcRequest("portSlotId must belong to the port group")
+			}
+		}
+		relationType := strings.TrimSpace(payload.RelationType)
+		if relationType == "" {
+			relationType = "source"
+		}
+		key := portSlotID + "\x00" + repositoryID + "\x00" + relationType
+		if _, exists := seen[key]; exists {
+			return nil, utilBadPortsvcRequest("repository links must be unique inside a port group")
+		}
+		seen[key] = struct{}{}
+		out = append(out, PortGroupRepositoryLink{
+			PortGroupID: group.ID, PortSlotID: portSlotID, RepositoryID: repositoryID,
+			RelationType: relationType, Required: payload.Required, Notes: strings.TrimSpace(payload.Notes),
 		})
 	}
 	return out, nil
@@ -595,6 +659,18 @@ func utilAssetLinks(links []PortGroupAssetLink) string {
 		label := link.AssetID
 		if link.Asset != nil && link.Asset.Name != "" {
 			label = link.Asset.Name
+		}
+		items = append(items, link.RelationType+":"+label)
+	}
+	return strings.Join(items, "; ")
+}
+
+func utilRepositoryLinks(links []PortGroupRepositoryLink) string {
+	items := make([]string, 0, len(links))
+	for _, link := range links {
+		label := link.RepositoryID
+		if link.Repository != nil && link.Repository.FullName != "" {
+			label = link.Repository.FullName
 		}
 		items = append(items, link.RelationType+":"+label)
 	}

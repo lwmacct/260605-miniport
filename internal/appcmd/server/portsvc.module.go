@@ -26,7 +26,7 @@ func NewPortsvcSpec() appmodule.Spec {
 	module := &PortsvcModule{}
 	return appmodule.Spec{
 		Name:     module.Name(),
-		Requires: []string{"auth"},
+		Requires: []string{"auth", "github"},
 		Schema:   applyPortsvcSchema,
 		Build: func(ctx *appmodule.Context) (appmodule.Module, error) {
 			store := repository.NewStore(ctx.DB())

@@ -52,6 +52,29 @@ func TestPortsvcReadRejectsMissingSession(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, rec.Code, rec.Body.String())
 }
 
+func TestGithubStatusUsesLocalSession(t *testing.T) {
+	app, handler := setupPortsvcTestApp(t)
+	cookie := createTestSessionCookie(t, app, "github-member")
+
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/github/status", nil)
+	req.RemoteAddr = "127.0.0.1:12345"
+	req.AddCookie(cookie)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+	var status struct {
+		Enabled bool `json:"enabled"`
+	}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &status))
+	require.False(t, status.Enabled)
+
+	req = httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/github/status", nil)
+	req.RemoteAddr = "127.0.0.1:12345"
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusUnauthorized, rec.Code, rec.Body.String())
+}
+
 func setupPortsvcTestApp(t *testing.T) (*App, http.Handler) {
 	t.Helper()
 	cfg := config.DefaultConfig()

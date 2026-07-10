@@ -1,6 +1,6 @@
 import { Tag } from "antd";
 import { statusOptions } from "./portsvcConstants";
-import type { DependencyAssetItem, PortGroupItem, ServiceGroupItem } from "./portsvcTypes";
+import type { DependencyAssetItem, GitHubRepositoryItem, PortGroupItem, ServiceGroupItem } from "./portsvcTypes";
 
 export function statusTag(status: string) {
   const colorMap: Record<string, string> = {
@@ -33,7 +33,13 @@ export function portGroupLabel(group?: Pick<PortGroupItem, "portPrefix"> | null)
   return group ? String(group.portPrefix) : "-";
 }
 
-export function buildStats(groups: PortGroupItem[], hosts: unknown[], assets: DependencyAssetItem[], serviceGroups: ServiceGroupItem[] = []) {
+export function buildStats(
+  groups: PortGroupItem[],
+  hosts: unknown[],
+  assets: DependencyAssetItem[],
+  repositories: GitHubRepositoryItem[],
+  serviceGroups: ServiceGroupItem[] = [],
+) {
   return {
     groups: groups.length,
     hosts: hosts.length,
@@ -43,5 +49,7 @@ export function buildStats(groups: PortGroupItem[], hosts: unknown[], assets: De
     dependencyAssets: assets.length,
     assetLinks: groups.reduce((sum, item) => sum + item.assetLinks.length, 0),
     serviceGroups: serviceGroups.length,
+    repositories: repositories.length,
+    repositoryLinks: groups.reduce((sum, item) => sum + item.repositoryLinks.length, 0),
   };
 }

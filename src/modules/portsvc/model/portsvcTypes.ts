@@ -57,6 +57,38 @@ export type PortGroupAssetLinkItem = {
   notes: string;
 };
 
+export type GitHubRepositoryItem = {
+  id: string;
+  installationId: string;
+  githubRepositoryId: number;
+  ownerLogin: string;
+  name: string;
+  fullName: string;
+  htmlUrl: string;
+  description: string;
+  defaultBranch: string;
+  visibility: string;
+  private: boolean;
+  fork: boolean;
+  archived: boolean;
+  disabled: boolean;
+  state: string;
+  pushedAt?: string;
+  remoteUpdatedAt?: string;
+  lastSeenAt: string;
+};
+
+export type PortGroupRepositoryLinkItem = {
+  id?: string;
+  portGroupId?: string;
+  portSlotId?: string;
+  repositoryId: string;
+  repository?: GitHubRepositoryItem;
+  relationType: string;
+  required: boolean;
+  notes: string;
+};
+
 export type ServiceGroupPortGroupItem = {
   id?: string;
   serviceGroupId?: string;
@@ -95,6 +127,7 @@ export type PortGroupItem = {
   notes: string;
   slots: PortSlotItem[];
   assetLinks: PortGroupAssetLinkItem[];
+  repositoryLinks: PortGroupRepositoryLinkItem[];
 };
 
 export type PortGroupForm = Partial<Omit<PortGroupItem, "id" | "ownerName" | "host">> & {
@@ -114,6 +147,7 @@ export type PortsvcSnapshot = {
   hosts: HostItem[];
   portGroups: PortGroupItem[];
   dependencyAssets: DependencyAssetItem[];
+  repositories: GitHubRepositoryItem[];
   serviceGroups: ServiceGroupItem[];
 };
 
@@ -133,4 +167,6 @@ export type AppStats = {
   dependencyAssets: number;
   assetLinks: number;
   serviceGroups: number;
+  repositories: number;
+  repositoryLinks: number;
 };

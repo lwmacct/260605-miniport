@@ -114,6 +114,19 @@ type PortsvcPortGroupAssetLinkRecord struct {
 	UpdatedAt    time.Time
 }
 
+type PortsvcPortGroupRepositoryLinkRecord struct {
+	ID           string
+	PortGroupID  string
+	PortSlotID   string
+	RepositoryID string
+	Repository   *GithubRepositoryRecord
+	RelationType string
+	Required     bool
+	Notes        string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
 type PortsvcServiceGroupRecord struct {
 	ID           string
 	OwnerSubject string
@@ -144,9 +157,10 @@ type PortsvcServiceGroupChildrenRecord struct {
 }
 
 type PortsvcPortGroupChildrenRecord struct {
-	PortGroupID string
-	Slots       []PortsvcPortSlotRecord
-	AssetLinks  []PortsvcPortGroupAssetLinkRecord
+	PortGroupID     string
+	Slots           []PortsvcPortSlotRecord
+	AssetLinks      []PortsvcPortGroupAssetLinkRecord
+	RepositoryLinks []PortsvcPortGroupRepositoryLinkRecord
 }
 
 func utilPortsvcHostRecordFromModel(model *HostsModel) *PortsvcHostRecord {
@@ -250,6 +264,19 @@ func utilPortsvcPortGroupAssetLinkRecordFromModel(model *PortGroupAssetLinksMode
 		UpdatedAt:    model.UpdatedAt,
 	}
 	out.Asset = utilPortsvcDependencyAssetRecordFromModel(model.Asset)
+	return out
+}
+
+func utilPortsvcPortGroupRepositoryLinkRecordFromModel(model *PortGroupRepositoryLinksModel) *PortsvcPortGroupRepositoryLinkRecord {
+	if model == nil {
+		return nil
+	}
+	out := &PortsvcPortGroupRepositoryLinkRecord{
+		ID: model.ID, PortGroupID: model.PortGroupID, PortSlotID: model.PortSlotID,
+		RepositoryID: model.RepositoryID, RelationType: model.RelationType, Required: model.Required,
+		Notes: model.Notes, CreatedAt: model.CreatedAt, UpdatedAt: model.UpdatedAt,
+	}
+	out.Repository = utilGithubRepositoryRecord(model.Repository)
 	return out
 }
 

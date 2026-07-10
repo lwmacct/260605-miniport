@@ -125,6 +125,16 @@ export function ServiceDetailDrawer({
               ))}
             </Space>
           </WorkbenchPanel>
+          <WorkbenchPanel title="GitHub 仓库">
+            <Space size={[6, 6]} wrap>
+              {group.repositoryLinks.length === 0 ? <Typography.Text type="secondary">未绑定仓库</Typography.Text> : null}
+              {group.repositoryLinks.map((link) => (
+                <Tag color={link.repository?.state === "active" ? undefined : "red"} key={`${link.id ?? link.repositoryId}-${link.relationType}`}>
+                  {link.relationType}: {link.repository?.fullName ?? link.repositoryId}
+                </Tag>
+              ))}
+            </Space>
+          </WorkbenchPanel>
         </Space>
       ) : null}
     </Drawer>

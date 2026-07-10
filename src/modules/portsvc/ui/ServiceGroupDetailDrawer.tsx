@@ -72,6 +72,21 @@ export function ServiceGroupDetailDrawer({
       },
     },
     {
+      title: "GitHub 仓库",
+      render: (_, item) => {
+        const links = item.resolvedPortGroup?.repositoryLinks ?? [];
+        return links.length ? (
+          <Space size={[4, 4]} wrap>
+            {links.map((link) => (
+              <Tag color={link.repository?.state === "active" ? undefined : "red"} key={link.id ?? `${link.repositoryId}-${link.relationType}`}>
+                {link.relationType}: {link.repository?.fullName ?? link.repositoryId}
+              </Tag>
+            ))}
+          </Space>
+        ) : "-";
+      },
+    },
+    {
       title: "依赖资产",
       render: (_, item) => {
         const links = item.resolvedPortGroup?.assetLinks ?? [];

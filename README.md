@@ -16,9 +16,10 @@ Miniport 是一个端口服务资产管理应用，用来管理宿主机、固�
 
 ## Table of Contents
 
-- [数据模型](#数据模型) `:25+8`
-- [本地运行](#本地运行) `:33+28`
-- [API](#api) `:61+32`
+- [数据模型](#数据模型) `:26+10`
+- [GitHub App](#github-app) `:36+12`
+- [本地运行](#本地运行) `:48+28`
+- [API](#api) `:76+40`
 
 <!--TOC-->
 
@@ -29,6 +30,20 @@ Miniport 是一个端口服务资产管理应用，用来管理宿主机、固�
 - 端口槽位：端口组内的具体服务组件，例如 `redis:11120`、`mysql:11121`、`kafka:11122`。
 - 依赖资产：端口组项目使用的代码仓库、闭源服务、SaaS、组件或文档，例如 GitHub 仓库、闭源 API、`kafka`、`nginx`、`redis`。
 - 资产关系：端口组到依赖资产的关系，例如源码、运行依赖、构建依赖、部署、基础设施、API 或文档。
+- GitHub 仓库：通过 GitHub App 安装同步的公开或私有仓库，以 GitHub repository ID 作为稳定身份。
+- 仓库关系：端口组或端口槽位到 GitHub 仓库的源码、构建、部署或文档关系。
+
+## GitHub App
+
+仓库同步使用 GitHub App Installation Token，不接收用户 Personal Access Token。GitHub App 注册时配置：
+
+- Repository permissions：`Metadata: Read-only`。
+- Setup URL：`https://<miniport-host>/api/github/setup`。
+- Webhook URL：`https://<miniport-host>/api/github/webhooks`。
+- Webhook events：`installation`、`installation_repositories`、`repository`。
+- 安装范围：`Any account`。
+
+在 `server.github` 中设置 `enabled`、`app-id`、`app-slug`、`private-key-file` 和 `webhook-secret`。用户需要分别在个人账号和每个 GitHub Organization 安装 App；系统只能同步安装时授权的仓库。
 
 ## 本地运行
 
@@ -71,6 +86,14 @@ API_PROXY_TARGET=http://127.0.0.1:40240 pnpm run dev
 - `GET /api/auth/me`
 - `POST /api/auth/logout`
 - `GET /api/admin/users`
+- `GET /api/github/status`
+- `POST /api/github/connections`
+- `GET /api/github/setup`
+- `GET /api/github/installations`
+- `POST /api/github/installations/{id}/sync`
+- `DELETE /api/github/installations/{id}/connection`
+- `GET /api/github/repositories`
+- `POST /api/github/webhooks`
 - `GET /api/hosts`
 - `POST /api/hosts`
 - `PUT /api/hosts/{id}`

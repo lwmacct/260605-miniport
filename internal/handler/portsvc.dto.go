@@ -45,20 +45,30 @@ type PortGroupAssetLinkPayloadDTO struct {
 	Notes        string `json:"notes,omitempty"`
 }
 
+type PortGroupRepositoryLinkPayloadDTO struct {
+	ID           string `json:"id,omitempty"`
+	PortSlotID   string `json:"portSlotId,omitempty"`
+	RepositoryID string `json:"repositoryId,omitempty"`
+	RelationType string `json:"relationType,omitempty"`
+	Required     bool   `json:"required,omitempty"`
+	Notes        string `json:"notes,omitempty"`
+}
+
 type PortGroupPayloadDTO struct {
-	OwnerSubject     string                         `json:"ownerSubject,omitempty"`
-	HostID           string                         `json:"hostId,omitempty"`
-	PortPrefix       int                            `json:"portPrefix,omitempty"`
-	EnvironmentName  string                         `json:"environmentName,omitempty"`
-	EnvironmentOwner string                         `json:"environmentOwner,omitempty"`
-	RuntimeMode      string                         `json:"runtimeMode,omitempty"`
-	RuntimeName      string                         `json:"runtimeName,omitempty"`
-	ServiceIP        string                         `json:"serviceIp,omitempty"`
-	Status           string                         `json:"status,omitempty"`
-	Tags             string                         `json:"tags,omitempty"`
-	Notes            string                         `json:"notes,omitempty"`
-	Slots            []PortSlotPayloadDTO           `json:"slots,omitempty"`
-	AssetLinks       []PortGroupAssetLinkPayloadDTO `json:"assetLinks,omitempty"`
+	OwnerSubject     string                              `json:"ownerSubject,omitempty"`
+	HostID           string                              `json:"hostId,omitempty"`
+	PortPrefix       int                                 `json:"portPrefix,omitempty"`
+	EnvironmentName  string                              `json:"environmentName,omitempty"`
+	EnvironmentOwner string                              `json:"environmentOwner,omitempty"`
+	RuntimeMode      string                              `json:"runtimeMode,omitempty"`
+	RuntimeName      string                              `json:"runtimeName,omitempty"`
+	ServiceIP        string                              `json:"serviceIp,omitempty"`
+	Status           string                              `json:"status,omitempty"`
+	Tags             string                              `json:"tags,omitempty"`
+	Notes            string                              `json:"notes,omitempty"`
+	Slots            []PortSlotPayloadDTO                `json:"slots,omitempty"`
+	AssetLinks       []PortGroupAssetLinkPayloadDTO      `json:"assetLinks,omitempty"`
+	RepositoryLinks  []PortGroupRepositoryLinkPayloadDTO `json:"repositoryLinks,omitempty"`
 }
 
 type ServiceGroupPortGroupPayloadDTO struct {
@@ -104,24 +114,25 @@ type PortSlotDTO struct {
 }
 
 type PortGroupDTO struct {
-	ID               string                  `json:"id"`
-	OwnerSubject     string                  `json:"ownerSubject"`
-	OwnerName        string                  `json:"ownerName"`
-	HostID           string                  `json:"hostId"`
-	Host             *HostDTO                `json:"host,omitempty"`
-	PortPrefix       int                     `json:"portPrefix"`
-	EnvironmentName  string                  `json:"environmentName"`
-	EnvironmentOwner string                  `json:"environmentOwner"`
-	RuntimeMode      string                  `json:"runtimeMode"`
-	RuntimeName      string                  `json:"runtimeName"`
-	ServiceIP        string                  `json:"serviceIp"`
-	Status           string                  `json:"status"`
-	Tags             string                  `json:"tags"`
-	Notes            string                  `json:"notes"`
-	CreatedAt        string                  `json:"createdAt"`
-	UpdatedAt        string                  `json:"updatedAt"`
-	Slots            []PortSlotDTO           `json:"slots"`
-	AssetLinks       []PortGroupAssetLinkDTO `json:"assetLinks"`
+	ID               string                       `json:"id"`
+	OwnerSubject     string                       `json:"ownerSubject"`
+	OwnerName        string                       `json:"ownerName"`
+	HostID           string                       `json:"hostId"`
+	Host             *HostDTO                     `json:"host,omitempty"`
+	PortPrefix       int                          `json:"portPrefix"`
+	EnvironmentName  string                       `json:"environmentName"`
+	EnvironmentOwner string                       `json:"environmentOwner"`
+	RuntimeMode      string                       `json:"runtimeMode"`
+	RuntimeName      string                       `json:"runtimeName"`
+	ServiceIP        string                       `json:"serviceIp"`
+	Status           string                       `json:"status"`
+	Tags             string                       `json:"tags"`
+	Notes            string                       `json:"notes"`
+	CreatedAt        string                       `json:"createdAt"`
+	UpdatedAt        string                       `json:"updatedAt"`
+	Slots            []PortSlotDTO                `json:"slots"`
+	AssetLinks       []PortGroupAssetLinkDTO      `json:"assetLinks"`
+	RepositoryLinks  []PortGroupRepositoryLinkDTO `json:"repositoryLinks"`
 }
 
 type ServiceGroupPortGroupDTO struct {
@@ -182,6 +193,19 @@ type PortGroupAssetLinkDTO struct {
 	Notes        string              `json:"notes"`
 	CreatedAt    string              `json:"createdAt"`
 	UpdatedAt    string              `json:"updatedAt"`
+}
+
+type PortGroupRepositoryLinkDTO struct {
+	ID           string               `json:"id"`
+	PortGroupID  string               `json:"portGroupId"`
+	PortSlotID   string               `json:"portSlotId"`
+	RepositoryID string               `json:"repositoryId"`
+	Repository   *GithubRepositoryDTO `json:"repository,omitempty"`
+	RelationType string               `json:"relationType"`
+	Required     bool                 `json:"required"`
+	Notes        string               `json:"notes"`
+	CreatedAt    string               `json:"createdAt"`
+	UpdatedAt    string               `json:"updatedAt"`
 }
 
 type HostListInputDTO struct {

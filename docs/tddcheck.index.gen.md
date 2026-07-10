@@ -8,60 +8,77 @@
 
 ## APIs
 
-| Method   | Full Path                 | Mount | Operation Path            | Operation                 | Tags              | Handler                 | Register          | File                                  |
-| -------- | ------------------------- | ----- | ------------------------- | ------------------------- | ----------------- | ----------------------- | ----------------- | ------------------------------------- |
-| `GET`    | `/dependency-assets`      | `-`   | `/dependency-assets`      | `list-dependency-assets`  | dependency-assets | `listDependencyAssets`  | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `POST`   | `/dependency-assets`      | `-`   | `/dependency-assets`      | `create-dependency-asset` | dependency-assets | `createDependencyAsset` | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `DELETE` | `/dependency-assets/{id}` | `-`   | `/dependency-assets/{id}` | `delete-dependency-asset` | dependency-assets | `deleteDependencyAsset` | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `PUT`    | `/dependency-assets/{id}` | `-`   | `/dependency-assets/{id}` | `update-dependency-asset` | dependency-assets | `updateDependencyAsset` | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `GET`    | `/hosts`                  | `-`   | `/hosts`                  | `list-hosts`              | hosts             | `listHosts`             | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `POST`   | `/hosts`                  | `-`   | `/hosts`                  | `create-host`             | hosts             | `createHost`            | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `DELETE` | `/hosts/{id}`             | `-`   | `/hosts/{id}`             | `delete-host`             | hosts             | `deleteHost`            | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `PUT`    | `/hosts/{id}`             | `-`   | `/hosts/{id}`             | `update-host`             | hosts             | `updateHost`            | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `GET`    | `/port-groups`            | `-`   | `/port-groups`            | `list-port-groups`        | port-groups       | `listPortGroups`        | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `POST`   | `/port-groups`            | `-`   | `/port-groups`            | `create-port-group`       | port-groups       | `createPortGroup`       | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `GET`    | `/port-groups/export.csv` | `-`   | `/port-groups/export.csv` | `export-port-groups`      | port-groups       | `exportPortGroups`      | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `DELETE` | `/port-groups/{id}`       | `-`   | `/port-groups/{id}`       | `delete-port-group`       | port-groups       | `deletePortGroup`       | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `GET`    | `/port-groups/{id}`       | `-`   | `/port-groups/{id}`       | `get-port-group`          | port-groups       | `getPortGroup`          | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `PUT`    | `/port-groups/{id}`       | `-`   | `/port-groups/{id}`       | `update-port-group`       | port-groups       | `updatePortGroup`       | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `POST`   | `/port-groups/{id}/slots` | `-`   | `/port-groups/{id}/slots` | `create-port-slot`        | port-slots        | `createPortSlot`        | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `DELETE` | `/port-slots/{id}`        | `-`   | `/port-slots/{id}`        | `delete-port-slot`        | port-slots        | `deletePortSlot`        | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `PUT`    | `/port-slots/{id}`        | `-`   | `/port-slots/{id}`        | `update-port-slot`        | port-slots        | `updatePortSlot`        | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `GET`    | `/service-groups`         | `-`   | `/service-groups`         | `list-service-groups`     | service-groups    | `listServiceGroups`     | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `POST`   | `/service-groups`         | `-`   | `/service-groups`         | `create-service-group`    | service-groups    | `createServiceGroup`    | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `DELETE` | `/service-groups/{id}`    | `-`   | `/service-groups/{id}`    | `delete-service-group`    | service-groups    | `deleteServiceGroup`    | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `GET`    | `/service-groups/{id}`    | `-`   | `/service-groups/{id}`    | `get-service-group`       | service-groups    | `getServiceGroup`       | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `PUT`    | `/service-groups/{id}`    | `-`   | `/service-groups/{id}`    | `update-service-group`    | service-groups    | `updateServiceGroup`    | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| Method   | Full Path                               | Mount | Operation Path                          | Operation                        | Tags              | Handler                 | Register          | File                                  |
+| -------- | --------------------------------------- | ----- | --------------------------------------- | -------------------------------- | ----------------- | ----------------------- | ----------------- | ------------------------------------- |
+| `GET`    | `/dependency-assets`                    | `-`   | `/dependency-assets`                    | `list-dependency-assets`         | dependency-assets | `listDependencyAssets`  | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `POST`   | `/dependency-assets`                    | `-`   | `/dependency-assets`                    | `create-dependency-asset`        | dependency-assets | `createDependencyAsset` | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `DELETE` | `/dependency-assets/{id}`               | `-`   | `/dependency-assets/{id}`               | `delete-dependency-asset`        | dependency-assets | `deleteDependencyAsset` | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `PUT`    | `/dependency-assets/{id}`               | `-`   | `/dependency-assets/{id}`               | `update-dependency-asset`        | dependency-assets | `updateDependencyAsset` | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `POST`   | `/github/connections`                   | `-`   | `/github/connections`                   | `begin-github-connection`        | github            | `beginConnection`       | `RegisterGithub`  | `internal/handler/github.handler.go`  |
+| `GET`    | `/github/installations`                 | `-`   | `/github/installations`                 | `list-github-installations`      | github            | `listInstallations`     | `RegisterGithub`  | `internal/handler/github.handler.go`  |
+| `DELETE` | `/github/installations/{id}/connection` | `-`   | `/github/installations/{id}/connection` | `disconnect-github-installation` | github            | `disconnect`            | `RegisterGithub`  | `internal/handler/github.handler.go`  |
+| `POST`   | `/github/installations/{id}/sync`       | `-`   | `/github/installations/{id}/sync`       | `sync-github-installation`       | github            | `syncInstallation`      | `RegisterGithub`  | `internal/handler/github.handler.go`  |
+| `GET`    | `/github/repositories`                  | `-`   | `/github/repositories`                  | `list-github-repositories`       | github            | `listRepositories`      | `RegisterGithub`  | `internal/handler/github.handler.go`  |
+| `GET`    | `/github/setup`                         | `-`   | `/github/setup`                         | `complete-github-connection`     | github            | `completeConnection`    | `RegisterGithub`  | `internal/handler/github.handler.go`  |
+| `GET`    | `/github/status`                        | `-`   | `/github/status`                        | `get-github-status`              | github            | `status`                | `RegisterGithub`  | `internal/handler/github.handler.go`  |
+| `POST`   | `/github/webhooks`                      | `-`   | `/github/webhooks`                      | `receive-github-webhook`         | github            | `webhook`               | `RegisterGithub`  | `internal/handler/github.handler.go`  |
+| `GET`    | `/hosts`                                | `-`   | `/hosts`                                | `list-hosts`                     | hosts             | `listHosts`             | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `POST`   | `/hosts`                                | `-`   | `/hosts`                                | `create-host`                    | hosts             | `createHost`            | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `DELETE` | `/hosts/{id}`                           | `-`   | `/hosts/{id}`                           | `delete-host`                    | hosts             | `deleteHost`            | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `PUT`    | `/hosts/{id}`                           | `-`   | `/hosts/{id}`                           | `update-host`                    | hosts             | `updateHost`            | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `GET`    | `/port-groups`                          | `-`   | `/port-groups`                          | `list-port-groups`               | port-groups       | `listPortGroups`        | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `POST`   | `/port-groups`                          | `-`   | `/port-groups`                          | `create-port-group`              | port-groups       | `createPortGroup`       | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `GET`    | `/port-groups/export.csv`               | `-`   | `/port-groups/export.csv`               | `export-port-groups`             | port-groups       | `exportPortGroups`      | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `DELETE` | `/port-groups/{id}`                     | `-`   | `/port-groups/{id}`                     | `delete-port-group`              | port-groups       | `deletePortGroup`       | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `GET`    | `/port-groups/{id}`                     | `-`   | `/port-groups/{id}`                     | `get-port-group`                 | port-groups       | `getPortGroup`          | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `PUT`    | `/port-groups/{id}`                     | `-`   | `/port-groups/{id}`                     | `update-port-group`              | port-groups       | `updatePortGroup`       | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `POST`   | `/port-groups/{id}/slots`               | `-`   | `/port-groups/{id}/slots`               | `create-port-slot`               | port-slots        | `createPortSlot`        | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `DELETE` | `/port-slots/{id}`                      | `-`   | `/port-slots/{id}`                      | `delete-port-slot`               | port-slots        | `deletePortSlot`        | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `PUT`    | `/port-slots/{id}`                      | `-`   | `/port-slots/{id}`                      | `update-port-slot`               | port-slots        | `updatePortSlot`        | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `GET`    | `/service-groups`                       | `-`   | `/service-groups`                       | `list-service-groups`            | service-groups    | `listServiceGroups`     | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `POST`   | `/service-groups`                       | `-`   | `/service-groups`                       | `create-service-group`           | service-groups    | `createServiceGroup`    | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `DELETE` | `/service-groups/{id}`                  | `-`   | `/service-groups/{id}`                  | `delete-service-group`           | service-groups    | `deleteServiceGroup`    | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `GET`    | `/service-groups/{id}`                  | `-`   | `/service-groups/{id}`                  | `get-service-group`              | service-groups    | `getServiceGroup`       | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
+| `PUT`    | `/service-groups/{id}`                  | `-`   | `/service-groups/{id}`                  | `update-service-group`           | service-groups    | `updateServiceGroup`    | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
 
 ## Handlers
 
 | Scope     | Handler          | Register          | File                                  | Methods                                                                                                                                                                                                                                                                                                                                                                                            |
 | --------- | ---------------- | ----------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `github`  | `githubHandler`  | `RegisterGithub`  | `internal/handler/github.handler.go`  | actor, beginConnection, completeConnection, disconnect, listInstallations, listRepositories, status, syncInstallation, webhook                                                                                                                                                                                                                                                                     |
 | `portsvc` | `portsvcHandler` | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` | actor, createDependencyAsset, createHost, createPortGroup, createPortSlot, createServiceGroup, deleteDependencyAsset, deleteHost, deletePortGroup, deletePortSlot, deleteServiceGroup, exportPortGroups, getPortGroup, getServiceGroup, listDependencyAssets, listHosts, listPortGroups, listServiceGroups, updateDependencyAsset, updateHost, updatePortGroup, updatePortSlot, updateServiceGroup |
 
 ## Services
 
 | Service          | Scope     | File                                  | Constructor         | Dependencies | Methods                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | ---------------- | --------- | ------------------------------------- | ------------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GithubService`  | `github`  | `internal/service/github.service.go`  | `NewGithubService`  |              | BeginConnection, CompleteConnection, Disconnect, HandleWebhook, ListInstallations, ListRepositories, Reconcile, SetupReturnURL, Status, SyncInstallation, processDeletedInstallation, processSuspendedInstallation, processWebhook, refreshInstallation, syncInstallation                                                                                                                                                                                                                                                                                                                                  |
 | `PortsvcService` | `portsvc` | `internal/service/portsvc.service.go` | `NewPortsvcService` |              | CreateDependencyAsset, CreateHost, CreatePortGroup, CreatePortSlot, CreateServiceGroup, DeleteDependencyAsset, DeleteHost, DeletePortGroup, DeletePortSlot, DeleteServiceGroup, ExportPortGroupsCSV, GetPortGroup, GetServiceGroup, ListDependencyAssets, ListHosts, ListPortGroups, ListServiceGroups, UpdateDependencyAsset, UpdateHost, UpdatePortGroup, UpdatePortSlot, UpdateServiceGroup, attachDependencyAssetOwnerNames, attachPortGroupOwnerNames, attachServiceGroupOwnerNames, buildPortGroupViews, buildServiceGroupViews, ownerNames, replacePortGroupChildren, replaceServiceGroupPortGroups |
 
 ## Stores
 
-| Scope     | File                                   | Methods                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| --------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `portsvc` | `internal/repository/portsvc.store.go` | AddPortsvcPortGroupAssetLinks, AddPortsvcPortSlots, AddPortsvcServiceGroupPortGroups, CountPortsvcOverlappingPortGroups, CountPortsvcPortGroupsByIDs, CountPortsvcServiceGroupsByIDs, CreatePortsvcDependencyAsset, CreatePortsvcHost, CreatePortsvcPortGroup, CreatePortsvcPortSlot, CreatePortsvcServiceGroup, DeletePortsvcDependencyAsset, DeletePortsvcHost, DeletePortsvcPortGroups, DeletePortsvcPortSlot, DeletePortsvcServiceGroup, FetchPortsvcDependencyAssetByID, FetchPortsvcHostByID, FetchPortsvcPortGroupByID, FetchPortsvcPortSlotByID, FetchPortsvcServiceGroupByID, ListPortsvcDependencyAssets, ListPortsvcHosts, ListPortsvcPortGroupChildrenByGroupIDs, ListPortsvcPortGroupPrefixesByOwner, ListPortsvcPortGroups, ListPortsvcServiceGroupChildrenByGroupIDs, ListPortsvcServiceGroups, ReplacePortsvcPortGroupChildren, ReplacePortsvcServiceGroupPortGroups, UpdatePortsvcDependencyAsset, UpdatePortsvcHost, UpdatePortsvcPortGroup, UpdatePortsvcPortSlot, UpdatePortsvcServiceGroup |
+| Scope     | File                                   | Methods                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| --------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `github`  | `internal/repository/github.store.go`  | AddGithubConnectionState, AddGithubInstallationSubject, AddGithubWebhookDelivery, DeleteGithubConnectionState, DeleteGithubInstallationSubject, ExistsGithubInstallationSubject, ExistsGithubRepositorySubject, FetchGithubInstallationByExternalID, FetchGithubInstallationByID, FetchGithubRepositoryByID, ListGithubInstallationsByActiveStatus, ListGithubInstallationsForSubject, ListGithubRepositoriesForSubject, ReplaceGithubRepositories, ReplaceGithubRepositoriesStateWithUnavailable, ReplaceGithubWebhookDeliveryResult, UpdateGithubInstallationStatus, UpdateGithubInstallationSync, UpsertGithubInstallation                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `portsvc` | `internal/repository/portsvc.store.go` | AddPortsvcPortGroupAssetLinks, AddPortsvcPortGroupRepositoryLinks, AddPortsvcPortSlots, AddPortsvcServiceGroupPortGroups, CountPortsvcOverlappingPortGroups, CountPortsvcPortGroupsByIDs, CountPortsvcServiceGroupsByIDs, CreatePortsvcDependencyAsset, CreatePortsvcHost, CreatePortsvcPortGroup, CreatePortsvcPortSlot, CreatePortsvcServiceGroup, DeletePortsvcDependencyAsset, DeletePortsvcHost, DeletePortsvcPortGroups, DeletePortsvcPortSlot, DeletePortsvcServiceGroup, ExistsPortsvcPortGroupRepositoryLink, FetchPortsvcDependencyAssetByID, FetchPortsvcHostByID, FetchPortsvcPortGroupByID, FetchPortsvcPortSlotByID, FetchPortsvcServiceGroupByID, ListPortsvcDependencyAssets, ListPortsvcHosts, ListPortsvcPortGroupChildrenByGroupIDs, ListPortsvcPortGroupPrefixesByOwner, ListPortsvcPortGroups, ListPortsvcServiceGroupChildrenByGroupIDs, ListPortsvcServiceGroups, ReplacePortsvcPortGroupChildren, ReplacePortsvcServiceGroupPortGroups, UpdatePortsvcDependencyAsset, UpdatePortsvcHost, UpdatePortsvcPortGroup, UpdatePortsvcPortSlot, UpdatePortsvcServiceGroup |
 
 ## Tables
 
-| Table                       | Model                          | Scope                        | File                                                   | Alias                      | Fields | Foreign Keys |
-| --------------------------- | ------------------------------ | ---------------------------- | ------------------------------------------------------ | -------------------------- | ------ | ------------ |
-| `dependency_assets`         | `DependenciesModel`            | `dependencies`               | `internal/repository/dependencies.schema.go`           | `asset`                    | 18     | 0            |
-| `hosts`                     | `HostsModel`                   | `hosts`                      | `internal/repository/hosts.schema.go`                  | `host`                     | 8      | 0            |
-| `port_group_asset_links`    | `PortGroupAssetLinksModel`     | `port_group_asset_links`     | `internal/repository/port_group_asset_links.schema.go` | `asset_link`               | 12     | 3            |
-| `port_groups`               | `PortAllocationsModel`         | `port_allocations`           | `internal/repository/port_allocations.schema.go`       | `port_group`               | 15     | 1            |
-| `port_slots`                | `ServicesModel`                | `services`                   | `internal/repository/services.schema.go`               | `slot`                     | 12     | 1            |
-| `service_group_port_groups` | `ServiceGroupsPortGroupsModel` | `service_groups_port_groups` | `internal/repository/service_groups.schema.go`         | `service_group_port_group` | 9      | 2            |
-| `service_groups`            | `ServiceGroupsModel`           | `service_groups`             | `internal/repository/service_groups.schema.go`         | `service_group`            | 9      | 0            |
+| Table                          | Model                             | Scope                          | File                                                         | Alias                         | Fields | Foreign Keys |
+| ------------------------------ | --------------------------------- | ------------------------------ | ------------------------------------------------------------ | ----------------------------- | ------ | ------------ |
+| `dependency_assets`            | `DependenciesModel`               | `dependencies`                 | `internal/repository/dependencies.schema.go`                 | `asset`                       | 18     | 0            |
+| `github_connection_states`     | `GithubConnectionStatesModel`     | `github_connection_states`     | `internal/repository/github_connection_states.schema.go`     | `github_connection_state`     | 4      | 0            |
+| `github_installation_subjects` | `GithubInstallationSubjectsModel` | `github_installation_subjects` | `internal/repository/github_installation_subjects.schema.go` | `github_installation_subject` | 5      | 1            |
+| `github_installations`         | `GithubInstallationsModel`        | `github_installations`         | `internal/repository/github_installations.schema.go`         | `github_installation`         | 14     | 0            |
+| `github_repositories`          | `GithubRepositoriesModel`         | `github_repositories`          | `internal/repository/github_repositories.schema.go`          | `github_repository`           | 22     | 1            |
+| `github_webhook_deliveries`    | `GithubWebhookDeliveriesModel`    | `github_webhook_deliveries`    | `internal/repository/github_webhook_deliveries.schema.go`    | `github_webhook_delivery`     | 8      | 0            |
+| `hosts`                        | `HostsModel`                      | `hosts`                        | `internal/repository/hosts.schema.go`                        | `host`                        | 8      | 0            |
+| `port_group_asset_links`       | `PortGroupAssetLinksModel`        | `port_group_asset_links`       | `internal/repository/port_group_asset_links.schema.go`       | `asset_link`                  | 12     | 3            |
+| `port_group_repository_links`  | `PortGroupRepositoryLinksModel`   | `port_group_repository_links`  | `internal/repository/port_group_repository_links.schema.go`  | `repository_link`             | 12     | 3            |
+| `port_groups`                  | `PortAllocationsModel`            | `port_allocations`             | `internal/repository/port_allocations.schema.go`             | `port_group`                  | 15     | 1            |
+| `port_slots`                   | `ServicesModel`                   | `services`                     | `internal/repository/services.schema.go`                     | `slot`                        | 12     | 1            |
+| `service_group_port_groups`    | `ServiceGroupsPortGroupsModel`    | `service_groups_port_groups`   | `internal/repository/service_groups.schema.go`               | `service_group_port_group`    | 9      | 2            |
+| `service_groups`               | `ServiceGroupsModel`              | `service_groups`               | `internal/repository/service_groups.schema.go`               | `service_group`               | 9      | 0            |
 
 ### `dependency_assets`
 
@@ -90,6 +107,117 @@
 | `Notes`           | `notes`           | `string`    |            |
 | `CreatedAt`       | `created_at`      | `time.Time` | [notnull]  |
 | `UpdatedAt`       | `updated_at`      | `time.Time` | [notnull]  |
+
+### `github_connection_states`
+
+- Model: `GithubConnectionStatesModel`
+- Scope: `github_connection_states`
+- File: `internal/repository/github_connection_states.schema.go`
+- Alias: `github_connection_state`
+
+| Field          | Column          | Go Type     | Attributes |
+| -------------- | --------------- | ----------- | ---------- |
+| `StateHash`    | `state_hash`    | `string`    | [pk]       |
+| `OwnerSubject` | `owner_subject` | `string`    | [notnull]  |
+| `ExpiresAt`    | `expires_at`    | `time.Time` | [notnull]  |
+| `CreatedAt`    | `created_at`    | `time.Time` | [notnull]  |
+
+### `github_installation_subjects`
+
+- Model: `GithubInstallationSubjectsModel`
+- Scope: `github_installation_subjects`
+- File: `internal/repository/github_installation_subjects.schema.go`
+- Alias: `github_installation_subject`
+
+| Field            | Column            | Go Type                     | Attributes |
+| ---------------- | ----------------- | --------------------------- | ---------- |
+| `ID`             | `id`              | `string`                    | [pk]       |
+| `InstallationID` | `installation_id` | `string`                    | [notnull]  |
+| `Installation`   | `installation`    | `*GithubInstallationsModel` |            |
+| `OwnerSubject`   | `owner_subject`   | `string`                    | [notnull]  |
+| `CreatedAt`      | `created_at`      | `time.Time`                 | [notnull]  |
+
+Foreign keys:
+
+- `(installation_id) REFERENCES github_installations (id) ON DELETE CASCADE`
+
+### `github_installations`
+
+- Model: `GithubInstallationsModel`
+- Scope: `github_installations`
+- File: `internal/repository/github_installations.schema.go`
+- Alias: `github_installation`
+
+| Field                  | Column                   | Go Type     | Attributes |
+| ---------------------- | ------------------------ | ----------- | ---------- |
+| `ID`                   | `id`                     | `string`    | [pk]       |
+| `GithubInstallationID` | `github_installation_id` | `int64`     | [notnull]  |
+| `AccountID`            | `account_id`             | `int64`     | [notnull]  |
+| `AccountLogin`         | `account_login`          | `string`    | [notnull]  |
+| `AccountType`          | `account_type`           | `string`    | [notnull]  |
+| `AvatarURL`            | `avatar_url`             | `string`    |            |
+| `RepositorySelection`  | `repository_selection`   | `string`    | [notnull]  |
+| `Permissions`          | `permissions`            | `string`    | [notnull]  |
+| `Status`               | `status`                 | `string`    | [notnull]  |
+| `SuspendedAt`          | `suspended_at`           | `time.Time` | [nullable] |
+| `LastSyncedAt`         | `last_synced_at`         | `time.Time` | [nullable] |
+| `LastSyncError`        | `last_sync_error`        | `string`    |            |
+| `CreatedAt`            | `created_at`             | `time.Time` | [notnull]  |
+| `UpdatedAt`            | `updated_at`             | `time.Time` | [notnull]  |
+
+### `github_repositories`
+
+- Model: `GithubRepositoriesModel`
+- Scope: `github_repositories`
+- File: `internal/repository/github_repositories.schema.go`
+- Alias: `github_repository`
+
+| Field                | Column                 | Go Type                     | Attributes |
+| -------------------- | ---------------------- | --------------------------- | ---------- |
+| `ID`                 | `id`                   | `string`                    | [pk]       |
+| `InstallationID`     | `installation_id`      | `string`                    | [notnull]  |
+| `Installation`       | `installation`         | `*GithubInstallationsModel` |            |
+| `GithubRepositoryID` | `github_repository_id` | `int64`                     | [notnull]  |
+| `NodeID`             | `node_id`              | `string`                    |            |
+| `OwnerLogin`         | `owner_login`          | `string`                    | [notnull]  |
+| `Name`               | `name`                 | `string`                    | [notnull]  |
+| `FullName`           | `full_name`            | `string`                    | [notnull]  |
+| `HTMLURL`            | `html_url`             | `string`                    | [notnull]  |
+| `Description`        | `description`          | `string`                    |            |
+| `DefaultBranch`      | `default_branch`       | `string`                    |            |
+| `Visibility`         | `visibility`           | `string`                    | [notnull]  |
+| `Private`            | `private`              | `bool`                      | [notnull]  |
+| `Fork`               | `fork`                 | `bool`                      | [notnull]  |
+| `Archived`           | `archived`             | `bool`                      | [notnull]  |
+| `Disabled`           | `disabled`             | `bool`                      | [notnull]  |
+| `State`              | `state`                | `string`                    | [notnull]  |
+| `PushedAt`           | `pushed_at`            | `time.Time`                 | [nullable] |
+| `RemoteUpdatedAt`    | `remote_updated_at`    | `time.Time`                 | [nullable] |
+| `LastSeenAt`         | `last_seen_at`         | `time.Time`                 | [notnull]  |
+| `CreatedAt`          | `created_at`           | `time.Time`                 | [notnull]  |
+| `UpdatedAt`          | `updated_at`           | `time.Time`                 | [notnull]  |
+
+Foreign keys:
+
+- `(installation_id) REFERENCES github_installations (id) ON DELETE CASCADE`
+
+### `github_webhook_deliveries`
+
+- Model: `GithubWebhookDeliveriesModel`
+- Scope: `github_webhook_deliveries`
+- File: `internal/repository/github_webhook_deliveries.schema.go`
+- Alias: `github_webhook_delivery`
+
+| Field            | Column            | Go Type     | Attributes |
+| ---------------- | ----------------- | ----------- | ---------- |
+| `DeliveryID`     | `delivery_id`     | `string`    | [pk]       |
+| `Event`          | `event`           | `string`    | [notnull]  |
+| `Action`         | `action`          | `string`    |            |
+| `InstallationID` | `installation_id` | `int64`     |            |
+| `Status`         | `status`          | `string`    | [notnull]  |
+| `Error`          | `error`           | `string`    |            |
+| `ReceivedAt`     | `received_at`     | `time.Time` | [notnull]  |
+| `ProcessedAt`    | `processed_at`    | `time.Time` | [nullable] |
 
 ### `hosts`
 
@@ -136,6 +264,34 @@ Foreign keys:
 - `(asset_id) REFERENCES dependency_assets (id) ON DELETE CASCADE`
 - `(port_group_id) REFERENCES port_groups (id) ON DELETE CASCADE`
 - `(port_slot_id) REFERENCES port_slots (id) ON DELETE SET NULL`
+
+### `port_group_repository_links`
+
+- Model: `PortGroupRepositoryLinksModel`
+- Scope: `port_group_repository_links`
+- File: `internal/repository/port_group_repository_links.schema.go`
+- Alias: `repository_link`
+
+| Field          | Column          | Go Type                    | Attributes |
+| -------------- | --------------- | -------------------------- | ---------- |
+| `ID`           | `id`            | `string`                   | [pk]       |
+| `PortGroupID`  | `port_group_id` | `string`                   | [notnull]  |
+| `PortGroup`    | `port_group`    | `*PortAllocationsModel`    |            |
+| `PortSlotID`   | `port_slot_id`  | `string`                   | [nullable] |
+| `PortSlot`     | `port_slot`     | `*ServicesModel`           |            |
+| `RepositoryID` | `repository_id` | `string`                   | [notnull]  |
+| `Repository`   | `repository`    | `*GithubRepositoriesModel` |            |
+| `RelationType` | `relation_type` | `string`                   | [notnull]  |
+| `Required`     | `required`      | `bool`                     | [notnull]  |
+| `Notes`        | `notes`         | `string`                   |            |
+| `CreatedAt`    | `created_at`    | `time.Time`                | [notnull]  |
+| `UpdatedAt`    | `updated_at`    | `time.Time`                | [notnull]  |
+
+Foreign keys:
+
+- `(port_group_id) REFERENCES port_groups (id) ON DELETE CASCADE`
+- `(port_slot_id) REFERENCES port_slots (id) ON DELETE SET NULL`
+- `(repository_id) REFERENCES github_repositories (id) ON DELETE RESTRICT`
 
 ### `port_groups`
 

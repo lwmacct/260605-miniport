@@ -10,7 +10,20 @@ type Server struct {
 	Debug    bool           `json:"debug" desc:"启用调试日志和诊断信息"`
 	Database ServerDatabase `json:"database" desc:"数据库配置"`
 	Auth     ServerAuth     `json:"auth" desc:"认证配置"`
+	GitHub   ServerGitHub   `json:"github" desc:"GitHub App 集成配置"`
 	HTTP     ServerHTTP     `json:"http" desc:"HTTP 服务配置"`
+}
+
+type ServerGitHub struct {
+	Enabled           bool          `json:"enabled" desc:"启用 GitHub App 仓库同步"`
+	AppID             int64         `json:"app-id" desc:"GitHub App ID"`
+	AppSlug           string        `json:"app-slug" desc:"GitHub App slug"`
+	PrivateKeyFile    string        `json:"private-key-file" desc:"GitHub App 私钥 PEM 文件"`
+	WebhookSecret     string        `json:"webhook-secret" desc:"GitHub App Webhook 签名密钥"`
+	APIURL            string        `json:"api-url" desc:"GitHub REST API 根地址"`
+	WebURL            string        `json:"web-url" desc:"GitHub Web 根地址"`
+	SetupReturnURL    string        `json:"setup-return-url" desc:"GitHub 安装完成后的站内跳转地址"`
+	ReconcileInterval time.Duration `json:"reconcile-interval" desc:"GitHub 仓库全量校准周期，0 表示不启用定时校准"`
 }
 
 type ServerDatabase struct {
@@ -124,6 +137,14 @@ func DefaultConfig() Config {
 						Path: "/api",
 					},
 				},
+			},
+			GitHub: ServerGitHub{
+				Enabled:           false,
+				PrivateKeyFile:    "${APP_DATA:-.local/data}/github-app.pem",
+				APIURL:            "https://api.github.com",
+				WebURL:            "https://github.com",
+				SetupReturnURL:    "/#/settings/github?github=connected",
+				ReconcileInterval: 6 * time.Hour,
 			},
 			HTTP: ServerHTTP{
 				Listen:  ":40238",

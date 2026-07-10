@@ -1,11 +1,12 @@
-import { BgColorsOutlined } from "@ant-design/icons";
+import { BgColorsOutlined, GithubOutlined } from "@ant-design/icons";
 import { WorkbenchSectionLayout } from "@lwmacct/260627-antd-workbench";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 
-type SettingsSectionKey = "appearance";
+type SettingsSectionKey = "appearance" | "github";
 
 const sectionItems = [
   { key: "appearance", label: "外观设置", icon: <BgColorsOutlined /> },
+  { key: "github", label: "GitHub 仓库", icon: <GithubOutlined /> },
 ] as const;
 
 const sectionKeys = new Set<SettingsSectionKey>(sectionItems.map((item) => item.key));

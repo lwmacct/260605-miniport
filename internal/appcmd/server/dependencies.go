@@ -20,6 +20,7 @@ func newDependencies(ctx context.Context, cfg *config.Config) (*dependencies, er
 	modules, err := appmodule.Build(ctx, db,
 		NewAuthSpec(cfg),
 		NewCoreSpec(),
+		NewGithubSpec(ctx, cfg),
 		NewPortsvcSpec(),
 	)
 	if err != nil {
@@ -31,6 +32,7 @@ func newDependencies(ctx context.Context, cfg *config.Config) (*dependencies, er
 		db:       db,
 		modules:  modules,
 		auth:     appmodule.MustGet[*AuthModule](modules, "auth"),
+		github:   appmodule.MustGet[*GithubModule](modules, "github"),
 		portsvc:  appmodule.MustGet[*PortsvcModule](modules, "portsvc"),
 		requests: requestctx.NewMiddleware(cfg.Server.HTTP.TrustedProxies),
 	}, nil
@@ -53,6 +55,7 @@ func (d *dependencies) Close() {
 		d.db = nil
 	}
 	d.auth = nil
+	d.github = nil
 	d.portsvc = nil
 }
 

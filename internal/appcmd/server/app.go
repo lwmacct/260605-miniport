@@ -18,6 +18,7 @@ type dependencies struct {
 	db          *bun.DB
 	modules     *appmodule.Runtime
 	auth        *AuthModule
+	github      *GithubModule
 	portsvc     *PortsvcModule
 	requests    requestctx.Middleware
 	tlsReloader *tlsreload.Manager

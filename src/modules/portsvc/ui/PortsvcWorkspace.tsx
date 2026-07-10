@@ -29,6 +29,7 @@ import {
 } from "../model/portsvcConstants";
 import type {
   DependencyAssetItem,
+  GitHubRepositoryItem,
   HostForm,
   HostItem,
   PortGroupForm,
@@ -98,12 +99,13 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
   const groups: PortGroupItem[] = snapshot?.portGroups ?? [];
   const hosts: HostItem[] = snapshot?.hosts ?? [];
   const dependencyAssets: DependencyAssetItem[] = snapshot?.dependencyAssets ?? [];
+  const repositories: GitHubRepositoryItem[] = snapshot?.repositories ?? [];
   const serviceGroups: ServiceGroupItem[] = snapshot?.serviceGroups ?? [];
   const meta = snapshot?.meta;
   const canManage = Boolean(authState.data?.session.authenticated);
   const stats = useMemo(
-    () => buildStats(groups, hosts, dependencyAssets, serviceGroups),
-    [dependencyAssets, groups, hosts, serviceGroups],
+    () => buildStats(groups, hosts, dependencyAssets, repositories, serviceGroups),
+    [dependencyAssets, groups, hosts, repositories, serviceGroups],
   );
   const projectGroups = useMemo(() => {
     if (view !== "projects" || !portSegment) {
@@ -147,6 +149,7 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
       status: "available",
       slots: [],
       assetLinks: [],
+      repositoryLinks: [],
     });
     setGroupDrawerOpen(true);
   }
@@ -156,6 +159,7 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
     groupForm.setFieldsValue({
       ...group,
       assetLinks: group.assetLinks,
+      repositoryLinks: group.repositoryLinks,
       slots: group.slots,
     });
     setGroupDrawerOpen(true);
@@ -360,6 +364,7 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
             canManage={canManage}
             dependencyAssets={dependencyAssets}
             groups={groups}
+            repositories={repositories}
             onEditAsset={openEditAsset}
             stats={stats}
           />
@@ -484,6 +489,7 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
       />
       <ServiceDrawer
         dependencyAssets={dependencyAssets}
+        repositories={repositories}
         editingGroup={editingGroup}
         form={groupForm}
         hosts={hosts}
