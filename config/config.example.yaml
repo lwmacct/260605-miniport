@@ -66,9 +66,7 @@ server:
     app-id: 0 # GitHub App ID
     app-slug: "" # GitHub App slug
     private-key-file: "${APP_DATA:-.local/data}/github-app.pem" # GitHub App 私钥 PEM 文件
-    webhook-secret: "" # GitHub App Webhook 签名密钥
-    api-url: "https://api.github.com" # GitHub REST API 根地址
-    web-url: "https://github.com" # GitHub Web 根地址
+    webhook-secret: "${GITHUB_APP_WEBHOOK_SECRET}" # GitHub App Webhook 签名密钥
     setup-return-url: "/#/settings/github?github=connected" # GitHub 安装完成后的站内跳转地址
     reconcile-interval: 6h0m0s # GitHub 仓库全量校准周期，0 表示不启用定时校准
 

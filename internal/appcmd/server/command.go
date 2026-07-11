@@ -163,16 +163,6 @@ var Command = &cli.Command{
 			Value: defaults.Server.GitHub.WebhookSecret,
 		},
 		&cli.StringFlag{
-			Name:  "github.api-url",
-			Usage: usage.MustUsage("github.api-url"),
-			Value: defaults.Server.GitHub.APIURL,
-		},
-		&cli.StringFlag{
-			Name:  "github.web-url",
-			Usage: usage.MustUsage("github.web-url"),
-			Value: defaults.Server.GitHub.WebURL,
-		},
-		&cli.StringFlag{
 			Name:  "github.setup-return-url",
 			Usage: usage.MustUsage("github.setup-return-url"),
 			Value: defaults.Server.GitHub.SetupReturnURL,

@@ -92,7 +92,7 @@ func applyGithubSchema(ctx context.Context, db *bun.DB) error {
 func githubServiceConfig(cfg config.ServerGitHub) service.GithubConfig {
 	return service.GithubConfig{
 		Enabled: cfg.Enabled, AppID: cfg.AppID, AppSlug: cfg.AppSlug, PrivateKeyFile: cfg.PrivateKeyFile,
-		WebhookSecret: cfg.WebhookSecret, APIURL: cfg.APIURL, WebURL: cfg.WebURL,
+		WebhookSecret:  cfg.WebhookSecret,
 		SetupReturnURL: cfg.SetupReturnURL, ReconcileInterval: cfg.ReconcileInterval,
 	}
 }

@@ -20,7 +20,10 @@ var (
 	ErrGithubNotFound     = errors.New("github resource not found")
 )
 
-const githubConnectionStateTTL = 10 * time.Minute
+const (
+	githubConnectionStateTTL = 10 * time.Minute
+	githubWebURL             = "https://github.com"
+)
 
 type GithubConfig struct {
 	Enabled           bool
@@ -28,8 +31,6 @@ type GithubConfig struct {
 	AppSlug           string
 	PrivateKeyFile    string
 	WebhookSecret     string
-	APIURL            string
-	WebURL            string
 	SetupReturnURL    string
 	ReconcileInterval time.Duration
 }

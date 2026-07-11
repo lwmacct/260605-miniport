@@ -22,9 +22,10 @@ import (
 	"time"
 )
 
+const githubAPIURL = "https://api.github.com"
+
 type Config struct {
 	AppID          int64
-	APIURL         string
 	PrivateKeyFile string
 }
 
@@ -86,7 +87,7 @@ func NewClient(cfg Config, client HTTPClient) (*Client, error) {
 		client = &http.Client{Timeout: 30 * time.Second}
 	}
 	return &Client{
-		appID: cfg.AppID, apiURL: strings.TrimRight(cfg.APIURL, "/"), httpClient: client,
+		appID: cfg.AppID, apiURL: githubAPIURL, httpClient: client,
 		now: time.Now, privateKey: privateKey,
 	}, nil
 }

@@ -20,8 +20,6 @@ type ServerGitHub struct {
 	AppSlug           string        `json:"app-slug" desc:"GitHub App slug"`
 	PrivateKeyFile    string        `json:"private-key-file" desc:"GitHub App 私钥 PEM 文件"`
 	WebhookSecret     string        `json:"webhook-secret" desc:"GitHub App Webhook 签名密钥"`
-	APIURL            string        `json:"api-url" desc:"GitHub REST API 根地址"`
-	WebURL            string        `json:"web-url" desc:"GitHub Web 根地址"`
 	SetupReturnURL    string        `json:"setup-return-url" desc:"GitHub 安装完成后的站内跳转地址"`
 	ReconcileInterval time.Duration `json:"reconcile-interval" desc:"GitHub 仓库全量校准周期，0 表示不启用定时校准"`
 }
@@ -138,11 +136,11 @@ func DefaultConfig() Config {
 					},
 				},
 			},
-			GitHub: ServerGitHub{
+
+			GitHub: ServerGitHub{ //nolint:gosec // WebhookSecret is an environment variable placeholder, not a credential.
 				Enabled:           false,
+				WebhookSecret:     "${GITHUB_APP_WEBHOOK_SECRET}",
 				PrivateKeyFile:    "${APP_DATA:-.local/data}/github-app.pem",
-				APIURL:            "https://api.github.com",
-				WebURL:            "https://github.com",
 				SetupReturnURL:    "/#/settings/github?github=connected",
 				ReconcileInterval: 6 * time.Hour,
 			},

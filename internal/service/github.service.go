@@ -42,7 +42,7 @@ func NewGithubService(store *repository.Store, cfg GithubConfig) (*GithubService
 func (s *GithubService) Status() GithubStatus {
 	status := GithubStatus{Enabled: s.cfg.Enabled, AppSlug: s.cfg.AppSlug}
 	if s.cfg.Enabled {
-		status.InstallURL = utilGithubInstallURL(s.cfg.WebURL, s.cfg.AppSlug)
+		status.InstallURL = utilGithubInstallURL(githubWebURL, s.cfg.AppSlug)
 	}
 	return status
 }

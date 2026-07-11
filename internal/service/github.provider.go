@@ -12,7 +12,7 @@ type GithubProvider struct {
 
 func NewGithubProvider(cfg GithubConfig) (*GithubProvider, error) {
 	client, err := githubinfra.NewClient(githubinfra.Config{
-		AppID: cfg.AppID, APIURL: cfg.APIURL, PrivateKeyFile: cfg.PrivateKeyFile,
+		AppID: cfg.AppID, PrivateKeyFile: cfg.PrivateKeyFile,
 	}, nil)
 	if err != nil {
 		return nil, err
