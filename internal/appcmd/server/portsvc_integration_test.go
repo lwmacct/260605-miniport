@@ -75,6 +75,16 @@ func TestGithubStatusUsesLocalSession(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, rec.Code, rec.Body.String())
 }
 
+func TestGithubSetupDoesNotRequireSessionCookie(t *testing.T) {
+	_, handler := setupPortsvcTestApp(t)
+
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/github/setup?installation_id=42&state=one-time-state", nil)
+	req.RemoteAddr = "127.0.0.1:12345"
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusServiceUnavailable, rec.Code, rec.Body.String())
+}
+
 func setupPortsvcTestApp(t *testing.T) (*App, http.Handler) {
 	t.Helper()
 	cfg := config.DefaultConfig()

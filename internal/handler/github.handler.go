@@ -49,11 +49,7 @@ func (h githubHandler) beginConnection(ctx context.Context, input *GithubSession
 }
 
 func (h githubHandler) completeConnection(ctx context.Context, input *GithubSetupInputDTO) (*RedirectDTO, error) {
-	actor, err := h.actor(ctx, input.Session)
-	if err != nil {
-		return nil, err
-	}
-	if err := h.service.CompleteConnection(ctx, actor.OwnerSubject, input.State, input.InstallationID); err != nil {
+	if err := h.service.CompleteConnection(ctx, input.State, input.InstallationID); err != nil {
 		return nil, utilGithubAPIError(err)
 	}
 	return &RedirectDTO{Status: http.StatusSeeOther, Location: h.service.SetupReturnURL()}, nil

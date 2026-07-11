@@ -65,7 +65,7 @@ func (s *GithubService) BeginConnection(ctx context.Context, ownerSubject string
 	return &GithubConnectionStart{URL: utilGithubConnectionURL(s.Status().InstallURL, state)}, nil
 }
 
-func (s *GithubService) CompleteConnection(ctx context.Context, ownerSubject, state string, installationID int64) error {
+func (s *GithubService) CompleteConnection(ctx context.Context, state string, installationID int64) error {
 	if !s.cfg.Enabled {
 		return ErrGithubDisabled
 	}
@@ -73,17 +73,26 @@ func (s *GithubService) CompleteConnection(ctx context.Context, ownerSubject, st
 		return ErrGithubInvalidState
 	}
 	now := s.now().UTC()
-	if err := s.store.DeleteGithubConnectionState(ctx, utilHashGithubState(state), ownerSubject, now); err != nil {
+	stateHash := utilHashGithubState(state)
+	connectionState, err := s.store.FetchGithubConnectionStateByHash(ctx, stateHash, now)
+	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			return ErrGithubInvalidState
 		}
 		return err
 	}
+	consumed, err := s.store.DeleteGithubConnectionState(ctx, stateHash, now)
+	if err != nil {
+		return err
+	}
+	if !consumed {
+		return ErrGithubInvalidState
+	}
 	installation, err := s.refreshInstallation(ctx, installationID)
 	if err != nil {
 		return err
 	}
-	if err := s.store.AddGithubInstallationSubject(ctx, installation.ID, ownerSubject, now); err != nil {
+	if err := s.store.AddGithubInstallationSubject(ctx, installation.ID, connectionState.OwnerSubject, now); err != nil {
 		return err
 	}
 	return s.syncInstallation(ctx, *installation)

@@ -56,7 +56,7 @@ func TestGithubCompleteConnectionSyncsPrivateRepositories(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, githubService.CompleteConnection(ctx, ownerSubject, state, 42))
+	require.NoError(t, githubService.CompleteConnection(ctx, state, 42))
 	installations, err := githubService.ListInstallations(ctx, ownerSubject)
 	require.NoError(t, err)
 	require.Len(t, installations, 1)
@@ -68,7 +68,7 @@ func TestGithubCompleteConnectionSyncsPrivateRepositories(t *testing.T) {
 	require.Equal(t, "acme/private-api", repositories[0].FullName)
 	require.True(t, repositories[0].Private)
 
-	err = githubService.CompleteConnection(ctx, ownerSubject, state, 42)
+	err = githubService.CompleteConnection(ctx, state, 42)
 	require.ErrorIs(t, err, ErrGithubInvalidState)
 }
 

@@ -48,6 +48,13 @@ type GithubRepositoryRecord struct {
 	UpdatedAt          time.Time
 }
 
+type GithubConnectionStateRecord struct {
+	StateHash    string
+	OwnerSubject string
+	ExpiresAt    time.Time
+	CreatedAt    time.Time
+}
+
 type GithubWebhookDeliveryRecord struct {
 	DeliveryID     string
 	Event          string
@@ -84,5 +91,15 @@ func utilGithubRepositoryRecord(model *GithubRepositoriesModel) *GithubRepositor
 		Disabled: model.Disabled, State: model.State, PushedAt: model.PushedAt,
 		RemoteUpdatedAt: model.RemoteUpdatedAt, LastSeenAt: model.LastSeenAt,
 		CreatedAt: model.CreatedAt, UpdatedAt: model.UpdatedAt,
+	}
+}
+
+func utilGithubConnectionStateRecord(model *GithubConnectionStatesModel) *GithubConnectionStateRecord {
+	if model == nil {
+		return nil
+	}
+	return &GithubConnectionStateRecord{
+		StateHash: model.StateHash, OwnerSubject: model.OwnerSubject,
+		ExpiresAt: model.ExpiresAt, CreatedAt: model.CreatedAt,
 	}
 }

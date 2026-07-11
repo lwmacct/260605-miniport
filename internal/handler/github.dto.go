@@ -52,7 +52,6 @@ type GithubSessionInputDTO struct {
 }
 
 type GithubSetupInputDTO struct {
-	Session        string `cookie:"web_session"`
 	InstallationID int64  `query:"installation_id" required:"true"`
 	SetupAction    string `query:"setup_action"`
 	State          string `query:"state" required:"true"`

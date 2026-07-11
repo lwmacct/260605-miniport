@@ -154,16 +154,23 @@ func (s *Store) AddGithubConnectionState(ctx context.Context, stateHash, ownerSu
 	return err
 }
 
-func (s *Store) DeleteGithubConnectionState(ctx context.Context, stateHash, ownerSubject string, now time.Time) error {
-	return s.RunInTx(ctx, func(ctx context.Context, tx *Store) error {
-		row := new(GithubConnectionStatesModel)
-		if err := tx.db.NewSelect().Model(row).Where("state_hash = ?", stateHash).
-			Where("owner_subject = ?", ownerSubject).Where("expires_at > ?", now).Scan(ctx); err != nil {
-			return WrapNotFound(err)
-		}
-		_, err := tx.db.NewDelete().Model(row).WherePK().Exec(ctx)
-		return err
-	})
+func (s *Store) FetchGithubConnectionStateByHash(ctx context.Context, stateHash string, now time.Time) (*GithubConnectionStateRecord, error) {
+	row := new(GithubConnectionStatesModel)
+	if err := s.db.NewSelect().Model(row).Where("state_hash = ?", stateHash).
+		Where("expires_at > ?", now).Scan(ctx); err != nil {
+		return nil, WrapNotFound(err)
+	}
+	return utilGithubConnectionStateRecord(row), nil
+}
+
+func (s *Store) DeleteGithubConnectionState(ctx context.Context, stateHash string, now time.Time) (bool, error) {
+	result, err := s.db.NewDelete().Model((*GithubConnectionStatesModel)(nil)).
+		Where("state_hash = ?", stateHash).Where("expires_at > ?", now).Exec(ctx)
+	if err != nil {
+		return false, err
+	}
+	count, err := result.RowsAffected()
+	return count > 0, err
 }
 
 func (s *Store) ReplaceGithubRepositories(ctx context.Context, installationID string, items []GithubRepositoryRecord, now time.Time) error {
