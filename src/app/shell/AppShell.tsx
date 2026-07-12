@@ -77,7 +77,6 @@ export function AppShell() {
       brand={{
         mark: "M",
         name: APP_NAME,
-        subtitle: "端口服务资产管理",
         version: DISPLAY_VERSION,
       }}
       flushContent={isFlushContent}
