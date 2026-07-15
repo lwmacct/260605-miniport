@@ -4,31 +4,30 @@ import (
 	"context"
 	"crypto/tls"
 	"log/slog"
-	"time"
 
 	"github.com/lwmacct/260614-go-pkg-tlsreload/pkg/tlsreload"
 )
 
-func (app *App) bootstrapTLSManager(ctx context.Context) error {
+func (app *App) bootstrapTLSStore(ctx context.Context) error {
 	if !app.cfg.Server.HTTP.TLS.Enabled {
 		return nil
 	}
 
 	httpTLS := app.cfg.Server.HTTP.TLS
-	reloader, err := tlsreload.New(ctx, tlsreload.Config{
-		Enabled:      httpTLS.Enabled,
-		CertFile:     httpTLS.CertFile,
-		KeyFile:      httpTLS.KeyFile,
-		PollInterval: httpTLS.PollInterval,
-	}, tlsreload.Options{
-		MinVersion:    tls.VersionTLS12,
-		RetryInterval: 2 * time.Second,
-		Logger:        slog.Default(),
+	store, err := tlsreload.New(ctx, httpTLS.ReloadConfig(), tlsreload.Options{
+		Logger: slog.Default(),
 	})
 	if err != nil {
 		return err
 	}
 
-	app.deps.tlsReloader = reloader
+	app.deps.tlsStore = store
 	return nil
+}
+
+func (app *App) tlsConfig() *tls.Config {
+	return &tls.Config{
+		MinVersion:     tls.VersionTLS12,
+		GetCertificate: app.deps.tlsStore.GetCertificate,
+	}
 }

@@ -23,7 +23,7 @@ func (app *App) Run(ctx context.Context) error {
 	app.deps = deps
 	defer app.deps.Close()
 
-	if tlsErr := app.bootstrapTLSManager(ctx); tlsErr != nil {
+	if tlsErr := app.bootstrapTLSStore(ctx); tlsErr != nil {
 		return tlsErr
 	}
 

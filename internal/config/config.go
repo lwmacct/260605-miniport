@@ -1,6 +1,11 @@
 package config
 
-import "time"
+import (
+	"time"
+
+	"github.com/lwmacct/251207-go-pkg-cfgm/pkg/cfgm"
+	"github.com/lwmacct/260614-go-pkg-tlsreload/pkg/tlsreload"
+)
 
 type Config struct {
 	Server Server `json:"server" desc:"服务端配置"`
@@ -90,10 +95,20 @@ type ServerAuthSessionCookie struct {
 }
 
 type ServerHTTPTLS struct {
-	Enabled      bool          `json:"enabled" desc:"是否启用 HTTPS TLS"`
-	CertFile     string        `json:"cert-file" desc:"TLS 证书文件路径或 URI"`
-	KeyFile      string        `json:"key-file" desc:"TLS 私钥文件路径或 URI"`
-	PollInterval time.Duration `json:"poll-interval" desc:"TLS 证书文件重载兜底轮询间隔，未配置时使用默认间隔"`
+	Enabled            bool                          `json:"enabled" desc:"是否启用 HTTPS TLS"`
+	Certificates       []tlsreload.CertificateSource `json:"certificates" desc:"TLS 证书来源列表"`
+	DefaultCertificate string                        `json:"default-certificate" desc:"未匹配 SNI 时使用的证书 ID"`
+	PollInterval       time.Duration                 `json:"poll-interval" desc:"证书来源兜底轮询间隔"`
+	RetryInterval      time.Duration                 `json:"retry-interval" desc:"证书重载失败后的重试间隔"`
+}
+
+func (c ServerHTTPTLS) ReloadConfig() tlsreload.Config {
+	return tlsreload.Config{
+		Certificates:       c.Certificates,
+		DefaultCertificate: c.DefaultCertificate,
+		PollInterval:       c.PollInterval,
+		RetryInterval:      c.RetryInterval,
+	}
 }
 
 func DefaultConfig() Config {
@@ -148,9 +163,15 @@ func DefaultConfig() Config {
 				Listen:  ":40238",
 				WebRoot: "${WEB_ROOT:-dist}",
 				TLS: ServerHTTPTLS{
-					Enabled:      false,
-					CertFile:     "${APP_DATA:-.local/data}/ssl/fullchain.pem",
-					KeyFile:      "${APP_DATA:-.local/data}/ssl/privkey.pem",
+					Enabled:            false,
+					DefaultCertificate: "default",
+					Certificates: []tlsreload.CertificateSource{
+						{
+							ID:          "default",
+							Certificate: "${APP_DATA:-.local/data}/ssl/fullchain.pem",
+							PrivateKey:  "${APP_DATA:-.local/data}/ssl/privkey.pem",
+						},
+					},
 					PollInterval: 3 * time.Second,
 				},
 				TrustedProxies:  nil,
@@ -162,3 +183,5 @@ func DefaultConfig() Config {
 		},
 	}
 }
+
+var Definition = cfgm.New(DefaultConfig(), cfgm.AppName("app"))

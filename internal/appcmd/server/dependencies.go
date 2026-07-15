@@ -42,9 +42,9 @@ func (d *dependencies) Close() {
 	if d == nil {
 		return
 	}
-	if d.tlsReloader != nil {
-		d.tlsReloader.Close()
-		d.tlsReloader = nil
+	if d.tlsStore != nil {
+		_ = d.tlsStore.Close()
+		d.tlsStore = nil
 	}
 	if d.modules != nil {
 		_ = d.modules.Close()

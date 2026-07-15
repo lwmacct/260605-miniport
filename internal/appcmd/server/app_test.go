@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lwmacct/260614-go-pkg-tlsreload/pkg/tlsreload"
 	"github.com/stretchr/testify/require"
 
 	"github.com/lwmacct/260605-miniport/internal/config"
@@ -19,27 +20,26 @@ func TestValidateHTTPTLS(t *testing.T) {
 			name: "disabled by default",
 		},
 		{
-			name: "disabled ignores empty files",
+			name: "disabled ignores empty certificates",
 			cfg: config.Config{
 				Server: config.Server{
 					HTTP: config.ServerHTTP{
-						TLS: config.ServerHTTPTLS{
-							CertFile: "",
-							KeyFile:  "",
-						},
+						TLS: config.ServerHTTPTLS{},
 					},
 				},
 			},
 		},
 		{
-			name: "files mode with cert and key",
+			name: "certificate source with default",
 			cfg: config.Config{
 				Server: config.Server{
 					HTTP: config.ServerHTTP{
 						TLS: config.ServerHTTPTLS{
-							Enabled:      true,
-							CertFile:     "cert.pem",
-							KeyFile:      "key.pem",
+							Enabled:            true,
+							DefaultCertificate: "default",
+							Certificates: []tlsreload.CertificateSource{
+								{ID: "default", Certificate: "cert.pem", PrivateKey: "key.pem"},
+							},
 							PollInterval: time.Second,
 						},
 					},
@@ -47,13 +47,16 @@ func TestValidateHTTPTLS(t *testing.T) {
 			},
 		},
 		{
-			name: "files mode cert without key rejected",
+			name: "certificate without private key rejected",
 			cfg: config.Config{
 				Server: config.Server{
 					HTTP: config.ServerHTTP{
 						TLS: config.ServerHTTPTLS{
-							Enabled:  true,
-							CertFile: "cert.pem",
+							Enabled:            true,
+							DefaultCertificate: "default",
+							Certificates: []tlsreload.CertificateSource{
+								{ID: "default", Certificate: "cert.pem"},
+							},
 						},
 					},
 				},
@@ -66,9 +69,11 @@ func TestValidateHTTPTLS(t *testing.T) {
 				Server: config.Server{
 					HTTP: config.ServerHTTP{
 						TLS: config.ServerHTTPTLS{
-							Enabled:      true,
-							CertFile:     "cert.pem",
-							KeyFile:      "key.pem",
+							Enabled:            true,
+							DefaultCertificate: "default",
+							Certificates: []tlsreload.CertificateSource{
+								{ID: "default", Certificate: "cert.pem", PrivateKey: "key.pem"},
+							},
 							PollInterval: -time.Second,
 						},
 					},
@@ -82,9 +87,11 @@ func TestValidateHTTPTLS(t *testing.T) {
 				Server: config.Server{
 					HTTP: config.ServerHTTP{
 						TLS: config.ServerHTTPTLS{
-							Enabled:      true,
-							CertFile:     "cert.pem",
-							KeyFile:      "key.pem",
+							Enabled:            true,
+							DefaultCertificate: "default",
+							Certificates: []tlsreload.CertificateSource{
+								{ID: "default", Certificate: "cert.pem", PrivateKey: "key.pem"},
+							},
 							PollInterval: 0,
 						},
 					},

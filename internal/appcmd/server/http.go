@@ -23,8 +23,8 @@ func (app *App) newHTTPServer() *http.Server {
 		WriteTimeout: httpCfg.WriteTimeout,
 		IdleTimeout:  httpCfg.IdleTimeout,
 	}
-	if app.deps.tlsReloader != nil {
-		srv.TLSConfig = app.deps.tlsReloader.TLSConfig()
+	if app.deps.tlsStore != nil {
+		srv.TLSConfig = app.tlsConfig()
 	}
 	return srv
 }

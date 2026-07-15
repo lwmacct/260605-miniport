@@ -15,13 +15,13 @@ type App struct {
 }
 
 type dependencies struct {
-	db          *bun.DB
-	modules     *appmodule.Runtime
-	auth        *AuthModule
-	github      *GithubModule
-	portsvc     *PortsvcModule
-	requests    requestctx.Middleware
-	tlsReloader *tlsreload.Manager
+	db       *bun.DB
+	modules  *appmodule.Runtime
+	auth     *AuthModule
+	github   *GithubModule
+	portsvc  *PortsvcModule
+	requests requestctx.Middleware
+	tlsStore *tlsreload.Store
 }
 
 func NewApp(cfg *config.Config) *App {

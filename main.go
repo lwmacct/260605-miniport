@@ -20,7 +20,7 @@ func main() {
 		Name:            "app",
 		Usage:           "service inventory application",
 		Version:         version.AppVersion,
-		Flags:           []cli.Flag{cfgm.ConfigFlag()},
+		Flags:           cfgm.RootFlags(),
 		Commands:        []*cli.Command{server.Command, version.Command},
 		HideHelpCommand: true,
 		Action: func(ctx context.Context, c *cli.Command) error {
