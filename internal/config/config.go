@@ -184,4 +184,4 @@ func DefaultConfig() Config {
 	}
 }
 
-var Definition = cfgm.New(DefaultConfig(), cfgm.AppName("app"))
+var Manager = cfgm.New(DefaultConfig(), cfgm.AppName("app"))

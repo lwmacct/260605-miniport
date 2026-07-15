@@ -11,17 +11,18 @@ import (
 	"github.com/lwmacct/260605-miniport/internal/config"
 )
 
-func TestBindingLoadsTLSCertificateFlags(t *testing.T) {
+func TestManagerLoadsTLSCertificateFlags(t *testing.T) {
+	manager := cfgm.New(config.DefaultConfig(), cfgm.WithoutDefaultPaths())
 	var loaded *config.Config
 	command := &cli.Command{
-		Name:  "server",
-		Flags: binding.Flags(),
-		Action: func(ctx context.Context, cmd *cli.Command) error {
-			loaded = binding.MustLoad(ctx, cmd)
+		Name: "server",
+		Action: manager.Action(func(_ context.Context, _ *cli.Command, cfg *config.Config) error {
+			loaded = cfg
 			return nil
-		},
+		}),
 	}
-	root := &cli.Command{Name: "app", Flags: cfgm.RootFlags(), Commands: []*cli.Command{command}}
+	root := &cli.Command{Name: "app", Commands: []*cli.Command{command}}
+	manager.MustConfigure(root)
 
 	err := root.Run(t.Context(), []string{
 		"app", "server",

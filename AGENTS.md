@@ -27,7 +27,7 @@
 - handler 保持简薄, 只做协议适配、参数接收和响应转换。
 - 业务规则放 service, 数据访问放 repository, schema/迁移逻辑放 schema 文件, 不混进请求处理。
 - DTO 命名保持明确, 例如 `CreateInput`, `UpdateInput`, `Response`; 现有接口命名可按当前 API 语义延续。
-- 配置使用 `cfgm.Definition` 和命令 binding 加载，默认值从 `internal/config` 读取。
+- 配置使用 `cfgm.Manager` 装配命令树并加载，默认值从 `internal/config` 读取。
 
 ## 数据模型
 

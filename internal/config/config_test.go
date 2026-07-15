@@ -7,7 +7,7 @@ import (
 )
 
 var files = cfgm.ConfigFiles[Config]{
-	Definition:  Definition,
+	Manager:     Manager,
 	ExampleFile: "config/config.example.yaml",
 	RuntimeFile: "config/config.yaml",
 }
