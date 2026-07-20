@@ -14,9 +14,7 @@ func (app *App) bootstrapTLSStore(ctx context.Context) error {
 	}
 
 	httpTLS := app.cfg.Server.HTTP.TLS
-	store, err := tlsreload.New(ctx, httpTLS.ReloadConfig(), tlsreload.Options{
-		Logger: slog.Default(),
-	})
+	store, err := tlsreload.New(ctx, httpTLS.ReloadConfig(), tlsreload.WithLogger(slog.Default()))
 	if err != nil {
 		return err
 	}

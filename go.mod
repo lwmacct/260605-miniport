@@ -3,12 +3,12 @@ module github.com/lwmacct/260605-miniport
 go 1.26.4
 
 require (
-	github.com/danielgtaylor/huma/v2 v2.38.0
+	github.com/danielgtaylor/huma/v2 v2.39.0
 	github.com/go-chi/chi/v5 v5.3.1
-	github.com/lwmacct/251207-go-pkg-cfgm v0.32.260715
+	github.com/lwmacct/251207-go-pkg-cfgm v0.35.260718
 	github.com/lwmacct/251207-go-pkg-version v0.4.260630
 	github.com/lwmacct/251219-go-pkg-logm v0.9.260413
-	github.com/lwmacct/260614-go-pkg-tlsreload v0.14.260715
+	github.com/lwmacct/260614-go-pkg-tlsreload v0.15.260716
 	github.com/lwmacct/260622-go-pkg-tddcheck v0.21.260630
 	github.com/lwmacct/260630-go-hsr-auth v0.8.260630
 	github.com/lwmacct/260630-go-hsr-shared v0.11.260630
@@ -29,7 +29,7 @@ require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/mattn/go-isatty v0.0.22 // indirect
+	github.com/mattn/go-isatty v0.0.23 // indirect
 	github.com/mattn/go-sqlite3 v1.14.48 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
@@ -50,8 +50,8 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	mellium.im/sasl v0.3.2 // indirect
-	modernc.org/libc v1.74.1 // indirect
+	modernc.org/libc v1.74.3 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	modernc.org/sqlite v1.53.0 // indirect
+	modernc.org/sqlite v1.54.0 // indirect
 )
