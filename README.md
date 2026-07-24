@@ -18,9 +18,9 @@ Miniport 是一个端口服务资产管理应用，用来管理宿主机、固�
 
 - [数据模型](#数据模型) `:27+10`
 - [GitHub App](#github-app) `:37+12`
-- [单操作员认证](#单操作员认证) `:49+8`
-- [本地运行](#本地运行) `:57+28`
-- [API](#api) `:85+41`
+- [单操作员认证](#单操作员认证) `:49+14`
+- [本地运行](#本地运行) `:63+28`
+- [API](#api) `:91+41`
 
 <!--TOC-->
 
@@ -50,7 +50,13 @@ Miniport 是一个端口服务资产管理应用，用来管理宿主机、固�
 
 认证只负责保护 HTTP 访问，不参与端口组、服务组、依赖资产或 GitHub 安装的数据归属。系统不提供用户表、注册、角色、管理员或按用户过滤的数据路径。
 
-默认启用一个静态 Access Token。设置 `AUTHME_ACCESS_TOKEN`，并为浏览器会话设置一个 base64url 编码的 32 字节 `AUTHME_SESSION_KEY`。Dex GitHub OIDC 默认启用，部署时需配置 `server.http.authme.dexgithub.client-secret`，并可用 `allowed-github-user` 调整唯一允许登录的 GitHub 用户名。
+默认启用一个静态 Access Token。设置 `AUTHME_ACCESS_TOKEN`，并为浏览器会话设置一个 base64url 编码的 32 字节 `AUTHME_SESSION_KEY`。可使用 OpenSSL 生成会话密钥：
+
+```bash
+openssl rand -base64 32 | tr '+/' '-_' | tr -d '=\n'
+```
+
+将命令输出写入 `.env` 的 `AUTHME_SESSION_KEY`。每个部署环境应使用独立密钥，并在服务重启和升级时保持不变；更换密钥会使现有浏览器会话失效。Dex GitHub OIDC 默认启用，部署时需配置 `server.http.authme.dexgithub.client-secret`，并可用 `allowed-github-user` 调整唯一允许登录的 GitHub 用户名。
 
 本次模型不提供历史数据库迁移。部署新版本前必须备份旧库并创建空数据库，让服务按当前 schema 初始化；不要把新二进制直接指向仍含 `users`、`auth_sessions`、`owner_subject` 或 `github_installation_subjects` 的旧库。
 
@@ -68,10 +74,10 @@ pnpm run dev
 前端使用 hash 路由。主要页面入口：
 
 ```text
-http://127.0.0.1:40239/#/console/overview
-http://127.0.0.1:40239/#/console/projects
-http://127.0.0.1:40239/#/console/service-groups
-http://127.0.0.1:40239/#/console/dependencies
+http://localhost:40239/#/console/overview
+http://localhost:40239/#/console/projects
+http://localhost:40239/#/console/service-groups
+http://localhost:40239/#/console/dependencies
 ```
 
 界面支持明亮/暗色主题切换。主题状态保存在浏览器 `localStorage` 中，刷新后会保持上次选择。
@@ -79,7 +85,7 @@ http://127.0.0.1:40239/#/console/dependencies
 如果需要让 Vite 代理到其他后端地址：
 
 ```bash
-API_PROXY_TARGET=http://127.0.0.1:40240 pnpm run dev
+API_PROXY_TARGET=http://localhost:40240 pnpm run dev
 ```
 
 ## API
