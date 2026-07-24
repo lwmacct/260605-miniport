@@ -10,15 +10,14 @@ import (
 type ServiceGroupsModel struct {
 	bun.BaseModel `bun:"table:service_groups,alias:service_group"`
 
-	ID           string    `bun:"id,pk,type:uuid" json:"id"`
-	OwnerSubject string    `bun:"owner_subject,type:uuid,notnull" json:"ownerSubject"`
-	Name         string    `bun:"name,notnull" json:"name"`
-	Kind         string    `bun:"kind,notnull" json:"kind"`
-	Status       string    `bun:"status,notnull" json:"status"`
-	Description  string    `bun:"description" json:"description"`
-	Notes        string    `bun:"notes" json:"notes"`
-	CreatedAt    time.Time `bun:"created_at,notnull" json:"createdAt"`
-	UpdatedAt    time.Time `bun:"updated_at,notnull" json:"updatedAt"`
+	ID          string    `bun:"id,pk,type:uuid" json:"id"`
+	Name        string    `bun:"name,notnull" json:"name"`
+	Kind        string    `bun:"kind,notnull" json:"kind"`
+	Status      string    `bun:"status,notnull" json:"status"`
+	Description string    `bun:"description" json:"description"`
+	Notes       string    `bun:"notes" json:"notes"`
+	CreatedAt   time.Time `bun:"created_at,notnull" json:"createdAt"`
+	UpdatedAt   time.Time `bun:"updated_at,notnull" json:"updatedAt"`
 }
 
 type ServiceGroupsPortGroupsModel struct {
@@ -47,9 +46,8 @@ func (*ServiceGroupsPortGroupsModel) BeforeCreateTable(_ context.Context, query 
 
 func ServiceGroupsIndexesSchema() []string {
 	return []string{
-		`CREATE INDEX IF NOT EXISTS idx_service_groups_owner ON service_groups(owner_subject)`,
 		`CREATE INDEX IF NOT EXISTS idx_service_groups_status ON service_groups(status)`,
-		`CREATE UNIQUE INDEX IF NOT EXISTS idx_service_groups_owner_name ON service_groups(owner_subject, name)`,
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_service_groups_name ON service_groups(name)`,
 		`CREATE UNIQUE INDEX IF NOT EXISTS idx_service_group_port_groups_unique ON service_group_port_groups(service_group_id, port_group_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_service_group_port_groups_service_group ON service_group_port_groups(service_group_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_service_group_port_groups_port_group ON service_group_port_groups(port_group_id)`,

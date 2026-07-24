@@ -6,7 +6,6 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/lwmacct/260630-go-hsr-shared/pkg/appmodule"
-	"github.com/lwmacct/260630-go-hsr-shared/pkg/identity"
 	"github.com/uptrace/bun"
 
 	"github.com/lwmacct/260605-miniport/internal/handler"
@@ -16,8 +15,7 @@ import (
 )
 
 type PortsvcModule struct {
-	identity identity.SessionResolver
-	value    *service.PortsvcService
+	value *service.PortsvcService
 }
 
 var _ appmodule.Module = (*PortsvcModule)(nil)
@@ -26,14 +24,12 @@ func NewPortsvcSpec() appmodule.Spec {
 	module := &PortsvcModule{}
 	return appmodule.Spec{
 		Name:     module.Name(),
-		Requires: []string{"auth", "github"},
+		Requires: []string{"github"},
 		Schema:   applyPortsvcSchema,
 		Build: func(ctx *appmodule.Context) (appmodule.Module, error) {
 			store := repository.NewStore(ctx.DB())
-			authModule := appmodule.MustContextGet[*AuthModule](ctx, "auth")
 			return &PortsvcModule{
-				identity: authModule,
-				value:    service.NewPortsvcService(store, authModule),
+				value: service.NewPortsvcService(store),
 			}, nil
 		},
 	}
@@ -44,9 +40,7 @@ func (m *PortsvcModule) Name() string {
 }
 
 func (m *PortsvcModule) Register(api huma.API) {
-	handler.RegisterPortsvc(api, handler.Config{
-		Identity: m.identity,
-	}, handler.Services{
+	handler.RegisterPortsvc(api, handler.Services{
 		Portsvc: m.value,
 	})
 }

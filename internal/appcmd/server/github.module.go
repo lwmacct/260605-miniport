@@ -9,7 +9,6 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/lwmacct/260630-go-hsr-shared/pkg/appmodule"
-	"github.com/lwmacct/260630-go-hsr-shared/pkg/identity"
 	"github.com/uptrace/bun"
 
 	"github.com/lwmacct/260605-miniport/internal/config"
@@ -20,10 +19,9 @@ import (
 )
 
 type GithubModule struct {
-	identity identity.SessionResolver
-	value    *service.GithubService
-	cancel   context.CancelFunc
-	wg       sync.WaitGroup
+	value  *service.GithubService
+	cancel context.CancelFunc
+	wg     sync.WaitGroup
 }
 
 var _ appmodule.Module = (*GithubModule)(nil)
@@ -32,14 +30,13 @@ var _ appmodule.Closer = (*GithubModule)(nil)
 func NewGithubSpec(parent context.Context, cfg *config.Config) appmodule.Spec {
 	module := &GithubModule{}
 	return appmodule.Spec{
-		Name: module.Name(), Requires: []string{"auth"}, Schema: applyGithubSchema,
+		Name: module.Name(), Schema: applyGithubSchema,
 		Build: func(moduleCtx *appmodule.Context) (appmodule.Module, error) {
-			authModule := appmodule.MustContextGet[*AuthModule](moduleCtx, "auth")
 			githubService, err := service.NewGithubService(repository.NewStore(moduleCtx.DB()), githubServiceConfig(cfg.Server.GitHub))
 			if err != nil {
 				return nil, err
 			}
-			built := &GithubModule{identity: authModule, value: githubService}
+			built := &GithubModule{value: githubService}
 			built.startReconciler(parent, cfg.Server.GitHub)
 			return built, nil
 		},
@@ -49,7 +46,7 @@ func NewGithubSpec(parent context.Context, cfg *config.Config) appmodule.Spec {
 func (m *GithubModule) Name() string { return "github" }
 
 func (m *GithubModule) Register(api huma.API) {
-	handler.RegisterGithub(api, handler.Config{Identity: m.identity}, m.value)
+	handler.RegisterGithub(api, m.value)
 }
 
 func (m *GithubModule) Close() error {

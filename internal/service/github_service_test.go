@@ -36,9 +36,8 @@ func TestGithubCompleteConnectionSyncsPrivateRepositories(t *testing.T) {
 	ctx := t.Context()
 	store := newGithubTestStore(t, ctx)
 	now := time.Date(2026, 7, 10, 8, 0, 0, 0, time.UTC)
-	ownerSubject := "018f2f9c-1111-7000-8000-000000000001"
 	state := "one-time-state"
-	require.NoError(t, store.AddGithubConnectionState(ctx, utilHashGithubState(state), ownerSubject, now.Add(time.Minute), now))
+	require.NoError(t, store.AddGithubConnectionState(ctx, utilHashGithubState(state), now.Add(time.Minute), now))
 
 	githubService := &GithubService{
 		store: store,
@@ -57,12 +56,12 @@ func TestGithubCompleteConnectionSyncsPrivateRepositories(t *testing.T) {
 	}
 
 	require.NoError(t, githubService.CompleteConnection(ctx, state, 42))
-	installations, err := githubService.ListInstallations(ctx, ownerSubject)
+	installations, err := githubService.ListInstallations(ctx)
 	require.NoError(t, err)
 	require.Len(t, installations, 1)
 	require.Equal(t, "all", installations[0].RepositorySelection)
 
-	repositories, err := githubService.ListRepositories(ctx, ownerSubject, "private", "")
+	repositories, err := githubService.ListRepositories(ctx, "private", "")
 	require.NoError(t, err)
 	require.Len(t, repositories, 1)
 	require.Equal(t, "acme/private-api", repositories[0].FullName)

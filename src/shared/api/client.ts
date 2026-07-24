@@ -1,3 +1,5 @@
+import { dispatchAuthRefresh } from "@/app/authme";
+
 export class APIError extends Error {
   constructor(
     message: string,
@@ -30,6 +32,7 @@ export async function apiGet<T>(path: string): Promise<T> {
       Accept: "application/json",
     },
   });
+  dispatchOnAuthFailure(response);
 
   if (!response.ok) {
     throw new APIError(
@@ -51,6 +54,7 @@ export async function apiSend<T>(path: string, init?: RequestInit): Promise<T> {
     },
     ...init,
   });
+  dispatchOnAuthFailure(response);
 
   if (!response.ok) {
     throw new APIError(
@@ -60,4 +64,10 @@ export async function apiSend<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   return response.json() as Promise<T>;
+}
+
+function dispatchOnAuthFailure(response: Response) {
+  if (response.status === 401 || response.status === 403) {
+    dispatchAuthRefresh();
+  }
 }

@@ -18,48 +18,6 @@ server:
       database: "${PGDATABASE}" # PostgreSQL 数据库名
       password: "${PGPASSWORD}" # PostgreSQL 密码
 
-  # 认证配置
-  auth:
-
-    # 运行时管理员用户名列表
-    admins:
-      - admin
-
-    # 本地账号认证配置
-    local:
-      login-enabled: true # 是否启用本地账号登录
-      registration-enabled: true # 是否允许用户名密码公开注册
-
-    # 认证挑战配置
-    challenge:
-      provider: "image" # 认证挑战提供方：image、hcaptcha、turnstile
-
-      # 图片验证码配置
-      image:
-        max-challenges: 1024 # 内存中图片验证码最大数量，0 表示不限制
-
-      # hCaptcha 挑战配置
-      hcaptcha:
-        sitekey: "" # 认证挑战站点公钥
-        secret: "" # 认证挑战服务端密钥
-        verify-url: "https://api.hcaptcha.com/siteverify" # 认证挑战服务端验证地址
-
-      # Cloudflare Turnstile 挑战配置
-      turnstile:
-        sitekey: "" # 认证挑战站点公钥
-        secret: "" # 认证挑战服务端密钥
-        verify-url: "https://challenges.cloudflare.com/turnstile/v0/siteverify" # 认证挑战服务端验证地址
-
-    # 认证会话配置
-    session:
-      ttl: 168h0m0s # 登录会话有效期
-
-      # 登录会话 Cookie 策略
-      cookie:
-        name: "web_session" # 登录会话 Cookie 名称
-        path: "/api" # 登录会话 Cookie Path
-        secure: false # 是否给登录会话 Cookie 设置 Secure 属性
-
   # GitHub App 集成配置
   github:
     enabled: false # 启用 GitHub App 仓库同步
@@ -74,6 +32,49 @@ server:
   http:
     listen: ":40238" # HTTP 服务监听地址
     web-root: "${WEB_ROOT:-dist}" # 静态 Web 根目录，留空则不托管前端
+
+    # 单用户访问认证配置
+    authme:
+      path-prefix: "" # 认证 HTTP 路由前缀
+
+      # 允许浏览器访问应用的可信 origin
+      origins:
+        - http://localhost:40238
+        - http://localhost:40239
+
+      # 加密浏览器 Session 配置
+      session:
+
+        # Session encryption key ring; first key writes, all keys read
+        keys:
+          - id: "default" # Session key ID
+            secret: "${AUTHME_SESSION_KEY}" # Base64url-encoded 32-byte AES key
+        ttl: 24h0m0s # Maximum browser session lifetime
+        cookie-name: "" # Optional browser session cookie name
+
+      # 静态 Access Token 认证配置
+      statictoken:
+        enabled: true # Whether to enable static token authentication
+        id: "token" # Authentication method ID
+        label: "Access token" # Authentication method display label
+
+        # Static access token credentials
+        credentials:
+          - id: "operator" # Credential ID
+            name: "Operator" # Display name
+            token: "${AUTHME_ACCESS_TOKEN}" # Opaque access token
+
+      # Dex GitHub OIDC 认证配置
+      dexgithub:
+        enabled: true # Whether to enable Dex GitHub authentication
+        id: "github" # Authentication method ID
+        label: "GitHub" # Authentication method display label
+        issuer: "https://2008.s.lwmacct.com:20088" # Dex OIDC issuer URL
+        client-id: "260605-miniport" # OIDC client ID
+        client-secret: "" # OIDC client secret
+        session-ttl: 24h0m0s # Maximum browser session lifetime
+        flow-ttl: 5m0s # Login flow lifetime
+      allowed-github-user: "lwmacct" # 允许访问应用的唯一 GitHub 用户名
 
     # HTTPS TLS 配置
     tls:

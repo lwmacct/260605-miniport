@@ -5,6 +5,9 @@ import (
 
 	"github.com/lwmacct/251207-go-pkg-cfgm/pkg/cfgm"
 	"github.com/lwmacct/260614-go-pkg-tlsreload/pkg/tlsreload"
+	"github.com/lwmacct/260711-go-pkg-authme/pkg/authme"
+	"github.com/lwmacct/260711-go-pkg-authme/pkg/authme/adapters/dexgithub"
+	"github.com/lwmacct/260711-go-pkg-authme/pkg/authme/adapters/statictoken"
 )
 
 type Config struct {
@@ -14,7 +17,6 @@ type Config struct {
 type Server struct {
 	Debug    bool           `json:"debug" desc:"启用调试日志和诊断信息"`
 	Database ServerDatabase `json:"database" desc:"数据库配置"`
-	Auth     ServerAuth     `json:"auth" desc:"认证配置"`
 	GitHub   ServerGitHub   `json:"github" desc:"GitHub App 集成配置"`
 	HTTP     ServerHTTP     `json:"http" desc:"HTTP 服务配置"`
 }
@@ -46,6 +48,7 @@ type ServerDatabasePGSQL struct {
 type ServerHTTP struct {
 	Listen          string        `json:"listen" desc:"HTTP 服务监听地址"`
 	WebRoot         string        `json:"web-root" desc:"静态 Web 根目录，留空则不托管前端"`
+	AuthMe          ServerAuthMe  `json:"authme" desc:"单用户访问认证配置"`
 	TLS             ServerHTTPTLS `json:"tls" desc:"HTTPS TLS 配置"`
 	TrustedProxies  []string      `json:"trusted-proxies" desc:"可信 HTTP 反向代理 CIDR/IP 列表"`
 	ReadTimeout     time.Duration `json:"read-timeout" desc:"HTTP 读取超时时间"`
@@ -54,44 +57,13 @@ type ServerHTTP struct {
 	MaxAPIBodyBytes int64         `json:"max-api-body-bytes" desc:"HTTP API 最大请求体字节数，0 表示不限制"`
 }
 
-type ServerAuth struct {
-	Admins    []string            `json:"admins" desc:"运行时管理员用户名列表"`
-	Local     ServerAuthLocal     `json:"local" desc:"本地账号认证配置"`
-	Challenge ServerAuthChallenge `json:"challenge" desc:"认证挑战配置"`
-	Session   ServerAuthSession   `json:"session" desc:"认证会话配置"`
-}
-
-type ServerAuthLocal struct {
-	LoginEnabled        bool `json:"login-enabled" desc:"是否启用本地账号登录"`
-	RegistrationEnabled bool `json:"registration-enabled" desc:"是否允许用户名密码公开注册"`
-}
-
-type ServerAuthChallenge struct {
-	Provider  string                    `json:"provider" desc:"认证挑战提供方：image、hcaptcha、turnstile"`
-	Image     ServerAuthChallengeImage  `json:"image" desc:"图片验证码配置"`
-	HCaptcha  ServerAuthChallengeRemote `json:"hcaptcha" desc:"hCaptcha 挑战配置"`
-	Turnstile ServerAuthChallengeRemote `json:"turnstile" desc:"Cloudflare Turnstile 挑战配置"`
-}
-
-type ServerAuthChallengeImage struct {
-	MaxChallenges int `json:"max-challenges" desc:"内存中图片验证码最大数量，0 表示不限制"`
-}
-
-type ServerAuthChallengeRemote struct {
-	SiteKey   string `json:"sitekey" desc:"认证挑战站点公钥"`
-	Secret    string `json:"secret" desc:"认证挑战服务端密钥"`
-	VerifyURL string `json:"verify-url" desc:"认证挑战服务端验证地址"`
-}
-
-type ServerAuthSession struct {
-	TTL    time.Duration           `json:"ttl" desc:"登录会话有效期"`
-	Cookie ServerAuthSessionCookie `json:"cookie" desc:"登录会话 Cookie 策略"`
-}
-
-type ServerAuthSessionCookie struct {
-	Name   string `json:"name" desc:"登录会话 Cookie 名称"`
-	Path   string `json:"path" desc:"登录会话 Cookie Path"`
-	Secure bool   `json:"secure" desc:"是否给登录会话 Cookie 设置 Secure 属性"`
+type ServerAuthMe struct {
+	PathPrefix        string               `json:"path-prefix" desc:"认证 HTTP 路由前缀"`
+	Origins           []string             `json:"origins" desc:"允许浏览器访问应用的可信 origin"`
+	Session           authme.SessionConfig `json:"session" desc:"加密浏览器 Session 配置"`
+	StaticToken       statictoken.Config   `json:"statictoken" desc:"静态 Access Token 认证配置"`
+	DexGitHub         dexgithub.Config     `json:"dexgithub" desc:"Dex GitHub OIDC 认证配置"`
+	AllowedGitHubUser string               `json:"allowed-github-user" desc:"允许访问应用的唯一 GitHub 用户名"`
 }
 
 type ServerHTTPTLS struct {
@@ -125,33 +97,6 @@ func DefaultConfig() Config {
 					Password: "${PGPASSWORD}",
 				},
 			},
-			Auth: ServerAuth{
-				Admins: []string{"admin"},
-				Local: ServerAuthLocal{
-					LoginEnabled:        true,
-					RegistrationEnabled: true,
-				},
-				Challenge: ServerAuthChallenge{
-					Provider: "image",
-					Image: ServerAuthChallengeImage{
-						MaxChallenges: 1024,
-					},
-					HCaptcha: ServerAuthChallengeRemote{
-						VerifyURL: "https://api.hcaptcha.com/siteverify",
-					},
-					Turnstile: ServerAuthChallengeRemote{
-						VerifyURL: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-					},
-				},
-				Session: ServerAuthSession{
-					TTL: 7 * 24 * time.Hour,
-					Cookie: ServerAuthSessionCookie{
-						Name: "web_session",
-						Path: "/api",
-					},
-				},
-			},
-
 			GitHub: ServerGitHub{ //nolint:gosec // WebhookSecret is an environment variable placeholder, not a credential.
 				Enabled:           false,
 				WebhookSecret:     "${GITHUB_APP_WEBHOOK_SECRET}",
@@ -162,6 +107,30 @@ func DefaultConfig() Config {
 			HTTP: ServerHTTP{
 				Listen:  ":40238",
 				WebRoot: "${WEB_ROOT:-dist}",
+				AuthMe: ServerAuthMe{
+					Origins: []string{
+						"http://localhost:40238",
+						"http://localhost:40239",
+					},
+					Session: authme.SessionConfig{
+						Keys: []authme.SessionKey{{ID: "default", Secret: "${AUTHME_SESSION_KEY}"}}, //nolint:gosec // Environment variable placeholder.
+						TTL:  24 * time.Hour,
+					},
+					StaticToken: func() statictoken.Config {
+						cfg := statictoken.DefaultConfig()
+						cfg.Enabled = true
+						cfg.Credentials = []statictoken.Credential{{ID: "operator", Name: "Operator", Token: "${AUTHME_ACCESS_TOKEN}"}} //nolint:gosec // Environment variable placeholder.
+						return cfg
+					}(),
+					DexGitHub: func() dexgithub.Config {
+						config := dexgithub.DefaultConfig()
+						config.Enabled = true
+						config.Issuer = "https://2008.s.lwmacct.com:20088"
+						config.ClientID = "260605-miniport"
+						return config
+					}(),
+					AllowedGitHubUser: "lwmacct",
+				},
 				TLS: ServerHTTPTLS{
 					Enabled:            false,
 					DefaultCertificate: "default",

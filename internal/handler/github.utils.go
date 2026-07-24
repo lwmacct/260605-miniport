@@ -12,7 +12,7 @@ func utilGithubAPIError(err error) error {
 	switch {
 	case errors.Is(err, service.ErrGithubDisabled):
 		return huma.Error503ServiceUnavailable(err.Error())
-	case errors.Is(err, service.ErrGithubUnauthorized):
+	case errors.Is(err, service.ErrGithubInvalidSignature):
 		return huma.Error403Forbidden(err.Error())
 	case errors.Is(err, service.ErrGithubInvalidState):
 		return huma.Error400BadRequest(err.Error())

@@ -2,7 +2,6 @@ package repository
 
 func GithubSchema() []any {
 	models := append([]any{}, GithubInstallationsSchema()...)
-	models = append(models, GithubInstallationSubjectsSchema()...)
 	models = append(models, GithubRepositoriesSchema()...)
 	models = append(models, GithubConnectionStatesSchema()...)
 	models = append(models, GithubWebhookDeliveriesSchema()...)
@@ -11,7 +10,6 @@ func GithubSchema() []any {
 
 func GithubIndexesSchema() []string {
 	statements := append([]string{}, GithubInstallationsIndexesSchema()...)
-	statements = append(statements, GithubInstallationSubjectsIndexesSchema()...)
 	statements = append(statements, GithubRepositoriesIndexesSchema()...)
 	statements = append(statements, GithubConnectionStatesIndexesSchema()...)
 	statements = append(statements, GithubWebhookDeliveriesIndexesSchema()...)

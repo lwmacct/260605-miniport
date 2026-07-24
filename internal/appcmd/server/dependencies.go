@@ -12,13 +12,22 @@ import (
 )
 
 func newDependencies(ctx context.Context, cfg *config.Config) (*dependencies, error) {
+	authCfg, err := config.NormalizeAuthMe(cfg.Server.HTTP.AuthMe)
+	if err != nil {
+		return nil, fmt.Errorf("configure authentication: %w", err)
+	}
+	cfg.Server.HTTP.AuthMe = authCfg
+	authRuntime, err := newAccessAuth(ctx, authCfg)
+	if err != nil {
+		return nil, fmt.Errorf("configure authentication: %w", err)
+	}
+
 	db, err := database.Open(ctx, databaseConfig(cfg.Server.Database))
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
 
 	modules, err := appmodule.Build(ctx, db,
-		NewAuthSpec(cfg),
 		NewCoreSpec(),
 		NewGithubSpec(ctx, cfg),
 		NewPortsvcSpec(),
@@ -31,7 +40,7 @@ func newDependencies(ctx context.Context, cfg *config.Config) (*dependencies, er
 	return &dependencies{
 		db:       db,
 		modules:  modules,
-		auth:     appmodule.MustGet[*AuthModule](modules, "auth"),
+		auth:     authRuntime,
 		github:   appmodule.MustGet[*GithubModule](modules, "github"),
 		portsvc:  appmodule.MustGet[*PortsvcModule](modules, "portsvc"),
 		requests: requestctx.NewMiddleware(cfg.Server.HTTP.TrustedProxies),

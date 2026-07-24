@@ -6,14 +6,12 @@ import type { ServiceGroupItem } from "../model/portsvcTypes";
 import { statusTag } from "../model/portsvcUtils";
 
 type ServiceGroupsSectionProps = {
-  canManage: boolean;
   onEditServiceGroup: (group: ServiceGroupItem) => void;
   onSelectServiceGroup: (group: ServiceGroupItem) => void;
   serviceGroups: ServiceGroupItem[];
 };
 
 export function ServiceGroupsSection({
-  canManage,
   onEditServiceGroup,
   onSelectServiceGroup,
   serviceGroups,
@@ -42,7 +40,6 @@ export function ServiceGroupsSection({
       ),
     },
     { title: "状态", dataIndex: "status", width: 110, render: (value) => statusTag(value) },
-    { title: "用户", dataIndex: "ownerName", width: 120, render: (value) => value || "-" },
     {
       title: "说明",
       dataIndex: "description",
@@ -51,12 +48,11 @@ export function ServiceGroupsSection({
     {
       title: "操作",
       width: 80,
-      render: (_, item) =>
-        canManage ? (
-          <Tooltip title="编辑服务组">
-            <Button size="small" icon={<EditOutlined />} onClick={() => onEditServiceGroup(item)} />
-          </Tooltip>
-        ) : null,
+      render: (_, item) => (
+        <Tooltip title="编辑服务组">
+          <Button size="small" icon={<EditOutlined />} onClick={() => onEditServiceGroup(item)} />
+        </Tooltip>
+      ),
     },
   ];
 

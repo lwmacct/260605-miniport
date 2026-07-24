@@ -10,7 +10,6 @@ type DependenciesModel struct {
 	bun.BaseModel `bun:"table:dependency_assets,alias:asset"`
 
 	ID              string    `bun:"id,pk,type:uuid" json:"id"`
-	OwnerSubject    string    `bun:"owner_subject,type:uuid,notnull" json:"ownerSubject"`
 	Name            string    `bun:"name,notnull" json:"name"`
 	AssetKind       string    `bun:"asset_kind,notnull" json:"assetKind"`
 	AssetType       string    `bun:"asset_type,notnull" json:"assetType"`
@@ -35,11 +34,10 @@ func DependencySchema() []any {
 
 func DependencyIndexesSchema() []string {
 	return []string{
-		`CREATE INDEX IF NOT EXISTS idx_dependency_assets_owner ON dependency_assets(owner_subject)`,
 		`CREATE INDEX IF NOT EXISTS idx_dependency_assets_kind ON dependency_assets(asset_kind)`,
 		`CREATE INDEX IF NOT EXISTS idx_dependency_assets_type ON dependency_assets(asset_type)`,
 		`CREATE INDEX IF NOT EXISTS idx_dependency_assets_provider ON dependency_assets(provider)`,
 		`CREATE INDEX IF NOT EXISTS idx_dependency_assets_status ON dependency_assets(status)`,
-		`CREATE UNIQUE INDEX IF NOT EXISTS idx_dependency_assets_owner_name_kind ON dependency_assets(owner_subject, name, asset_kind)`,
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_dependency_assets_name_kind ON dependency_assets(name, asset_kind)`,
 	}
 }

@@ -5,20 +5,16 @@ import (
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
-	"github.com/lwmacct/260630-go-hsr-shared/pkg/identity"
-	"github.com/lwmacct/260630-go-hsr-shared/pkg/requestctx"
 
 	"github.com/lwmacct/260605-miniport/internal/service"
 )
 
 type portsvcHandler struct {
-	config   Config
 	services Services
 }
 
-func RegisterPortsvc(api huma.API, config Config, services Services) {
+func RegisterPortsvc(api huma.API, services Services) {
 	handler := portsvcHandler{
-		config:   config,
 		services: services,
 	}
 	huma.Register(api, huma.Operation{OperationID: "list-hosts", Method: http.MethodGet, Path: "/hosts", Summary: "List hosts", Tags: []string{"hosts"}}, handler.listHosts)
@@ -49,9 +45,6 @@ func RegisterPortsvc(api huma.API, config Config, services Services) {
 }
 
 func (h portsvcHandler) listHosts(ctx context.Context, input *HostListInputDTO) (*BodyDTO[[]HostDTO], error) {
-	if _, err := h.actor(ctx, input.Session); err != nil {
-		return nil, err
-	}
 	hosts, err := h.services.Portsvc.ListHosts(ctx, service.HostListParams{Query: input.Query, Status: input.Status})
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
@@ -60,11 +53,7 @@ func (h portsvcHandler) listHosts(ctx context.Context, input *HostListInputDTO) 
 }
 
 func (h portsvcHandler) createHost(ctx context.Context, input *HostBodyInputDTO) (*BodyDTO[HostDTO], error) {
-	actor, err := h.actor(ctx, input.Session)
-	if err != nil {
-		return nil, err
-	}
-	host, err := h.services.Portsvc.CreateHost(ctx, actor, ToHostPayload(input.Body))
+	host, err := h.services.Portsvc.CreateHost(ctx, ToHostPayload(input.Body))
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
@@ -72,11 +61,7 @@ func (h portsvcHandler) createHost(ctx context.Context, input *HostBodyInputDTO)
 }
 
 func (h portsvcHandler) updateHost(ctx context.Context, input *HostUpdateInputDTO) (*BodyDTO[HostDTO], error) {
-	actor, err := h.actor(ctx, input.Session)
-	if err != nil {
-		return nil, err
-	}
-	host, err := h.services.Portsvc.UpdateHost(ctx, actor, input.ID, ToHostPayload(input.Body))
+	host, err := h.services.Portsvc.UpdateHost(ctx, input.ID, ToHostPayload(input.Body))
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
@@ -84,29 +69,19 @@ func (h portsvcHandler) updateHost(ctx context.Context, input *HostUpdateInputDT
 }
 
 func (h portsvcHandler) deleteHost(ctx context.Context, input *HostInputDTO) (*BodyDTO[DeleteDTO], error) {
-	actor, err := h.actor(ctx, input.Session)
-	if err != nil {
-		return nil, err
-	}
-	if err := h.services.Portsvc.DeleteHost(ctx, actor, input.ID); err != nil {
+	if err := h.services.Portsvc.DeleteHost(ctx, input.ID); err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
 	return &BodyDTO[DeleteDTO]{Body: DeleteDTO{Deleted: true}}, nil
 }
 
 func (h portsvcHandler) listDependencyAssets(ctx context.Context, input *DependencyAssetListInputDTO) (*BodyDTO[[]DependencyAssetDTO], error) {
-	actor, err := h.actor(ctx, input.Session)
-	if err != nil {
-		return nil, err
-	}
 	assets, err := h.services.Portsvc.ListDependencyAssets(ctx, service.DependencyAssetListParams{
-		Actor:        actor,
-		OwnerSubject: input.OwnerSubject,
-		Query:        input.Query,
-		AssetKind:    input.AssetKind,
-		AssetType:    input.AssetType,
-		Provider:     input.Provider,
-		Status:       input.Status,
+		Query:     input.Query,
+		AssetKind: input.AssetKind,
+		AssetType: input.AssetType,
+		Provider:  input.Provider,
+		Status:    input.Status,
 	})
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
@@ -115,11 +90,7 @@ func (h portsvcHandler) listDependencyAssets(ctx context.Context, input *Depende
 }
 
 func (h portsvcHandler) createDependencyAsset(ctx context.Context, input *DependencyAssetBodyInputDTO) (*BodyDTO[DependencyAssetDTO], error) {
-	actor, err := h.actor(ctx, input.Session)
-	if err != nil {
-		return nil, err
-	}
-	asset, err := h.services.Portsvc.CreateDependencyAsset(ctx, actor, ToDependencyAssetPayload(input.Body))
+	asset, err := h.services.Portsvc.CreateDependencyAsset(ctx, ToDependencyAssetPayload(input.Body))
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
@@ -127,11 +98,7 @@ func (h portsvcHandler) createDependencyAsset(ctx context.Context, input *Depend
 }
 
 func (h portsvcHandler) updateDependencyAsset(ctx context.Context, input *DependencyAssetUpdateInputDTO) (*BodyDTO[DependencyAssetDTO], error) {
-	actor, err := h.actor(ctx, input.Session)
-	if err != nil {
-		return nil, err
-	}
-	asset, err := h.services.Portsvc.UpdateDependencyAsset(ctx, actor, input.ID, ToDependencyAssetPayload(input.Body))
+	asset, err := h.services.Portsvc.UpdateDependencyAsset(ctx, input.ID, ToDependencyAssetPayload(input.Body))
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
@@ -139,26 +106,16 @@ func (h portsvcHandler) updateDependencyAsset(ctx context.Context, input *Depend
 }
 
 func (h portsvcHandler) deleteDependencyAsset(ctx context.Context, input *DependencyAssetInputDTO) (*BodyDTO[DeleteDTO], error) {
-	actor, err := h.actor(ctx, input.Session)
-	if err != nil {
-		return nil, err
-	}
-	if err := h.services.Portsvc.DeleteDependencyAsset(ctx, actor, input.ID); err != nil {
+	if err := h.services.Portsvc.DeleteDependencyAsset(ctx, input.ID); err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
 	return &BodyDTO[DeleteDTO]{Body: DeleteDTO{Deleted: true}}, nil
 }
 
 func (h portsvcHandler) listServiceGroups(ctx context.Context, input *ServiceGroupListInputDTO) (*BodyDTO[[]ServiceGroupDTO], error) {
-	actor, err := h.actor(ctx, input.Session)
-	if err != nil {
-		return nil, err
-	}
 	groups, err := h.services.Portsvc.ListServiceGroups(ctx, service.ServiceGroupListParams{
-		Actor:        actor,
-		OwnerSubject: input.OwnerSubject,
-		Query:        input.Query,
-		Status:       input.Status,
+		Query:  input.Query,
+		Status: input.Status,
 	})
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
@@ -167,11 +124,7 @@ func (h portsvcHandler) listServiceGroups(ctx context.Context, input *ServiceGro
 }
 
 func (h portsvcHandler) getServiceGroup(ctx context.Context, input *ServiceGroupInputDTO) (*BodyDTO[ServiceGroupDTO], error) {
-	actor, err := h.actor(ctx, input.Session)
-	if err != nil {
-		return nil, err
-	}
-	group, err := h.services.Portsvc.GetServiceGroup(ctx, actor, input.ID)
+	group, err := h.services.Portsvc.GetServiceGroup(ctx, input.ID)
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
@@ -179,11 +132,7 @@ func (h portsvcHandler) getServiceGroup(ctx context.Context, input *ServiceGroup
 }
 
 func (h portsvcHandler) createServiceGroup(ctx context.Context, input *ServiceGroupBodyInputDTO) (*BodyDTO[ServiceGroupDTO], error) {
-	actor, err := h.actor(ctx, input.Session)
-	if err != nil {
-		return nil, err
-	}
-	group, err := h.services.Portsvc.CreateServiceGroup(ctx, actor, ToServiceGroupPayload(input.Body))
+	group, err := h.services.Portsvc.CreateServiceGroup(ctx, ToServiceGroupPayload(input.Body))
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
@@ -191,11 +140,7 @@ func (h portsvcHandler) createServiceGroup(ctx context.Context, input *ServiceGr
 }
 
 func (h portsvcHandler) updateServiceGroup(ctx context.Context, input *ServiceGroupUpdateInputDTO) (*BodyDTO[ServiceGroupDTO], error) {
-	actor, err := h.actor(ctx, input.Session)
-	if err != nil {
-		return nil, err
-	}
-	group, err := h.services.Portsvc.UpdateServiceGroup(ctx, actor, input.ID, ToServiceGroupPayload(input.Body))
+	group, err := h.services.Portsvc.UpdateServiceGroup(ctx, input.ID, ToServiceGroupPayload(input.Body))
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
@@ -203,22 +148,14 @@ func (h portsvcHandler) updateServiceGroup(ctx context.Context, input *ServiceGr
 }
 
 func (h portsvcHandler) deleteServiceGroup(ctx context.Context, input *ServiceGroupInputDTO) (*BodyDTO[DeleteDTO], error) {
-	actor, err := h.actor(ctx, input.Session)
-	if err != nil {
-		return nil, err
-	}
-	if err := h.services.Portsvc.DeleteServiceGroup(ctx, actor, input.ID); err != nil {
+	if err := h.services.Portsvc.DeleteServiceGroup(ctx, input.ID); err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
 	return &BodyDTO[DeleteDTO]{Body: DeleteDTO{Deleted: true}}, nil
 }
 
 func (h portsvcHandler) listPortGroups(ctx context.Context, input *PortGroupListInputDTO) (*BodyDTO[[]PortGroupDTO], error) {
-	actor, err := h.actor(ctx, input.Session)
-	if err != nil {
-		return nil, err
-	}
-	groups, err := h.services.Portsvc.ListPortGroups(ctx, service.PortGroupListParams{Actor: actor, OwnerSubject: input.OwnerSubject, Query: input.Query, Sort: input.Sort, Status: input.Status})
+	groups, err := h.services.Portsvc.ListPortGroups(ctx, service.PortGroupListParams{Query: input.Query, Sort: input.Sort, Status: input.Status})
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
@@ -226,11 +163,7 @@ func (h portsvcHandler) listPortGroups(ctx context.Context, input *PortGroupList
 }
 
 func (h portsvcHandler) getPortGroup(ctx context.Context, input *PortGroupInputDTO) (*BodyDTO[PortGroupDTO], error) {
-	actor, err := h.actor(ctx, input.Session)
-	if err != nil {
-		return nil, err
-	}
-	group, err := h.services.Portsvc.GetPortGroup(ctx, actor, input.ID)
+	group, err := h.services.Portsvc.GetPortGroup(ctx, input.ID)
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
@@ -238,11 +171,7 @@ func (h portsvcHandler) getPortGroup(ctx context.Context, input *PortGroupInputD
 }
 
 func (h portsvcHandler) createPortGroup(ctx context.Context, input *PortGroupBodyInputDTO) (*BodyDTO[PortGroupDTO], error) {
-	actor, err := h.actor(ctx, input.Session)
-	if err != nil {
-		return nil, err
-	}
-	group, err := h.services.Portsvc.CreatePortGroup(ctx, actor, ToPortGroupPayload(input.Body))
+	group, err := h.services.Portsvc.CreatePortGroup(ctx, ToPortGroupPayload(input.Body))
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
@@ -250,11 +179,7 @@ func (h portsvcHandler) createPortGroup(ctx context.Context, input *PortGroupBod
 }
 
 func (h portsvcHandler) updatePortGroup(ctx context.Context, input *PortGroupUpdateInputDTO) (*BodyDTO[PortGroupDTO], error) {
-	actor, err := h.actor(ctx, input.Session)
-	if err != nil {
-		return nil, err
-	}
-	group, err := h.services.Portsvc.UpdatePortGroup(ctx, actor, input.ID, ToPortGroupPayload(input.Body))
+	group, err := h.services.Portsvc.UpdatePortGroup(ctx, input.ID, ToPortGroupPayload(input.Body))
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
@@ -262,22 +187,14 @@ func (h portsvcHandler) updatePortGroup(ctx context.Context, input *PortGroupUpd
 }
 
 func (h portsvcHandler) deletePortGroup(ctx context.Context, input *PortGroupInputDTO) (*BodyDTO[DeleteDTO], error) {
-	actor, err := h.actor(ctx, input.Session)
-	if err != nil {
-		return nil, err
-	}
-	if err := h.services.Portsvc.DeletePortGroup(ctx, actor, input.ID); err != nil {
+	if err := h.services.Portsvc.DeletePortGroup(ctx, input.ID); err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
 	return &BodyDTO[DeleteDTO]{Body: DeleteDTO{Deleted: true}}, nil
 }
 
 func (h portsvcHandler) createPortSlot(ctx context.Context, input *PortSlotBodyInputDTO) (*BodyDTO[PortSlotDTO], error) {
-	actor, err := h.actor(ctx, input.Session)
-	if err != nil {
-		return nil, err
-	}
-	slot, err := h.services.Portsvc.CreatePortSlot(ctx, actor, input.ID, ToPortSlotPayload(input.Body))
+	slot, err := h.services.Portsvc.CreatePortSlot(ctx, input.ID, ToPortSlotPayload(input.Body))
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
@@ -285,11 +202,7 @@ func (h portsvcHandler) createPortSlot(ctx context.Context, input *PortSlotBodyI
 }
 
 func (h portsvcHandler) updatePortSlot(ctx context.Context, input *PortSlotUpdateInputDTO) (*BodyDTO[PortSlotDTO], error) {
-	actor, err := h.actor(ctx, input.Session)
-	if err != nil {
-		return nil, err
-	}
-	slot, err := h.services.Portsvc.UpdatePortSlot(ctx, actor, input.ID, ToPortSlotPayload(input.Body))
+	slot, err := h.services.Portsvc.UpdatePortSlot(ctx, input.ID, ToPortSlotPayload(input.Body))
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
@@ -297,22 +210,14 @@ func (h portsvcHandler) updatePortSlot(ctx context.Context, input *PortSlotUpdat
 }
 
 func (h portsvcHandler) deletePortSlot(ctx context.Context, input *PortGroupInputDTO) (*BodyDTO[DeleteDTO], error) {
-	actor, err := h.actor(ctx, input.Session)
-	if err != nil {
-		return nil, err
-	}
-	if err := h.services.Portsvc.DeletePortSlot(ctx, actor, input.ID); err != nil {
+	if err := h.services.Portsvc.DeletePortSlot(ctx, input.ID); err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
 	return &BodyDTO[DeleteDTO]{Body: DeleteDTO{Deleted: true}}, nil
 }
 
 func (h portsvcHandler) exportPortGroups(ctx context.Context, input *PortGroupListInputDTO) (*CSVOutputDTO, error) {
-	actor, err := h.actor(ctx, input.Session)
-	if err != nil {
-		return nil, err
-	}
-	body, err := h.services.Portsvc.ExportPortGroupsCSV(ctx, service.PortGroupListParams{Actor: actor, OwnerSubject: input.OwnerSubject, Query: input.Query, Sort: input.Sort, Status: input.Status})
+	body, err := h.services.Portsvc.ExportPortGroupsCSV(ctx, service.PortGroupListParams{Query: input.Query, Sort: input.Sort, Status: input.Status})
 	if err != nil {
 		return nil, utilPortsvcAPIError(err)
 	}
@@ -321,26 +226,4 @@ func (h portsvcHandler) exportPortGroups(ctx context.Context, input *PortGroupLi
 		ContentDisposition: `attachment; filename="miniport-port-groups.csv"`,
 		Body:               body,
 	}, nil
-}
-
-func (h portsvcHandler) actor(ctx context.Context, sessionID string) (service.PortsvcActor, error) {
-	if sessionID == "" || h.config.Identity == nil {
-		return service.PortsvcActor{}, huma.Error401Unauthorized("unauthorized")
-	}
-	request, ok := requestctx.RequestFromContext(ctx)
-	if !ok {
-		return service.PortsvcActor{}, huma.Error401Unauthorized("unauthorized")
-	}
-	principal, err := h.config.Identity.CurrentPrincipal(ctx, sessionID, request)
-	if err != nil || principal == nil {
-		return service.PortsvcActor{}, huma.Error401Unauthorized("unauthorized")
-	}
-	if !principal.Active() || principal.Status == identity.StatusDisabled {
-		return service.PortsvcActor{}, huma.Error401Unauthorized("unauthorized")
-	}
-	actor := ToPortsvcActor(principal)
-	if actor.OwnerSubject == "" {
-		return service.PortsvcActor{}, huma.Error401Unauthorized("unauthorized")
-	}
-	return actor, nil
 }

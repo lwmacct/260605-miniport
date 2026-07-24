@@ -30,12 +30,10 @@ export async function loadPortsvc(query: PortsvcQuery): Promise<PortsvcSnapshot>
     q: query.query,
     sort: query.sort,
     status: query.status,
-    ownerSubject: query.ownerSubject,
   });
   const serviceGroupsPath = "/api/service-groups" + buildQueryString({
     q: query.query,
     status: query.status,
-    ownerSubject: query.ownerSubject,
   });
 
   const [meta, hosts, portGroups, dependencyAssets, serviceGroups, repositories] = await Promise.all([
@@ -72,7 +70,6 @@ export function savePortGroup(group: PortGroupForm, editingGroup?: PortGroupItem
     repositoryLinks: group.repositoryLinks ?? [],
     hostId: group.hostId ?? "",
     notes: group.notes ?? "",
-    ownerSubject: group.ownerSubject ?? "",
     portPrefix: group.portPrefix ?? 0,
     environmentName: group.environmentName ?? "",
     environmentOwner: group.environmentOwner ?? "",
@@ -102,7 +99,6 @@ export function saveServiceGroup(group: ServiceGroupForm, editingGroup?: Service
     kind: group.kind ?? "service",
     name: group.name ?? "",
     notes: group.notes ?? "",
-    ownerSubject: group.ownerSubject ?? "",
     portGroups: group.portGroups ?? [],
     status: group.status ?? "active",
   };
@@ -148,7 +144,6 @@ export function saveDependencyAsset(asset: Partial<DependencyAssetItem>, editing
     metadata: asset.metadata ?? "",
     name: asset.name ?? "",
     notes: asset.notes ?? "",
-    ownerSubject: asset.ownerSubject ?? "",
     provider: asset.provider ?? "manual",
     status: asset.status ?? "active",
     url: asset.url ?? "",
@@ -172,6 +167,5 @@ export function exportPortGroupsURL(query: PortsvcQuery) {
     q: query.query,
     sort: query.sort,
     status: query.status,
-    ownerSubject: query.ownerSubject,
   });
 }

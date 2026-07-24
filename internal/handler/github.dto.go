@@ -47,10 +47,6 @@ type GithubRepositoryDTO struct {
 	LastSeenAt         time.Time `json:"lastSeenAt"`
 }
 
-type GithubSessionInputDTO struct {
-	Session string `cookie:"web_session"`
-}
-
 type GithubSetupInputDTO struct {
 	InstallationID int64  `query:"installation_id" required:"true"`
 	SetupAction    string `query:"setup_action"`
@@ -58,14 +54,12 @@ type GithubSetupInputDTO struct {
 }
 
 type GithubInstallationInputDTO struct {
-	Session string `cookie:"web_session"`
-	ID      string `path:"id"`
+	ID string `path:"id"`
 }
 
 type GithubRepositoryListInputDTO struct {
-	Session string `cookie:"web_session"`
-	Query   string `query:"q"`
-	State   string `query:"state"`
+	Query string `query:"q"`
+	State string `query:"state"`
 }
 
 type GithubWebhookInputDTO struct {

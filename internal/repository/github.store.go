@@ -58,11 +58,9 @@ func (s *Store) FetchGithubInstallationByExternalID(ctx context.Context, id int6
 	return utilGithubInstallationRecord(row), nil
 }
 
-func (s *Store) ListGithubInstallationsForSubject(ctx context.Context, ownerSubject string) ([]GithubInstallationRecord, error) {
+func (s *Store) ListGithubInstallations(ctx context.Context) ([]GithubInstallationRecord, error) {
 	var rows []GithubInstallationsModel
 	err := s.db.NewSelect().Model(&rows).
-		Join("JOIN github_installation_subjects AS access ON access.installation_id = github_installation.id").
-		Where("access.owner_subject = ?", ownerSubject).
 		Order("github_installation.account_login ASC", "github_installation.id ASC").Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -84,37 +82,6 @@ func (s *Store) ListGithubInstallationsByActiveStatus(ctx context.Context) ([]Gi
 		out = append(out, *utilGithubInstallationRecord(&rows[idx]))
 	}
 	return out, nil
-}
-
-func (s *Store) AddGithubInstallationSubject(ctx context.Context, installationID, ownerSubject string, now time.Time) error {
-	row := &GithubInstallationSubjectsModel{
-		ID: idgen.NewUUID7(), InstallationID: installationID, OwnerSubject: ownerSubject, CreatedAt: now,
-	}
-	_, err := s.db.NewInsert().Model(row).
-		On("CONFLICT (installation_id, owner_subject) DO NOTHING").Exec(ctx)
-	return err
-}
-
-func (s *Store) DeleteGithubInstallationSubject(ctx context.Context, installationID, ownerSubject string) error {
-	result, err := s.db.NewDelete().Model((*GithubInstallationSubjectsModel)(nil)).
-		Where("installation_id = ?", installationID).Where("owner_subject = ?", ownerSubject).Exec(ctx)
-	if err != nil {
-		return err
-	}
-	count, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if count == 0 {
-		return ErrNotFound
-	}
-	return nil
-}
-
-func (s *Store) ExistsGithubInstallationSubject(ctx context.Context, installationID, ownerSubject string) (bool, error) {
-	count, err := s.db.NewSelect().Model((*GithubInstallationSubjectsModel)(nil)).
-		Where("installation_id = ?", installationID).Where("owner_subject = ?", ownerSubject).Count(ctx)
-	return count > 0, err
 }
 
 func (s *Store) UpdateGithubInstallationSync(ctx context.Context, id string, syncedAt time.Time, syncError string) (*GithubInstallationRecord, error) {
@@ -144,12 +111,12 @@ func (s *Store) ReplaceGithubRepositoriesStateWithUnavailable(ctx context.Contex
 	return err
 }
 
-func (s *Store) AddGithubConnectionState(ctx context.Context, stateHash, ownerSubject string, expiresAt, now time.Time) error {
+func (s *Store) AddGithubConnectionState(ctx context.Context, stateHash string, expiresAt, now time.Time) error {
 	_, err := s.db.NewDelete().Model((*GithubConnectionStatesModel)(nil)).Where("expires_at <= ?", now).Exec(ctx)
 	if err != nil {
 		return err
 	}
-	row := &GithubConnectionStatesModel{StateHash: stateHash, OwnerSubject: ownerSubject, ExpiresAt: expiresAt, CreatedAt: now}
+	row := &GithubConnectionStatesModel{StateHash: stateHash, ExpiresAt: expiresAt, CreatedAt: now}
 	_, err = s.db.NewInsert().Model(row).Exec(ctx)
 	return err
 }
@@ -211,11 +178,9 @@ func (s *Store) ReplaceGithubRepositories(ctx context.Context, installationID st
 	})
 }
 
-func (s *Store) ListGithubRepositoriesForSubject(ctx context.Context, ownerSubject, queryText, state string) ([]GithubRepositoryRecord, error) {
+func (s *Store) ListGithubRepositories(ctx context.Context, queryText, state string) ([]GithubRepositoryRecord, error) {
 	var rows []GithubRepositoriesModel
-	query := s.db.NewSelect().Model(&rows).
-		Join("JOIN github_installation_subjects AS access ON access.installation_id = github_repository.installation_id").
-		Where("access.owner_subject = ?", ownerSubject)
+	query := s.db.NewSelect().Model(&rows)
 	if state != "" {
 		query = query.Where("github_repository.state = ?", state)
 	}
@@ -241,10 +206,9 @@ func (s *Store) FetchGithubRepositoryByID(ctx context.Context, id string) (*Gith
 	return utilGithubRepositoryRecord(row), nil
 }
 
-func (s *Store) ExistsGithubRepositorySubject(ctx context.Context, repositoryID, ownerSubject string) (bool, error) {
+func (s *Store) ExistsGithubRepository(ctx context.Context, repositoryID string) (bool, error) {
 	count, err := s.db.NewSelect().Model((*GithubRepositoriesModel)(nil)).
-		Join("JOIN github_installation_subjects AS access ON access.installation_id = github_repository.installation_id").
-		Where("github_repository.id = ?", repositoryID).Where("access.owner_subject = ?", ownerSubject).Count(ctx)
+		Where("github_repository.id = ?", repositoryID).Count(ctx)
 	return count > 0, err
 }
 

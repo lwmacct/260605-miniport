@@ -1,8 +1,11 @@
 package repository
 
 import (
+	"context"
 	"strings"
 	"time"
+
+	"github.com/uptrace/bun"
 )
 
 type PortsvcHostListFilter struct {
@@ -11,28 +14,22 @@ type PortsvcHostListFilter struct {
 }
 
 type PortsvcPortGroupListFilter struct {
-	OwnerSubject string
-	Admin        bool
-	Query        string
-	Sort         string
-	Status       string
+	Query  string
+	Sort   string
+	Status string
 }
 
 type PortsvcDependencyAssetListFilter struct {
-	OwnerSubject string
-	Admin        bool
-	Query        string
-	AssetKind    string
-	AssetType    string
-	Provider     string
-	Status       string
+	Query     string
+	AssetKind string
+	AssetType string
+	Provider  string
+	Status    string
 }
 
 type PortsvcServiceGroupListFilter struct {
-	OwnerSubject string
-	Admin        bool
-	Query        string
-	Status       string
+	Query  string
+	Status string
 }
 
 type PortsvcHostRecord struct {
@@ -48,8 +45,6 @@ type PortsvcHostRecord struct {
 
 type PortsvcPortGroupRecord struct {
 	ID               string
-	OwnerSubject     string
-	OwnerName        string
 	HostID           string
 	Host             *PortsvcHostRecord
 	PortPrefix       int
@@ -81,8 +76,6 @@ type PortsvcPortSlotRecord struct {
 
 type PortsvcDependencyAssetRecord struct {
 	ID              string
-	OwnerSubject    string
-	OwnerName       string
 	Name            string
 	AssetKind       string
 	AssetType       string
@@ -128,16 +121,14 @@ type PortsvcPortGroupRepositoryLinkRecord struct {
 }
 
 type PortsvcServiceGroupRecord struct {
-	ID           string
-	OwnerSubject string
-	OwnerName    string
-	Name         string
-	Kind         string
-	Status       string
-	Description  string
-	Notes        string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID          string
+	Name        string
+	Kind        string
+	Status      string
+	Description string
+	Notes       string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 type PortsvcServiceGroupPortGroupRecord struct {
@@ -185,7 +176,6 @@ func utilPortsvcPortGroupRecordFromModel(model *PortAllocationsModel) *PortsvcPo
 	}
 	out := &PortsvcPortGroupRecord{
 		ID:               model.ID,
-		OwnerSubject:     model.OwnerSubject,
 		HostID:           model.HostID,
 		PortPrefix:       model.PortPrefix,
 		EnvironmentName:  model.EnvironmentName,
@@ -228,7 +218,6 @@ func utilPortsvcDependencyAssetRecordFromModel(model *DependenciesModel) *Portsv
 	}
 	return &PortsvcDependencyAssetRecord{
 		ID:              model.ID,
-		OwnerSubject:    model.OwnerSubject,
 		Name:            model.Name,
 		AssetKind:       model.AssetKind,
 		AssetType:       model.AssetType,
@@ -285,15 +274,14 @@ func utilPortsvcServiceGroupRecordFromModel(model *ServiceGroupsModel) *PortsvcS
 		return nil
 	}
 	return &PortsvcServiceGroupRecord{
-		ID:           model.ID,
-		OwnerSubject: model.OwnerSubject,
-		Name:         model.Name,
-		Kind:         model.Kind,
-		Status:       model.Status,
-		Description:  model.Description,
-		Notes:        model.Notes,
-		CreatedAt:    model.CreatedAt,
-		UpdatedAt:    model.UpdatedAt,
+		ID:          model.ID,
+		Name:        model.Name,
+		Kind:        model.Kind,
+		Status:      model.Status,
+		Description: model.Description,
+		Notes:       model.Notes,
+		CreatedAt:   model.CreatedAt,
+		UpdatedAt:   model.UpdatedAt,
 	}
 }
 
@@ -336,4 +324,31 @@ func utilJoinSearchArgs(pattern string, count int) []any {
 		args = append(args, pattern)
 	}
 	return args
+}
+
+func utilFilterPortsvcList(query *bun.SelectQuery, alias, status, keyword string, columns []string) *bun.SelectQuery {
+	if status = utilCompactString(status); status != "" {
+		query = query.Where(alias+".status = ?", status)
+	}
+	if keyword = utilCompactString(keyword); keyword != "" {
+		pattern := utilSearchPattern(keyword)
+		query = query.Where(utilJoinSearchClauses(columns), utilJoinSearchArgs(pattern, len(columns))...)
+	}
+	return query
+}
+
+func utilScanPortsvcList[Model any, Record any](
+	ctx context.Context,
+	query *bun.SelectQuery,
+	rows *[]Model,
+	convert func(*Model) *Record,
+) ([]Record, error) {
+	if err := query.Scan(ctx); err != nil {
+		return nil, err
+	}
+	out := make([]Record, 0, len(*rows))
+	for idx := range *rows {
+		out = append(out, *convert(&(*rows)[idx]))
+	}
+	return out, nil
 }

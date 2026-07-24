@@ -65,7 +65,3 @@ export function beginGitHubConnection() {
 export function syncGitHubInstallation(id: string) {
   return apiSend<GitHubInstallation>(`/api/github/installations/${id}/sync`, { method: "POST" });
 }
-
-export function disconnectGitHubInstallation(id: string) {
-  return apiSend<{ deleted: boolean }>(`/api/github/installations/${id}/connection`, { method: "DELETE" });
-}

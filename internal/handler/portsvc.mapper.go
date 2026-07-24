@@ -1,21 +1,6 @@
 package handler
 
-import (
-	"github.com/lwmacct/260630-go-hsr-shared/pkg/identity"
-
-	"github.com/lwmacct/260605-miniport/internal/service"
-)
-
-func ToPortsvcActor(user *identity.Principal) service.PortsvcActor {
-	actor := service.PortsvcActor{}
-	if user == nil {
-		return actor
-	}
-	actor.OwnerSubject = user.Subject
-	actor.OwnerName = user.Username
-	actor.Admin = user.Admin
-	return actor
-}
+import "github.com/lwmacct/260605-miniport/internal/service"
 
 func ToHostPayload(input HostPayloadDTO) service.HostPayload {
 	return service.HostPayload(input)
@@ -31,7 +16,6 @@ func ToDependencyAssetPayload(input DependencyAssetPayloadDTO) service.Dependenc
 
 func ToPortGroupPayload(input PortGroupPayloadDTO) service.PortGroupPayload {
 	out := service.PortGroupPayload{
-		OwnerSubject:     input.OwnerSubject,
 		HostID:           input.HostID,
 		PortPrefix:       input.PortPrefix,
 		EnvironmentName:  input.EnvironmentName,
@@ -60,13 +44,12 @@ func ToPortGroupPayload(input PortGroupPayloadDTO) service.PortGroupPayload {
 
 func ToServiceGroupPayload(input ServiceGroupPayloadDTO) service.ServiceGroupPayload {
 	out := service.ServiceGroupPayload{
-		OwnerSubject: input.OwnerSubject,
-		Name:         input.Name,
-		Kind:         input.Kind,
-		Status:       input.Status,
-		Description:  input.Description,
-		Notes:        input.Notes,
-		PortGroups:   make([]service.ServiceGroupPortGroupPayload, 0, len(input.PortGroups)),
+		Name:        input.Name,
+		Kind:        input.Kind,
+		Status:      input.Status,
+		Description: input.Description,
+		Notes:       input.Notes,
+		PortGroups:  make([]service.ServiceGroupPortGroupPayload, 0, len(input.PortGroups)),
 	}
 	for _, portGroup := range input.PortGroups {
 		out.PortGroups = append(out.PortGroups, service.ServiceGroupPortGroupPayload(portGroup))
@@ -122,8 +105,6 @@ func ToPortSlotDTOs(slots []service.PortSlot) []PortSlotDTO {
 func ToDependencyAssetDTO(asset service.DependencyAsset) DependencyAssetDTO {
 	return DependencyAssetDTO{
 		ID:              asset.ID,
-		OwnerSubject:    asset.OwnerSubject,
-		OwnerName:       asset.OwnerName,
 		Name:            asset.Name,
 		AssetKind:       asset.AssetKind,
 		AssetType:       asset.AssetType,
@@ -202,8 +183,6 @@ func ToPortGroupRepositoryLinkDTOs(links []service.PortGroupRepositoryLink) []Po
 func ToPortGroupDTO(group service.PortGroupView) PortGroupDTO {
 	out := PortGroupDTO{
 		ID:               group.ID,
-		OwnerSubject:     group.OwnerSubject,
-		OwnerName:        group.OwnerName,
 		HostID:           group.HostID,
 		PortPrefix:       group.PortPrefix,
 		EnvironmentName:  group.EnvironmentName,
@@ -262,17 +241,15 @@ func ToServiceGroupPortGroupDTOs(groups []service.ServiceGroupPortGroup) []Servi
 
 func ToServiceGroupDTO(group service.ServiceGroupView) ServiceGroupDTO {
 	return ServiceGroupDTO{
-		ID:           group.ID,
-		OwnerSubject: group.OwnerSubject,
-		OwnerName:    group.OwnerName,
-		Name:         group.Name,
-		Kind:         group.Kind,
-		Status:       group.Status,
-		Description:  group.Description,
-		Notes:        group.Notes,
-		CreatedAt:    utilHTTPTime(group.CreatedAt),
-		UpdatedAt:    utilHTTPTime(group.UpdatedAt),
-		PortGroups:   ToServiceGroupPortGroupDTOs(group.PortGroups),
+		ID:          group.ID,
+		Name:        group.Name,
+		Kind:        group.Kind,
+		Status:      group.Status,
+		Description: group.Description,
+		Notes:       group.Notes,
+		CreatedAt:   utilHTTPTime(group.CreatedAt),
+		UpdatedAt:   utilHTTPTime(group.UpdatedAt),
+		PortGroups:  ToServiceGroupPortGroupDTOs(group.PortGroups),
 	}
 }
 

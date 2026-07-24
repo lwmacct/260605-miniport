@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ChangeEvent, ReactNode } from "react";
 import type { FormListFieldData, FormListOperation } from "antd/es/form";
-import { useAuthStateQuery } from "@/modules/auth";
 import { usePortsvcQuery } from "../model/portsvcQueries";
 import {
   exportPortGroupsURL,
@@ -61,7 +60,6 @@ type PortsvcWorkspaceProps = {
 
 export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceProps) {
   const queryClient = useQueryClient();
-  const authState = useAuthStateQuery();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>();
   const [sort, setSort] = useState<string>("port");
@@ -102,7 +100,6 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
   const repositories: GitHubRepositoryItem[] = snapshot?.repositories ?? [];
   const serviceGroups: ServiceGroupItem[] = snapshot?.serviceGroups ?? [];
   const meta = snapshot?.meta;
-  const canManage = Boolean(authState.data?.session.authenticated);
   const stats = useMemo(
     () => buildStats(groups, hosts, dependencyAssets, repositories, serviceGroups),
     [dependencyAssets, groups, hosts, repositories, serviceGroups],
@@ -326,7 +323,6 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
       case "hosts":
         content = (
           <HostsSection
-            canManage={canManage}
             groups={groups}
             hosts={hosts}
             onEditHost={openEditHost}
@@ -334,12 +330,11 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
         );
         break;
       case "portGroups":
-        content = <PortGroupsUsageSection canManage={canManage} groups={groups} onCreateGroup={openCreateGroup} />;
+		content = <PortGroupsUsageSection groups={groups} onCreateGroup={openCreateGroup} />;
         break;
       case "projects":
         content = (
           <ProjectServicesSection
-            canManage={canManage}
             groups={projectGroups}
             onDeleteGroup={(group) => void handleDeleteGroup(group)}
             onEditGroup={openEditGroup}
@@ -351,7 +346,6 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
       case "serviceGroups":
         content = (
           <ServiceGroupsSection
-            canManage={canManage}
             onEditServiceGroup={openEditServiceGroup}
             onSelectServiceGroup={setSelectedServiceGroup}
             serviceGroups={filteredServiceGroups}
@@ -361,7 +355,6 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
       case "dependencies":
         content = (
           <DependenciesSection
-            canManage={canManage}
             dependencyAssets={dependencyAssets}
             groups={groups}
             repositories={repositories}
@@ -373,7 +366,6 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
       default:
         content = (
           <OverviewSection
-            canManage={canManage}
             onCreateGroup={openCreateGroup}
             stats={stats}
           />
@@ -440,22 +432,22 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
               导出 CSV
             </Button>
             {view === "hosts" ? (
-              <Button type="primary" icon={<PlusOutlined />} onClick={openCreateHost} disabled={!canManage}>
+			  <Button type="primary" icon={<PlusOutlined />} onClick={openCreateHost}>
                 宿主机
               </Button>
             ) : null}
             {view === "dependencies" ? (
-              <Button type="primary" icon={<PlusOutlined />} onClick={openCreateAsset} disabled={!canManage}>
+			  <Button type="primary" icon={<PlusOutlined />} onClick={openCreateAsset}>
                 依赖资产
               </Button>
             ) : null}
             {view === "projects" ? (
-              <Button type="primary" icon={<PlusOutlined />} onClick={openCreateGroup} disabled={!canManage}>
+			  <Button type="primary" icon={<PlusOutlined />} onClick={openCreateGroup}>
                 运行环境
               </Button>
             ) : null}
             {view === "serviceGroups" ? (
-              <Button type="primary" icon={<PlusOutlined />} onClick={openCreateServiceGroup} disabled={!canManage}>
+			  <Button type="primary" icon={<PlusOutlined />} onClick={openCreateServiceGroup}>
                 服务组
               </Button>
             ) : null}
@@ -466,7 +458,6 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
       <section className="app-content">{content}</section>
 
       <ServiceDetailDrawer
-        canManage={canManage}
         group={selectedGroup}
         onClose={() => setSelectedGroup(null)}
         onDelete={handleDeleteGroup}
@@ -477,7 +468,6 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
         serviceGroups={serviceGroups}
       />
       <ServiceGroupDetailDrawer
-        canManage={canManage}
         groups={groups}
         serviceGroup={selectedServiceGroup}
         onClose={() => setSelectedServiceGroup(null)}

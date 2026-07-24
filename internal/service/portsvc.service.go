@@ -2,33 +2,27 @@ package service
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	"github.com/lwmacct/260605-miniport/internal/repository"
-	"github.com/lwmacct/260630-go-hsr-shared/pkg/identity"
 )
 
 type PortsvcService struct {
-	store     *repository.Store
-	directory identity.Directory
+	store *repository.Store
 }
 
-func NewPortsvcService(store *repository.Store, directory identity.Directory) *PortsvcService {
+func NewPortsvcService(store *repository.Store) *PortsvcService {
 	if store == nil {
 		panic("NewPortsvcService: store is nil")
 	}
-	if directory == nil {
-		panic("NewPortsvcService: directory is nil")
-	}
-	return &PortsvcService{store: store, directory: directory}
+	return &PortsvcService{store: store}
 }
 
 func (s *PortsvcService) ListHosts(ctx context.Context, params HostListParams) ([]Host, error) {
 	return s.store.ListPortsvcHosts(ctx, repository.PortsvcHostListFilter{Query: params.Query, Status: params.Status})
 }
 
-func (s *PortsvcService) CreateHost(ctx context.Context, _ PortsvcActor, payload HostPayload) (*Host, error) {
+func (s *PortsvcService) CreateHost(ctx context.Context, payload HostPayload) (*Host, error) {
 	host, err := utilNormalizeHost(payload)
 	if err != nil {
 		return nil, err
@@ -39,7 +33,7 @@ func (s *PortsvcService) CreateHost(ctx context.Context, _ PortsvcActor, payload
 	return s.store.CreatePortsvcHost(ctx, host)
 }
 
-func (s *PortsvcService) UpdateHost(ctx context.Context, _ PortsvcActor, id string, payload HostPayload) (*Host, error) {
+func (s *PortsvcService) UpdateHost(ctx context.Context, id string, payload HostPayload) (*Host, error) {
 	host, err := utilNormalizeHost(payload)
 	if err != nil {
 		return nil, err
@@ -52,7 +46,7 @@ func (s *PortsvcService) UpdateHost(ctx context.Context, _ PortsvcActor, id stri
 	return out, nil
 }
 
-func (s *PortsvcService) DeleteHost(ctx context.Context, _ PortsvcActor, id string) error {
+func (s *PortsvcService) DeleteHost(ctx context.Context, id string) error {
 	if err := s.store.DeletePortsvcHost(ctx, id); err != nil {
 		return utilWrapNotFound(err, "host not found")
 	}
@@ -60,75 +54,42 @@ func (s *PortsvcService) DeleteHost(ctx context.Context, _ PortsvcActor, id stri
 }
 
 func (s *PortsvcService) ListDependencyAssets(ctx context.Context, params DependencyAssetListParams) ([]DependencyAsset, error) {
-	assets, err := s.store.ListPortsvcDependencyAssets(ctx, repository.PortsvcDependencyAssetListFilter{
-		OwnerSubject: utilVisibleOwnerSubject(params.Actor, params.OwnerSubject),
-		Admin:        params.Actor.Admin,
-		Query:        params.Query,
-		AssetKind:    params.AssetKind,
-		AssetType:    params.AssetType,
-		Provider:     params.Provider,
-		Status:       params.Status,
+	return s.store.ListPortsvcDependencyAssets(ctx, repository.PortsvcDependencyAssetListFilter{
+		Query: params.Query, AssetKind: params.AssetKind, AssetType: params.AssetType,
+		Provider: params.Provider, Status: params.Status,
 	})
-	if err != nil {
-		return nil, err
-	}
-	if err := s.attachDependencyAssetOwnerNames(ctx, assets); err != nil {
-		return nil, err
-	}
-	return assets, nil
 }
 
-func (s *PortsvcService) CreateDependencyAsset(ctx context.Context, actor PortsvcActor, payload DependencyAssetPayload) (*DependencyAsset, error) {
-	asset, err := utilNormalizeDependencyAsset(actor, nil, payload)
+func (s *PortsvcService) CreateDependencyAsset(ctx context.Context, payload DependencyAssetPayload) (*DependencyAsset, error) {
+	asset, err := utilNormalizeDependencyAsset(payload)
 	if err != nil {
 		return nil, err
-	}
-	if principalErr := utilResolveActivePrincipal(ctx, s.directory, asset.OwnerSubject); principalErr != nil {
-		return nil, principalErr
 	}
 	now := utilNowUTC()
 	asset.CreatedAt = now
 	asset.UpdatedAt = now
-	created, err := s.store.CreatePortsvcDependencyAsset(ctx, asset)
-	if err != nil {
-		return nil, err
-	}
-	assets := []DependencyAsset{*created}
-	if err := s.attachDependencyAssetOwnerNames(ctx, assets); err != nil {
-		return nil, err
-	}
-	return &assets[0], nil
+	return s.store.CreatePortsvcDependencyAsset(ctx, asset)
 }
 
-func (s *PortsvcService) UpdateDependencyAsset(ctx context.Context, actor PortsvcActor, id string, payload DependencyAssetPayload) (*DependencyAsset, error) {
-	current, err := s.store.FetchPortsvcDependencyAssetByID(ctx, id)
+func (s *PortsvcService) UpdateDependencyAsset(ctx context.Context, id string, payload DependencyAssetPayload) (*DependencyAsset, error) {
+	_, err := s.store.FetchPortsvcDependencyAssetByID(ctx, id)
 	if err != nil {
 		return nil, utilWrapNotFound(err, "dependency asset not found")
 	}
-	if !actor.Admin && current.OwnerSubject != actor.OwnerSubject {
-		return nil, utilPortsvcNotFound("dependency asset not found")
-	}
-	asset, err := utilNormalizeDependencyAsset(actor, current, payload)
+	asset, err := utilNormalizeDependencyAsset(payload)
 	if err != nil {
 		return nil, err
-	}
-	if principalErr := utilResolveActivePrincipal(ctx, s.directory, asset.OwnerSubject); principalErr != nil {
-		return nil, principalErr
 	}
 	asset.UpdatedAt = utilNowUTC()
 	updated, err := s.store.UpdatePortsvcDependencyAsset(ctx, id, asset)
 	if err != nil {
 		return nil, utilWrapNotFound(err, "dependency asset not found")
 	}
-	assets := []DependencyAsset{*updated}
-	if err := s.attachDependencyAssetOwnerNames(ctx, assets); err != nil {
-		return nil, err
-	}
-	return &assets[0], nil
+	return updated, nil
 }
 
-func (s *PortsvcService) DeleteDependencyAsset(ctx context.Context, actor PortsvcActor, id string) error {
-	if err := s.store.DeletePortsvcDependencyAsset(ctx, id, actor.OwnerSubject, actor.Admin); err != nil {
+func (s *PortsvcService) DeleteDependencyAsset(ctx context.Context, id string) error {
+	if err := s.store.DeletePortsvcDependencyAsset(ctx, id); err != nil {
 		return utilWrapNotFound(err, "dependency asset not found")
 	}
 	return nil
@@ -136,10 +97,7 @@ func (s *PortsvcService) DeleteDependencyAsset(ctx context.Context, actor Portsv
 
 func (s *PortsvcService) ListServiceGroups(ctx context.Context, params ServiceGroupListParams) ([]ServiceGroupView, error) {
 	groups, err := s.store.ListPortsvcServiceGroups(ctx, repository.PortsvcServiceGroupListFilter{
-		OwnerSubject: utilVisibleOwnerSubject(params.Actor, params.OwnerSubject),
-		Admin:        params.Actor.Admin,
-		Query:        params.Query,
-		Status:       params.Status,
+		Query: params.Query, Status: params.Status,
 	})
 	if err != nil {
 		return nil, err
@@ -147,13 +105,10 @@ func (s *PortsvcService) ListServiceGroups(ctx context.Context, params ServiceGr
 	return s.buildServiceGroupViews(ctx, groups)
 }
 
-func (s *PortsvcService) GetServiceGroup(ctx context.Context, actor PortsvcActor, id string) (*ServiceGroupView, error) {
+func (s *PortsvcService) GetServiceGroup(ctx context.Context, id string) (*ServiceGroupView, error) {
 	group, err := s.store.FetchPortsvcServiceGroupByID(ctx, id)
 	if err != nil {
 		return nil, utilWrapNotFound(err, "service group not found")
-	}
-	if !actor.Admin && group.OwnerSubject != actor.OwnerSubject {
-		return nil, utilPortsvcNotFound("service group not found")
 	}
 	views, err := s.buildServiceGroupViews(ctx, []ServiceGroup{*group})
 	if err != nil {
@@ -162,20 +117,17 @@ func (s *PortsvcService) GetServiceGroup(ctx context.Context, actor PortsvcActor
 	return &views[0], nil
 }
 
-func (s *PortsvcService) CreateServiceGroup(ctx context.Context, actor PortsvcActor, payload ServiceGroupPayload) (*ServiceGroupView, error) {
-	group, err := utilNormalizeServiceGroup(actor, nil, payload)
+func (s *PortsvcService) CreateServiceGroup(ctx context.Context, payload ServiceGroupPayload) (*ServiceGroupView, error) {
+	group, err := utilNormalizeServiceGroup(payload)
 	if err != nil {
 		return nil, err
-	}
-	if principalErr := utilResolveActivePrincipal(ctx, s.directory, group.OwnerSubject); principalErr != nil {
-		return nil, principalErr
 	}
 	var createdID string
 	now := utilNowUTC()
 	group.CreatedAt = now
 	group.UpdatedAt = now
 	err = s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
-		tx := &PortsvcService{store: txStore, directory: s.directory}
+		tx := &PortsvcService{store: txStore}
 		created, createErr := tx.store.CreatePortsvcServiceGroup(ctx, group)
 		if createErr != nil {
 			return createErr
@@ -189,27 +141,21 @@ func (s *PortsvcService) CreateServiceGroup(ctx context.Context, actor PortsvcAc
 	if err != nil {
 		return nil, err
 	}
-	return s.GetServiceGroup(ctx, PortsvcActor{OwnerSubject: group.OwnerSubject, Admin: true}, createdID)
+	return s.GetServiceGroup(ctx, createdID)
 }
 
-func (s *PortsvcService) UpdateServiceGroup(ctx context.Context, actor PortsvcActor, id string, payload ServiceGroupPayload) (*ServiceGroupView, error) {
-	current, err := s.store.FetchPortsvcServiceGroupByID(ctx, id)
+func (s *PortsvcService) UpdateServiceGroup(ctx context.Context, id string, payload ServiceGroupPayload) (*ServiceGroupView, error) {
+	_, err := s.store.FetchPortsvcServiceGroupByID(ctx, id)
 	if err != nil {
 		return nil, utilWrapNotFound(err, "service group not found")
 	}
-	if !actor.Admin && current.OwnerSubject != actor.OwnerSubject {
-		return nil, utilPortsvcNotFound("service group not found")
-	}
-	group, err := utilNormalizeServiceGroup(actor, current, payload)
+	group, err := utilNormalizeServiceGroup(payload)
 	if err != nil {
 		return nil, err
 	}
-	if principalErr := utilResolveActivePrincipal(ctx, s.directory, group.OwnerSubject); principalErr != nil {
-		return nil, principalErr
-	}
 	group.UpdatedAt = utilNowUTC()
 	err = s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
-		tx := &PortsvcService{store: txStore, directory: s.directory}
+		tx := &PortsvcService{store: txStore}
 		updated, updateErr := tx.store.UpdatePortsvcServiceGroup(ctx, id, group)
 		if updateErr != nil {
 			return updateErr
@@ -222,11 +168,11 @@ func (s *PortsvcService) UpdateServiceGroup(ctx context.Context, actor PortsvcAc
 	if err != nil {
 		return nil, err
 	}
-	return s.GetServiceGroup(ctx, PortsvcActor{OwnerSubject: group.OwnerSubject, Admin: true}, id)
+	return s.GetServiceGroup(ctx, id)
 }
 
-func (s *PortsvcService) DeleteServiceGroup(ctx context.Context, actor PortsvcActor, id string) error {
-	if err := s.store.DeletePortsvcServiceGroup(ctx, id, actor.OwnerSubject, actor.Admin); err != nil {
+func (s *PortsvcService) DeleteServiceGroup(ctx context.Context, id string) error {
+	if err := s.store.DeletePortsvcServiceGroup(ctx, id); err != nil {
 		return utilWrapNotFound(err, "service group not found")
 	}
 	return nil
@@ -234,11 +180,7 @@ func (s *PortsvcService) DeleteServiceGroup(ctx context.Context, actor PortsvcAc
 
 func (s *PortsvcService) ListPortGroups(ctx context.Context, params PortGroupListParams) ([]PortGroupView, error) {
 	groups, err := s.store.ListPortsvcPortGroups(ctx, repository.PortsvcPortGroupListFilter{
-		OwnerSubject: utilVisibleOwnerSubject(params.Actor, params.OwnerSubject),
-		Admin:        params.Actor.Admin,
-		Query:        params.Query,
-		Sort:         params.Sort,
-		Status:       params.Status,
+		Query: params.Query, Sort: params.Sort, Status: params.Status,
 	})
 	if err != nil {
 		return nil, err
@@ -246,13 +188,10 @@ func (s *PortsvcService) ListPortGroups(ctx context.Context, params PortGroupLis
 	return s.buildPortGroupViews(ctx, groups)
 }
 
-func (s *PortsvcService) GetPortGroup(ctx context.Context, actor PortsvcActor, id string) (*PortGroupView, error) {
+func (s *PortsvcService) GetPortGroup(ctx context.Context, id string) (*PortGroupView, error) {
 	group, err := s.store.FetchPortsvcPortGroupByID(ctx, id)
 	if err != nil {
 		return nil, utilWrapNotFound(err, "port group not found")
-	}
-	if !actor.Admin && group.OwnerSubject != actor.OwnerSubject {
-		return nil, utilPortsvcNotFound("port group not found")
 	}
 	views, err := s.buildPortGroupViews(ctx, []PortGroup{*group})
 	if err != nil {
@@ -261,20 +200,17 @@ func (s *PortsvcService) GetPortGroup(ctx context.Context, actor PortsvcActor, i
 	return &views[0], nil
 }
 
-func (s *PortsvcService) CreatePortGroup(ctx context.Context, actor PortsvcActor, payload PortGroupPayload) (*PortGroupView, error) {
-	group, err := utilNormalizePortGroup(ctx, s.store, actor, nil, payload)
+func (s *PortsvcService) CreatePortGroup(ctx context.Context, payload PortGroupPayload) (*PortGroupView, error) {
+	group, err := utilNormalizePortGroup(ctx, s.store, nil, payload)
 	if err != nil {
 		return nil, err
-	}
-	if principalErr := utilResolveActivePrincipal(ctx, s.directory, group.OwnerSubject); principalErr != nil {
-		return nil, principalErr
 	}
 	var createdID string
 	now := utilNowUTC()
 	group.CreatedAt = now
 	group.UpdatedAt = now
 	err = s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
-		tx := &PortsvcService{store: txStore, directory: s.directory}
+		tx := &PortsvcService{store: txStore}
 		created, createErr := tx.store.CreatePortsvcPortGroup(ctx, group)
 		if createErr != nil {
 			return createErr
@@ -288,27 +224,21 @@ func (s *PortsvcService) CreatePortGroup(ctx context.Context, actor PortsvcActor
 	if err != nil {
 		return nil, err
 	}
-	return s.GetPortGroup(ctx, PortsvcActor{OwnerSubject: group.OwnerSubject, Admin: true}, createdID)
+	return s.GetPortGroup(ctx, createdID)
 }
 
-func (s *PortsvcService) UpdatePortGroup(ctx context.Context, actor PortsvcActor, id string, payload PortGroupPayload) (*PortGroupView, error) {
+func (s *PortsvcService) UpdatePortGroup(ctx context.Context, id string, payload PortGroupPayload) (*PortGroupView, error) {
 	current, err := s.store.FetchPortsvcPortGroupByID(ctx, id)
 	if err != nil {
 		return nil, utilWrapNotFound(err, "port group not found")
 	}
-	if !actor.Admin && current.OwnerSubject != actor.OwnerSubject {
-		return nil, utilPortsvcNotFound("port group not found")
-	}
-	group, err := utilNormalizePortGroup(ctx, s.store, actor, current, payload)
+	group, err := utilNormalizePortGroup(ctx, s.store, current, payload)
 	if err != nil {
 		return nil, err
 	}
-	if principalErr := utilResolveActivePrincipal(ctx, s.directory, group.OwnerSubject); principalErr != nil {
-		return nil, principalErr
-	}
 	group.UpdatedAt = utilNowUTC()
 	err = s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
-		tx := &PortsvcService{store: txStore, directory: s.directory}
+		tx := &PortsvcService{store: txStore}
 		updated, updateErr := tx.store.UpdatePortsvcPortGroup(ctx, id, group)
 		if updateErr != nil {
 			return updateErr
@@ -321,29 +251,26 @@ func (s *PortsvcService) UpdatePortGroup(ctx context.Context, actor PortsvcActor
 	if err != nil {
 		return nil, err
 	}
-	return s.GetPortGroup(ctx, PortsvcActor{OwnerSubject: group.OwnerSubject, Admin: true}, id)
+	return s.GetPortGroup(ctx, id)
 }
 
-func (s *PortsvcService) DeletePortGroup(ctx context.Context, actor PortsvcActor, id string) error {
+func (s *PortsvcService) DeletePortGroup(ctx context.Context, id string) error {
 	return s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
-		count, err := txStore.CountPortsvcPortGroupsByIDs(ctx, []string{id}, actor.OwnerSubject, actor.Admin)
+		count, err := txStore.CountPortsvcPortGroupsByIDs(ctx, []string{id})
 		if err != nil {
 			return err
 		}
 		if count == 0 {
 			return utilPortsvcNotFound("port group not found")
 		}
-		return txStore.DeletePortsvcPortGroups(ctx, []string{id}, actor.OwnerSubject, actor.Admin)
+		return txStore.DeletePortsvcPortGroups(ctx, []string{id})
 	})
 }
 
-func (s *PortsvcService) CreatePortSlot(ctx context.Context, actor PortsvcActor, groupID string, payload PortSlotPayload) (*PortSlot, error) {
+func (s *PortsvcService) CreatePortSlot(ctx context.Context, groupID string, payload PortSlotPayload) (*PortSlot, error) {
 	group, err := s.store.FetchPortsvcPortGroupByID(ctx, groupID)
 	if err != nil {
 		return nil, utilWrapNotFound(err, "port group not found")
-	}
-	if !actor.Admin && group.OwnerSubject != actor.OwnerSubject {
-		return nil, utilPortsvcNotFound("port group not found")
 	}
 	slot, err := utilNormalizePortSlot(*group, payload)
 	if err != nil {
@@ -355,7 +282,7 @@ func (s *PortsvcService) CreatePortSlot(ctx context.Context, actor PortsvcActor,
 	return s.store.CreatePortsvcPortSlot(ctx, slot)
 }
 
-func (s *PortsvcService) UpdatePortSlot(ctx context.Context, actor PortsvcActor, id string, payload PortSlotPayload) (*PortSlot, error) {
+func (s *PortsvcService) UpdatePortSlot(ctx context.Context, id string, payload PortSlotPayload) (*PortSlot, error) {
 	current, err := s.store.FetchPortsvcPortSlotByID(ctx, id)
 	if err != nil {
 		return nil, utilWrapNotFound(err, "port slot not found")
@@ -363,9 +290,6 @@ func (s *PortsvcService) UpdatePortSlot(ctx context.Context, actor PortsvcActor,
 	group, err := s.store.FetchPortsvcPortGroupByID(ctx, current.PortGroupID)
 	if err != nil {
 		return nil, err
-	}
-	if !actor.Admin && group.OwnerSubject != actor.OwnerSubject {
-		return nil, utilPortsvcNotFound("port slot not found")
 	}
 	slot, err := utilNormalizePortSlot(*group, payload)
 	if err != nil {
@@ -376,17 +300,10 @@ func (s *PortsvcService) UpdatePortSlot(ctx context.Context, actor PortsvcActor,
 	return s.store.UpdatePortsvcPortSlot(ctx, id, slot)
 }
 
-func (s *PortsvcService) DeletePortSlot(ctx context.Context, actor PortsvcActor, id string) error {
-	current, err := s.store.FetchPortsvcPortSlotByID(ctx, id)
+func (s *PortsvcService) DeletePortSlot(ctx context.Context, id string) error {
+	_, err := s.store.FetchPortsvcPortSlotByID(ctx, id)
 	if err != nil {
 		return utilWrapNotFound(err, "port slot not found")
-	}
-	group, err := s.store.FetchPortsvcPortGroupByID(ctx, current.PortGroupID)
-	if err != nil {
-		return err
-	}
-	if !actor.Admin && group.OwnerSubject != actor.OwnerSubject {
-		return utilPortsvcNotFound("port slot not found")
 	}
 	if err := s.store.DeletePortsvcPortSlot(ctx, id); err != nil {
 		return utilWrapNotFound(err, "port slot not found")
@@ -400,7 +317,7 @@ func (s *PortsvcService) ExportPortGroupsCSV(ctx context.Context, params PortGro
 		return nil, err
 	}
 	records := [][]string{{
-		"ownerName", "environment_name", "status", "port_prefix", "runtime_mode", "runtime_name", "service_ip",
+		"environment_name", "status", "port_prefix", "runtime_mode", "runtime_name", "service_ip",
 		"host_name", "host_ip", "environment_owner", "tags", "slots", "asset_links", "repository_links", "notes",
 	}}
 	for _, group := range groups {
@@ -411,7 +328,6 @@ func (s *PortsvcService) ExportPortGroupsCSV(ctx context.Context, params PortGro
 			hostIP = group.Host.IP
 		}
 		records = append(records, []string{
-			group.OwnerName,
 			group.EnvironmentName,
 			group.Status,
 			utilPortGroupLabel(group.PortGroup),
@@ -452,9 +368,6 @@ func (s *PortsvcService) buildServiceGroupViews(ctx context.Context, groups []Se
 	for idx := range views {
 		child := children[views[idx].ID]
 		views[idx].PortGroups = child.PortGroups
-	}
-	if err := s.attachServiceGroupOwnerNames(ctx, views); err != nil {
-		return nil, err
 	}
 	return views, nil
 }
@@ -498,9 +411,6 @@ func (s *PortsvcService) buildPortGroupViews(ctx context.Context, groups []PortG
 		views[idx].AssetLinks = child.AssetLinks
 		views[idx].RepositoryLinks = child.RepositoryLinks
 	}
-	if err := s.attachPortGroupOwnerNames(ctx, views); err != nil {
-		return nil, err
-	}
 	return views, nil
 }
 
@@ -539,82 +449,4 @@ func (s *PortsvcService) replacePortGroupChildren(ctx context.Context, group Por
 		repositoryLinks[idx].UpdatedAt = now
 	}
 	return s.store.AddPortsvcPortGroupRepositoryLinks(ctx, repositoryLinks)
-}
-
-func (s *PortsvcService) attachPortGroupOwnerNames(ctx context.Context, views []PortGroupView) error {
-	subjects := make([]string, 0, len(views))
-	for _, view := range views {
-		subjects = append(subjects, view.OwnerSubject)
-	}
-	names, err := s.ownerNames(ctx, subjects)
-	if err != nil {
-		return err
-	}
-	for idx := range views {
-		views[idx].OwnerName = names[views[idx].OwnerSubject]
-		if views[idx].OwnerName == "" {
-			views[idx].OwnerName = views[idx].OwnerSubject
-		}
-	}
-	return nil
-}
-
-func (s *PortsvcService) attachServiceGroupOwnerNames(ctx context.Context, views []ServiceGroupView) error {
-	subjects := make([]string, 0, len(views))
-	for _, view := range views {
-		subjects = append(subjects, view.OwnerSubject)
-	}
-	names, err := s.ownerNames(ctx, subjects)
-	if err != nil {
-		return err
-	}
-	for idx := range views {
-		views[idx].OwnerName = names[views[idx].OwnerSubject]
-		if views[idx].OwnerName == "" {
-			views[idx].OwnerName = views[idx].OwnerSubject
-		}
-	}
-	return nil
-}
-
-func (s *PortsvcService) attachDependencyAssetOwnerNames(ctx context.Context, assets []DependencyAsset) error {
-	subjects := make([]string, 0, len(assets))
-	for _, asset := range assets {
-		subjects = append(subjects, asset.OwnerSubject)
-	}
-	names, err := s.ownerNames(ctx, subjects)
-	if err != nil {
-		return err
-	}
-	for idx := range assets {
-		assets[idx].OwnerName = names[assets[idx].OwnerSubject]
-		if assets[idx].OwnerName == "" {
-			assets[idx].OwnerName = assets[idx].OwnerSubject
-		}
-	}
-	return nil
-}
-
-func (s *PortsvcService) ownerNames(ctx context.Context, subjects []string) (map[string]string, error) {
-	out := make(map[string]string, len(subjects))
-	unique := make([]string, 0, len(subjects))
-	for _, subject := range subjects {
-		subject = strings.TrimSpace(subject)
-		if subject == "" {
-			continue
-		}
-		if _, ok := out[subject]; ok {
-			continue
-		}
-		out[subject] = subject
-		unique = append(unique, subject)
-	}
-	principals, err := s.directory.Principals(ctx, unique)
-	if err != nil {
-		return nil, err
-	}
-	for subject, principal := range principals {
-		out[subject] = utilPrincipalName(principal, subject)
-	}
-	return out, nil
 }

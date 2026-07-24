@@ -5,7 +5,6 @@ import type { ColumnsType } from "antd/es/table";
 import type { AppStats, DependencyAssetItem, GitHubRepositoryItem, PortGroupItem } from "../model/portsvcTypes";
 
 type DependenciesSectionProps = {
-  canManage: boolean;
   dependencyAssets: DependencyAssetItem[];
   groups: PortGroupItem[];
   repositories: GitHubRepositoryItem[];
@@ -13,7 +12,7 @@ type DependenciesSectionProps = {
   stats: AppStats;
 };
 
-export function DependenciesSection({ canManage, dependencyAssets, groups, repositories, onEditAsset, stats }: DependenciesSectionProps) {
+export function DependenciesSection({ dependencyAssets, groups, repositories, onEditAsset, stats }: DependenciesSectionProps) {
   const assetColumns: ColumnsType<DependencyAssetItem> = [
     { title: "名称", dataIndex: "name", render: (value, item) => value || item.fullName || item.url },
     { title: "类别", width: 120, render: (_, item) => <Tag>{item.assetKind}</Tag> },
@@ -29,12 +28,11 @@ export function DependenciesSection({ canManage, dependencyAssets, groups, repos
     {
       title: "操作",
       width: 80,
-      render: (_, item) =>
-        canManage ? (
-          <Tooltip title="编辑资产">
-            <Button size="small" icon={<EditOutlined />} onClick={() => onEditAsset(item)} />
-          </Tooltip>
-        ) : null,
+      render: (_, item) => (
+        <Tooltip title="编辑资产">
+          <Button size="small" icon={<EditOutlined />} onClick={() => onEditAsset(item)} />
+        </Tooltip>
+      ),
     },
   ];
 

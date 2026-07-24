@@ -14,10 +14,10 @@ import (
 )
 
 var (
-	ErrGithubDisabled     = errors.New("github integration is disabled")
-	ErrGithubUnauthorized = errors.New("github resource is not accessible")
-	ErrGithubInvalidState = errors.New("github connection state is invalid or expired")
-	ErrGithubNotFound     = errors.New("github resource not found")
+	ErrGithubDisabled         = errors.New("github integration is disabled")
+	ErrGithubInvalidSignature = errors.New("github webhook signature is invalid")
+	ErrGithubInvalidState     = errors.New("github connection state is invalid or expired")
+	ErrGithubNotFound         = errors.New("github resource not found")
 )
 
 const (

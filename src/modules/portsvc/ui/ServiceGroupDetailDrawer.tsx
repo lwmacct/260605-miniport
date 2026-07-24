@@ -6,7 +6,6 @@ import type { PortGroupItem, ServiceGroupItem, ServiceGroupPortGroupItem } from 
 import { statusTag } from "../model/portsvcUtils";
 
 type ServiceGroupDetailDrawerProps = {
-  canManage: boolean;
   groups: PortGroupItem[];
   onClose: () => void;
   onDelete: (group: ServiceGroupItem) => Promise<void>;
@@ -19,7 +18,6 @@ type ServiceGroupMember = ServiceGroupPortGroupItem & {
 };
 
 export function ServiceGroupDetailDrawer({
-  canManage,
   groups,
   onClose,
   onDelete,
@@ -110,7 +108,7 @@ export function ServiceGroupDetailDrawer({
       size="large"
       onClose={onClose}
       extra={
-        serviceGroup && canManage ? (
+		serviceGroup ? (
           <Space>
             <Button icon={<EditOutlined />} onClick={() => onEdit(serviceGroup)}>
               编辑
@@ -139,7 +137,6 @@ export function ServiceGroupDetailDrawer({
               size="small"
               column={{ xs: 1, sm: 2 }}
               items={[
-                { key: "owner", label: "用户", children: serviceGroup.ownerName || serviceGroup.ownerSubject || "-" },
                 { key: "kind", label: "类型", children: <Tag>{serviceGroup.kind}</Tag> },
                 { key: "status", label: "状态", children: statusTag(serviceGroup.status) },
                 { key: "members", label: "运行环境", children: serviceGroup.portGroups.length },

@@ -6,7 +6,6 @@ import type { PortGroupItem, PortSlotItem, ServiceGroupItem } from "../model/por
 import { portGroupLabel, runtimeTag, splitTags } from "../model/portsvcUtils";
 
 type ServiceDetailDrawerProps = {
-  canManage: boolean;
   group: PortGroupItem | null;
   onClose: () => void;
   onDelete: (group: PortGroupItem) => Promise<void>;
@@ -15,7 +14,6 @@ type ServiceDetailDrawerProps = {
 };
 
 export function ServiceDetailDrawer({
-  canManage,
   group,
   onClose,
   onDelete,
@@ -38,7 +36,7 @@ export function ServiceDetailDrawer({
       size="large"
       onClose={onClose}
       extra={
-        group && canManage ? (
+		group ? (
           <Space>
             <Button icon={<EditOutlined />} onClick={() => onEdit(group)}>
               编辑
@@ -67,7 +65,6 @@ export function ServiceDetailDrawer({
               size="small"
               column={{ xs: 1, sm: 2 }}
               items={[
-                { key: "user", label: "用户", children: group.ownerName || group.ownerSubject },
                 { key: "project", label: "运行环境", children: group.environmentName || "-" },
                 { key: "ports", label: "端口组", children: portGroupLabel(group) },
                 { key: "runtime", label: "运行模式", children: runtimeTag(group.runtimeMode) },

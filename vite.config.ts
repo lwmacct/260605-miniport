@@ -20,9 +20,11 @@ export default defineConfig({
     port: 40239,
     strictPort: true,
     proxy: {
+      "/authme": {
+        target: apiTarget,
+      },
       "/api": {
         target: apiTarget,
-        changeOrigin: true,
         ws: true,
       },
     },

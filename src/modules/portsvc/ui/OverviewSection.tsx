@@ -4,13 +4,11 @@ import { Button, Col, Empty, Row, Space, Statistic } from "antd";
 import type { AppStats } from "../model/portsvcTypes";
 
 type OverviewSectionProps = {
-  canManage: boolean;
   onCreateGroup: () => void;
   stats: AppStats;
 };
 
 export function OverviewSection({
-  canManage,
   onCreateGroup,
   stats,
 }: OverviewSectionProps) {
@@ -46,7 +44,7 @@ export function OverviewSection({
       </Row>
       {stats.groups === 0 ? (
         <Empty description="还没有端口组">
-          <Button type="primary" icon={<PlusOutlined />} onClick={onCreateGroup} disabled={!canManage}>
+		  <Button type="primary" icon={<PlusOutlined />} onClick={onCreateGroup}>
             新建端口组
           </Button>
         </Empty>

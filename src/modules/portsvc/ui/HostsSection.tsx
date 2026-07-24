@@ -6,13 +6,12 @@ import type { HostItem, PortGroupItem } from "../model/portsvcTypes";
 import { statusTag } from "../model/portsvcUtils";
 
 type HostsSectionProps = {
-  canManage: boolean;
   groups: PortGroupItem[];
   hosts: HostItem[];
   onEditHost: (host: HostItem) => void;
 };
 
-export function HostsSection({ canManage, groups, hosts, onEditHost }: HostsSectionProps) {
+export function HostsSection({ groups, hosts, onEditHost }: HostsSectionProps) {
   const groupCountByHost = new Map<string, number>();
   for (const group of groups) {
     if (!group.hostId) {
@@ -58,14 +57,13 @@ export function HostsSection({ canManage, groups, hosts, onEditHost }: HostsSect
     {
       title: "操作",
       width: 80,
-      render: (_, item) =>
-        canManage ? (
-          <Space>
-            <Tooltip title="编辑宿主机">
-              <Button size="small" icon={<EditOutlined />} onClick={() => onEditHost(item)} />
-            </Tooltip>
-          </Space>
-        ) : null,
+      render: (_, item) => (
+        <Space>
+          <Tooltip title="编辑宿主机">
+            <Button size="small" icon={<EditOutlined />} onClick={() => onEditHost(item)} />
+          </Tooltip>
+        </Space>
+      ),
     },
   ];
 

@@ -21,7 +21,6 @@ type SegmentUsage = {
 };
 
 type PortGroupsUsageSectionProps = {
-  canManage: boolean;
   groups: PortGroupItem[];
   onCreateGroup: () => void;
 };
@@ -63,7 +62,7 @@ function buildSegmentUsage(groups: PortGroupItem[]): SegmentUsage[] {
   });
 }
 
-export function PortGroupsUsageSection({ canManage, groups, onCreateGroup }: PortGroupsUsageSectionProps) {
+export function PortGroupsUsageSection({ groups, onCreateGroup }: PortGroupsUsageSectionProps) {
   const segments = buildSegmentUsage(groups);
   const totalGroups = segments.reduce((sum, item) => sum + item.totalGroups, 0);
   const usedGroups = segments.reduce((sum, item) => sum + item.usedGroups, 0);
@@ -109,7 +108,7 @@ export function PortGroupsUsageSection({ canManage, groups, onCreateGroup }: Por
       <WorkbenchPanel
         title="端口组使用情况"
         extra={
-          <Button type="primary" icon={<PlusOutlined />} onClick={onCreateGroup} disabled={!canManage}>
+		  <Button type="primary" icon={<PlusOutlined />} onClick={onCreateGroup}>
             新建端口组
           </Button>
         }

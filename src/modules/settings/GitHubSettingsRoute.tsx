@@ -1,5 +1,4 @@
 import {
-  DisconnectOutlined,
   GithubOutlined,
   LinkOutlined,
   ReloadOutlined,
@@ -8,13 +7,12 @@ import {
 } from "@ant-design/icons";
 import { WorkbenchPage, WorkbenchPanel } from "@lwmacct/260627-antd-workbench";
 import { useQueryClient } from "@tanstack/react-query";
-import { Alert, Avatar, Button, Input, Popconfirm, Space, Table, Tag, Tooltip, Typography, message } from "antd";
+import { Alert, Avatar, Button, Input, Space, Table, Tag, Tooltip, Typography, message } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import {
   beginGitHubConnection,
-  disconnectGitHubInstallation,
   syncGitHubInstallation,
   type GitHubInstallation,
   type GitHubRepository,
@@ -65,22 +63,8 @@ export function GitHubSettingsRoute() {
       await queryClient.invalidateQueries({ queryKey: ["portsvc", "snapshot"] });
       message.success(`${item.accountLogin} 同步完成`);
     } catch (error) {
-	  await queryClient.invalidateQueries({ queryKey: githubKeys.all });
-      message.error(error instanceof Error ? error.message : "同步失败");
-    } finally {
-      setBusyId(undefined);
-    }
-  }
-
-  async function disconnect(item: GitHubInstallation) {
-    setBusyId(item.id);
-    try {
-      await disconnectGitHubInstallation(item.id);
       await queryClient.invalidateQueries({ queryKey: githubKeys.all });
-      await queryClient.invalidateQueries({ queryKey: ["portsvc", "snapshot"] });
-      message.success(`${item.accountLogin} 已断开`);
-    } catch (error) {
-      message.error(error instanceof Error ? error.message : "断开失败");
+      message.error(error instanceof Error ? error.message : "同步失败");
     } finally {
       setBusyId(undefined);
     }
@@ -112,7 +96,7 @@ export function GitHubSettingsRoute() {
     { title: "最近同步", dataIndex: "lastSyncedAt", width: 190, render: formatTime },
     {
       title: "操作",
-      width: 150,
+      width: 110,
       render: (_, item) => (
         <Space size={4}>
           <Tooltip title="同步仓库">
@@ -125,11 +109,6 @@ export function GitHubSettingsRoute() {
               target="_blank"
             />
           </Tooltip>
-          <Popconfirm title="断开此账号？" onConfirm={() => void disconnect(item)}>
-            <Tooltip title="断开连接">
-              <Button danger icon={<DisconnectOutlined />} />
-            </Tooltip>
-          </Popconfirm>
         </Space>
       ),
     },

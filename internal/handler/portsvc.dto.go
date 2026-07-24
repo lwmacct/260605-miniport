@@ -20,7 +20,6 @@ type PortSlotPayloadDTO struct {
 }
 
 type DependencyAssetPayloadDTO struct {
-	OwnerSubject    string `json:"ownerSubject,omitempty"`
 	Name            string `json:"name,omitempty"`
 	AssetKind       string `json:"assetKind,omitempty"`
 	AssetType       string `json:"assetType,omitempty"`
@@ -55,7 +54,6 @@ type PortGroupRepositoryLinkPayloadDTO struct {
 }
 
 type PortGroupPayloadDTO struct {
-	OwnerSubject     string                              `json:"ownerSubject,omitempty"`
 	HostID           string                              `json:"hostId,omitempty"`
 	PortPrefix       int                                 `json:"portPrefix,omitempty"`
 	EnvironmentName  string                              `json:"environmentName,omitempty"`
@@ -79,13 +77,12 @@ type ServiceGroupPortGroupPayloadDTO struct {
 }
 
 type ServiceGroupPayloadDTO struct {
-	OwnerSubject string                            `json:"ownerSubject,omitempty"`
-	Name         string                            `json:"name,omitempty"`
-	Kind         string                            `json:"kind,omitempty"`
-	Status       string                            `json:"status,omitempty"`
-	Description  string                            `json:"description,omitempty"`
-	Notes        string                            `json:"notes,omitempty"`
-	PortGroups   []ServiceGroupPortGroupPayloadDTO `json:"portGroups,omitempty"`
+	Name        string                            `json:"name,omitempty"`
+	Kind        string                            `json:"kind,omitempty"`
+	Status      string                            `json:"status,omitempty"`
+	Description string                            `json:"description,omitempty"`
+	Notes       string                            `json:"notes,omitempty"`
+	PortGroups  []ServiceGroupPortGroupPayloadDTO `json:"portGroups,omitempty"`
 }
 
 type HostDTO struct {
@@ -115,8 +112,6 @@ type PortSlotDTO struct {
 
 type PortGroupDTO struct {
 	ID               string                       `json:"id"`
-	OwnerSubject     string                       `json:"ownerSubject"`
-	OwnerName        string                       `json:"ownerName"`
 	HostID           string                       `json:"hostId"`
 	Host             *HostDTO                     `json:"host,omitempty"`
 	PortPrefix       int                          `json:"portPrefix"`
@@ -147,23 +142,19 @@ type ServiceGroupPortGroupDTO struct {
 }
 
 type ServiceGroupDTO struct {
-	ID           string                     `json:"id"`
-	OwnerSubject string                     `json:"ownerSubject"`
-	OwnerName    string                     `json:"ownerName"`
-	Name         string                     `json:"name"`
-	Kind         string                     `json:"kind"`
-	Status       string                     `json:"status"`
-	Description  string                     `json:"description"`
-	Notes        string                     `json:"notes"`
-	CreatedAt    string                     `json:"createdAt"`
-	UpdatedAt    string                     `json:"updatedAt"`
-	PortGroups   []ServiceGroupPortGroupDTO `json:"portGroups"`
+	ID          string                     `json:"id"`
+	Name        string                     `json:"name"`
+	Kind        string                     `json:"kind"`
+	Status      string                     `json:"status"`
+	Description string                     `json:"description"`
+	Notes       string                     `json:"notes"`
+	CreatedAt   string                     `json:"createdAt"`
+	UpdatedAt   string                     `json:"updatedAt"`
+	PortGroups  []ServiceGroupPortGroupDTO `json:"portGroups"`
 }
 
 type DependencyAssetDTO struct {
 	ID              string `json:"id"`
-	OwnerSubject    string `json:"ownerSubject"`
-	OwnerName       string `json:"ownerName"`
 	Name            string `json:"name"`
 	AssetKind       string `json:"assetKind"`
 	AssetType       string `json:"assetType"`
@@ -209,110 +200,89 @@ type PortGroupRepositoryLinkDTO struct {
 }
 
 type HostListInputDTO struct {
-	Session string `cookie:"web_session"`
-	Query   string `query:"q" example:"4h4g"`
-	Status  string `query:"status" example:"active"`
+	Query  string `query:"q" example:"4h4g"`
+	Status string `query:"status" example:"active"`
 }
 
 type HostInputDTO struct {
-	Session string `cookie:"web_session"`
-	ID      string `path:"id" example:"018f2f9c-1111-7000-8000-000000000001"`
+	ID string `path:"id" example:"018f2f9c-1111-7000-8000-000000000001"`
 }
 
 type HostBodyInputDTO struct {
-	Session string `cookie:"web_session"`
-	Body    HostPayloadDTO
+	Body HostPayloadDTO
 }
 
 type HostUpdateInputDTO struct {
-	Session string `cookie:"web_session"`
-	ID      string `path:"id" example:"018f2f9c-1111-7000-8000-000000000001"`
-	Body    HostPayloadDTO
+	ID   string `path:"id" example:"018f2f9c-1111-7000-8000-000000000001"`
+	Body HostPayloadDTO
 }
 
 type PortGroupListInputDTO struct {
-	Session      string `cookie:"web_session"`
-	OwnerSubject string `query:"ownerSubject" example:"018f2f9c-1111-7000-8000-000000000001"`
-	Query        string `query:"q" example:"miniport"`
-	Sort         string `query:"sort" example:"port"`
-	Status       string `query:"status" example:"running"`
+	Query  string `query:"q" example:"miniport"`
+	Sort   string `query:"sort" example:"port"`
+	Status string `query:"status" example:"running"`
 }
 
 type ServiceGroupListInputDTO struct {
-	Session      string `cookie:"web_session"`
-	OwnerSubject string `query:"ownerSubject" example:"018f2f9c-1111-7000-8000-000000000001"`
-	Query        string `query:"q" example:"etcd"`
-	Status       string `query:"status" example:"active"`
+	Query  string `query:"q" example:"etcd"`
+	Status string `query:"status" example:"active"`
 }
 
 type DependencyAssetListInputDTO struct {
-	Session      string `cookie:"web_session"`
-	OwnerSubject string `query:"ownerSubject" example:"018f2f9c-1111-7000-8000-000000000001"`
-	Query        string `query:"q" example:"github"`
-	AssetKind    string `query:"assetKind" example:"repository"`
-	AssetType    string `query:"assetType" example:"owned"`
-	Provider     string `query:"provider" example:"github"`
-	Status       string `query:"status" example:"active"`
+	Query     string `query:"q" example:"github"`
+	AssetKind string `query:"assetKind" example:"repository"`
+	AssetType string `query:"assetType" example:"owned"`
+	Provider  string `query:"provider" example:"github"`
+	Status    string `query:"status" example:"active"`
 }
 
 type DependencyAssetInputDTO struct {
-	Session string `cookie:"web_session"`
-	ID      string `path:"id" example:"018f2f9c-1111-7000-8000-000000000004"`
+	ID string `path:"id" example:"018f2f9c-1111-7000-8000-000000000004"`
 }
 
 type DependencyAssetBodyInputDTO struct {
-	Session string `cookie:"web_session"`
-	Body    DependencyAssetPayloadDTO
+	Body DependencyAssetPayloadDTO
 }
 
 type DependencyAssetUpdateInputDTO struct {
-	Session string `cookie:"web_session"`
-	ID      string `path:"id" example:"018f2f9c-1111-7000-8000-000000000004"`
-	Body    DependencyAssetPayloadDTO
+	ID   string `path:"id" example:"018f2f9c-1111-7000-8000-000000000004"`
+	Body DependencyAssetPayloadDTO
 }
 
 type PortGroupInputDTO struct {
-	Session string `cookie:"web_session"`
-	ID      string `path:"id" example:"018f2f9c-1111-7000-8000-000000000002"`
+	ID string `path:"id" example:"018f2f9c-1111-7000-8000-000000000002"`
 }
 
 type PortGroupBodyInputDTO struct {
-	Session string `cookie:"web_session"`
-	Body    PortGroupPayloadDTO
+	Body PortGroupPayloadDTO
 }
 
 type PortGroupUpdateInputDTO struct {
-	Session string `cookie:"web_session"`
-	ID      string `path:"id" example:"018f2f9c-1111-7000-8000-000000000002"`
-	Body    PortGroupPayloadDTO
+	ID   string `path:"id" example:"018f2f9c-1111-7000-8000-000000000002"`
+	Body PortGroupPayloadDTO
 }
 
 type ServiceGroupInputDTO struct {
-	Session string `cookie:"web_session"`
-	ID      string `path:"id" example:"018f2f9c-1111-7000-8000-000000000005"`
+	ID string `path:"id" example:"018f2f9c-1111-7000-8000-000000000005"`
 }
 
 type ServiceGroupBodyInputDTO struct {
-	Session string `cookie:"web_session"`
-	Body    ServiceGroupPayloadDTO
+	Body ServiceGroupPayloadDTO
 }
 
 type ServiceGroupUpdateInputDTO struct {
-	Session string `cookie:"web_session"`
-	ID      string `path:"id" example:"018f2f9c-1111-7000-8000-000000000005"`
-	Body    ServiceGroupPayloadDTO
+	ID   string `path:"id" example:"018f2f9c-1111-7000-8000-000000000005"`
+	Body ServiceGroupPayloadDTO
 }
 
 type PortSlotBodyInputDTO struct {
-	Session string `cookie:"web_session"`
-	ID      string `path:"id" example:"018f2f9c-1111-7000-8000-000000000002"`
-	Body    PortSlotPayloadDTO
+	ID   string `path:"id" example:"018f2f9c-1111-7000-8000-000000000002"`
+	Body PortSlotPayloadDTO
 }
 
 type PortSlotUpdateInputDTO struct {
-	Session string `cookie:"web_session"`
-	ID      string `path:"id" example:"018f2f9c-1111-7000-8000-000000000003"`
-	Body    PortSlotPayloadDTO
+	ID   string `path:"id" example:"018f2f9c-1111-7000-8000-000000000003"`
+	Body PortSlotPayloadDTO
 }
 
 type CSVOutputDTO struct {

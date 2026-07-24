@@ -11,7 +11,6 @@ type PortAllocationsModel struct {
 	bun.BaseModel `bun:"table:port_groups,alias:port_group"`
 
 	ID               string      `bun:"id,pk,type:uuid" json:"id"`
-	OwnerSubject     string      `bun:"owner_subject,type:uuid,notnull" json:"ownerSubject"`
 	HostID           string      `bun:"host_id,type:uuid,nullzero" json:"hostId"`
 	Host             *HostsModel `bun:"rel:belongs-to,join:host_id=id" json:"host,omitempty"`
 	PortPrefix       int         `bun:"port_prefix,notnull" json:"portPrefix"`
@@ -38,8 +37,7 @@ func (*PortAllocationsModel) BeforeCreateTable(_ context.Context, query *bun.Cre
 
 func PortAllocationIndexesSchema() []string {
 	return []string{
-		`CREATE UNIQUE INDEX IF NOT EXISTS idx_port_groups_owner_port_prefix ON port_groups(owner_subject, port_prefix)`,
-		`CREATE INDEX IF NOT EXISTS idx_port_groups_owner ON port_groups(owner_subject)`,
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_port_groups_port_prefix ON port_groups(port_prefix)`,
 		`CREATE INDEX IF NOT EXISTS idx_port_groups_host ON port_groups(host_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_port_groups_status ON port_groups(status)`,
 		`CREATE INDEX IF NOT EXISTS idx_port_groups_environment_name ON port_groups(environment_name)`,

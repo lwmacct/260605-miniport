@@ -1,7 +1,7 @@
 import {
+  WorkbenchAppearanceButton,
   WorkbenchLanguageToggle,
   WorkbenchShell,
-  WorkbenchThemeToggle,
   WorkbenchUserMenu,
   useWorkbenchLocale,
   type WorkbenchNavEntry,
@@ -9,24 +9,20 @@ import {
 import { Space } from "antd";
 import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { GithubOutlined, KeyOutlined } from "@ant-design/icons";
 import { appPaths, topNavFromPathname, type TopNavKey } from "../router/navigation";
+import { useAuth } from "../auth";
 import { APP_NAME, DISPLAY_VERSION } from "@/shared/config/appConfig";
-import { useAuthStateQuery, useLogoutMutation } from "@/modules/auth";
 
-function navItems(admin: boolean, locale: string): WorkbenchNavEntry[] {
+function navItems(locale: string): WorkbenchNavEntry[] {
   const isZh = locale.startsWith("zh");
-  const items: WorkbenchNavEntry[] = [
+  return [
     { key: "console", label: isZh ? "控制台" : "Console" },
     { key: "settings", label: isZh ? "设置" : "Settings" },
   ];
-  if (admin) {
-    items.push({ key: "admin", label: isZh ? "管理" : "Admin" });
-  }
-  return items;
 }
 
 const navTargets: Record<TopNavKey, string> = {
-  admin: appPaths.admin,
   console: appPaths.console,
   settings: appPaths.settings,
 };
@@ -34,13 +30,11 @@ const navTargets: Record<TopNavKey, string> = {
 export function AppShell() {
   const navigate = useNavigate();
   const location = useLocation();
-  const authState = useAuthStateQuery();
-  const logoutMutation = useLogoutMutation();
+  const { identity, logout } = useAuth();
   const { locale } = useWorkbenchLocale();
   const activeNavKey = topNavFromPathname(location.pathname);
-  const isFlushContent = activeNavKey === "admin" || activeNavKey === "console" || activeNavKey === "settings";
+  const isFlushContent = activeNavKey === "console" || activeNavKey === "settings";
   const [optimisticActiveKey, setOptimisticActiveKey] = useState<TopNavKey>();
-  const user = authState.data?.session.user;
   const visibleActiveKey = optimisticActiveKey ?? activeNavKey;
 
   useEffect(() => {
@@ -61,18 +55,17 @@ export function AppShell() {
 
   return (
     <WorkbenchShell
-      actions={
-        <Space>
-          <WorkbenchThemeToggle />
-          <WorkbenchLanguageToggle
-            labels={{ switchLanguage: locale.startsWith("zh") ? "切换语言" : "Switch language" }}
-          />
-          <WorkbenchUserMenu
-            user={{ name: user?.username, username: user?.username }}
-            onLogout={() => void logoutMutation.mutateAsync()}
-            onOpenAccount={() => navigate(appPaths.settings)}
-          />
-        </Space>
+      account={
+        <WorkbenchUserMenu
+          user={{
+            avatarUrl: identity.avatar_url,
+            displayName: identity.name,
+            provider: identity.provider === "github" ? "GitHub" : "Access token",
+            providerIcon: identity.provider === "github" ? <GithubOutlined /> : <KeyOutlined />,
+            username: identity.username,
+          }}
+          onLogout={logout}
+        />
       }
       brand={{
         mark: "M",
@@ -80,8 +73,14 @@ export function AppShell() {
         version: DISPLAY_VERSION,
       }}
       flushContent={isFlushContent}
-      nav={navItems(Boolean(user?.admin), locale)}
+      nav={navItems(locale)}
       selectedNavKey={visibleActiveKey}
+      utilities={
+        <Space>
+          <WorkbenchAppearanceButton />
+          <WorkbenchLanguageToggle />
+        </Space>
+      }
       onSelectNav={handleNavigate}
     >
       <Outlet />

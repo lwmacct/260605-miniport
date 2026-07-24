@@ -18,43 +18,36 @@ func TestListPortsvcPortGroupsSortsByPort(t *testing.T) {
 	ctx := t.Context()
 	db := newPortsvcTestDB(t, ctx)
 	store := NewStore(db)
-	ownerSubject := "018f2f9c-1111-7000-8000-000000000001"
 	now := time.Now().UTC()
 
 	_, err := store.CreatePortsvcPortGroup(ctx, &PortsvcPortGroupRecord{
-		OwnerSubject: ownerSubject, PortPrefix: 1002, RuntimeMode: "dind", Status: "running", CreatedAt: now, UpdatedAt: now,
+		PortPrefix: 1002, RuntimeMode: "dind", Status: "running", CreatedAt: now, UpdatedAt: now,
 	})
 	require.NoError(t, err)
 	_, err = store.CreatePortsvcPortGroup(ctx, &PortsvcPortGroupRecord{
-		OwnerSubject: ownerSubject, PortPrefix: 1000, RuntimeMode: "dind", Status: "running", CreatedAt: now, UpdatedAt: now,
+		PortPrefix: 1000, RuntimeMode: "dind", Status: "running", CreatedAt: now, UpdatedAt: now,
 	})
 	require.NoError(t, err)
 
-	groups, err := store.ListPortsvcPortGroups(ctx, PortsvcPortGroupListFilter{OwnerSubject: ownerSubject})
+	groups, err := store.ListPortsvcPortGroups(ctx, PortsvcPortGroupListFilter{})
 	require.NoError(t, err)
 	require.Len(t, groups, 2)
 	require.Equal(t, 1000, groups[0].PortPrefix)
 	require.Equal(t, 1002, groups[1].PortPrefix)
 }
 
-func TestPortGroupsAreUniquePerUser(t *testing.T) {
+func TestPortGroupsAreGloballyUnique(t *testing.T) {
 	ctx := t.Context()
 	db := newPortsvcTestDB(t, ctx)
 	store := NewStore(db)
-	first := "018f2f9c-1111-7000-8000-000000000001"
-	second := "018f2f9c-1111-7000-8000-000000000002"
 	now := time.Now().UTC()
 
 	_, err := store.CreatePortsvcPortGroup(ctx, &PortsvcPortGroupRecord{
-		OwnerSubject: first, PortPrefix: 1000, RuntimeMode: "dind", Status: "available", CreatedAt: now, UpdatedAt: now,
+		PortPrefix: 1000, RuntimeMode: "dind", Status: "available", CreatedAt: now, UpdatedAt: now,
 	})
 	require.NoError(t, err)
 	_, err = store.CreatePortsvcPortGroup(ctx, &PortsvcPortGroupRecord{
-		OwnerSubject: second, PortPrefix: 1000, RuntimeMode: "dind", Status: "available", CreatedAt: now, UpdatedAt: now,
-	})
-	require.NoError(t, err)
-	_, err = store.CreatePortsvcPortGroup(ctx, &PortsvcPortGroupRecord{
-		OwnerSubject: first, PortPrefix: 1000, RuntimeMode: "dind", Status: "available", CreatedAt: now, UpdatedAt: now,
+		PortPrefix: 1000, RuntimeMode: "dind", Status: "available", CreatedAt: now, UpdatedAt: now,
 	})
 	require.Error(t, err)
 }
@@ -63,10 +56,9 @@ func TestPortSlotsAreUniqueInsideGroup(t *testing.T) {
 	ctx := t.Context()
 	db := newPortsvcTestDB(t, ctx)
 	store := NewStore(db)
-	ownerSubject := "018f2f9c-1111-7000-8000-000000000001"
 	now := time.Now().UTC()
 	group, err := store.CreatePortsvcPortGroup(ctx, &PortsvcPortGroupRecord{
-		OwnerSubject: ownerSubject, PortPrefix: 1000, RuntimeMode: "dind", Status: "available", CreatedAt: now, UpdatedAt: now,
+		PortPrefix: 1000, RuntimeMode: "dind", Status: "available", CreatedAt: now, UpdatedAt: now,
 	})
 	require.NoError(t, err)
 	_, err = store.CreatePortsvcPortSlot(ctx, &PortsvcPortSlotRecord{
@@ -84,24 +76,22 @@ func TestPortGroupRepositoryLinksLoadRepositoryAndPreserveSlotID(t *testing.T) {
 	db := newPortsvcTestDB(t, ctx)
 	store := NewStore(db)
 	now := time.Now().UTC()
-	ownerSubject := "018f2f9c-1111-7000-8000-000000000001"
 
 	installation, err := store.UpsertGithubInstallation(ctx, GithubInstallationRecord{
 		GithubInstallationID: 42, AccountID: 7, AccountLogin: "acme", AccountType: "Organization",
 		RepositorySelection: "all", Permissions: `{"metadata":"read"}`, Status: "active", CreatedAt: now, UpdatedAt: now,
 	})
 	require.NoError(t, err)
-	require.NoError(t, store.AddGithubInstallationSubject(ctx, installation.ID, ownerSubject, now))
 	require.NoError(t, store.ReplaceGithubRepositories(ctx, installation.ID, []GithubRepositoryRecord{{
 		GithubRepositoryID: 99, OwnerLogin: "acme", Name: "api", FullName: "acme/api",
 		HTMLURL: "https://github.com/acme/api", Visibility: "private", Private: true,
 	}}, now))
-	repositories, err := store.ListGithubRepositoriesForSubject(ctx, ownerSubject, "", "")
+	repositories, err := store.ListGithubRepositories(ctx, "", "")
 	require.NoError(t, err)
 	require.Len(t, repositories, 1)
 
 	group, err := store.CreatePortsvcPortGroup(ctx, &PortsvcPortGroupRecord{
-		OwnerSubject: ownerSubject, PortPrefix: 1000, RuntimeMode: "dind", Status: "running", CreatedAt: now, UpdatedAt: now,
+		PortPrefix: 1000, RuntimeMode: "dind", Status: "running", CreatedAt: now, UpdatedAt: now,
 	})
 	require.NoError(t, err)
 	slotID := "018f2f9c-2222-7000-8000-000000000001"

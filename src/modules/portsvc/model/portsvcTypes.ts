@@ -29,8 +29,6 @@ export type PortSlotItem = {
 
 export type DependencyAssetItem = {
   id?: string;
-  ownerSubject?: string;
-  ownerName?: string;
   name: string;
   assetKind: string;
   assetType: string;
@@ -100,8 +98,6 @@ export type ServiceGroupPortGroupItem = {
 
 export type ServiceGroupItem = {
   id?: string;
-  ownerSubject?: string;
-  ownerName?: string;
   name: string;
   kind: string;
   status: string;
@@ -112,8 +108,6 @@ export type ServiceGroupItem = {
 
 export type PortGroupItem = {
   id: string;
-  ownerSubject: string;
-  ownerName: string;
   hostId: string;
   host?: HostItem;
   portPrefix: number;
@@ -130,7 +124,7 @@ export type PortGroupItem = {
   repositoryLinks: PortGroupRepositoryLinkItem[];
 };
 
-export type PortGroupForm = Partial<Omit<PortGroupItem, "id" | "ownerName" | "host">> & {
+export type PortGroupForm = Partial<Omit<PortGroupItem, "id" | "host">> & {
   environmentName?: string;
 };
 
@@ -155,7 +149,6 @@ export type PortsvcQuery = {
   query?: string;
   sort?: string;
   status?: string;
-  ownerSubject?: string;
 };
 
 export type AppStats = {

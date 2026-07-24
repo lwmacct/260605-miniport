@@ -33,7 +33,6 @@ const serviceSlotTagsStyle: CSSProperties = {
 };
 
 type ProjectServicesSectionProps = {
-  canManage: boolean;
   groups: PortGroupItem[];
   onDeleteGroup: (group: PortGroupItem) => void;
   onEditGroup: (group: PortGroupItem) => void;
@@ -42,7 +41,6 @@ type ProjectServicesSectionProps = {
 };
 
 export function ProjectServicesSection({
-  canManage,
   groups,
   onDeleteGroup,
   onEditGroup,
@@ -115,21 +113,19 @@ export function ProjectServicesSection({
         ) : "-",
     },
     { title: "状态", width: 110, render: (_, item) => statusTag(item.status) },
-    { title: "用户", dataIndex: "ownerName", width: 120 },
     {
       title: "操作",
       width: 120,
-      render: (_, item) =>
-        canManage ? (
-          <Space>
-            <Tooltip title="编辑">
-              <Button icon={<EditOutlined />} onClick={() => onEditGroup(item)} />
-            </Tooltip>
-            <Popconfirm title="删除运行环境" onConfirm={() => onDeleteGroup(item)}>
-              <Button danger icon={<DeleteOutlined />} />
-            </Popconfirm>
-          </Space>
-        ) : null,
+      render: (_, item) => (
+        <Space>
+          <Tooltip title="编辑">
+            <Button icon={<EditOutlined />} onClick={() => onEditGroup(item)} />
+          </Tooltip>
+          <Popconfirm title="删除运行环境" onConfirm={() => onDeleteGroup(item)}>
+            <Button danger icon={<DeleteOutlined />} />
+          </Popconfirm>
+        </Space>
+      ),
     },
   ];
 

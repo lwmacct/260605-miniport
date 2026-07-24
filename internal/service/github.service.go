@@ -49,7 +49,7 @@ func (s *GithubService) Status() GithubStatus {
 
 func (s *GithubService) SetupReturnURL() string { return s.cfg.SetupReturnURL }
 
-func (s *GithubService) BeginConnection(ctx context.Context, ownerSubject string) (*GithubConnectionStart, error) {
+func (s *GithubService) BeginConnection(ctx context.Context) (*GithubConnectionStart, error) {
 	if !s.cfg.Enabled {
 		return nil, ErrGithubDisabled
 	}
@@ -59,7 +59,7 @@ func (s *GithubService) BeginConnection(ctx context.Context, ownerSubject string
 	}
 	state := base64.RawURLEncoding.EncodeToString(raw)
 	now := s.now().UTC()
-	if err := s.store.AddGithubConnectionState(ctx, utilHashGithubState(state), ownerSubject, now.Add(githubConnectionStateTTL), now); err != nil {
+	if err := s.store.AddGithubConnectionState(ctx, utilHashGithubState(state), now.Add(githubConnectionStateTTL), now); err != nil {
 		return nil, err
 	}
 	return &GithubConnectionStart{URL: utilGithubConnectionURL(s.Status().InstallURL, state)}, nil
@@ -74,7 +74,7 @@ func (s *GithubService) CompleteConnection(ctx context.Context, state string, in
 	}
 	now := s.now().UTC()
 	stateHash := utilHashGithubState(state)
-	connectionState, err := s.store.FetchGithubConnectionStateByHash(ctx, stateHash, now)
+	_, err := s.store.FetchGithubConnectionStateByHash(ctx, stateHash, now)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			return ErrGithubInvalidState
@@ -92,38 +92,20 @@ func (s *GithubService) CompleteConnection(ctx context.Context, state string, in
 	if err != nil {
 		return err
 	}
-	if err := s.store.AddGithubInstallationSubject(ctx, installation.ID, connectionState.OwnerSubject, now); err != nil {
-		return err
-	}
 	return s.syncInstallation(ctx, *installation)
 }
 
-func (s *GithubService) ListInstallations(ctx context.Context, ownerSubject string) ([]GithubInstallation, error) {
-	return s.store.ListGithubInstallationsForSubject(ctx, ownerSubject)
+func (s *GithubService) ListInstallations(ctx context.Context) ([]GithubInstallation, error) {
+	return s.store.ListGithubInstallations(ctx)
 }
 
-func (s *GithubService) ListRepositories(ctx context.Context, ownerSubject, query, state string) ([]GithubRepository, error) {
-	return s.store.ListGithubRepositoriesForSubject(ctx, ownerSubject, query, state)
+func (s *GithubService) ListRepositories(ctx context.Context, query, state string) ([]GithubRepository, error) {
+	return s.store.ListGithubRepositories(ctx, query, state)
 }
 
-func (s *GithubService) Disconnect(ctx context.Context, ownerSubject, installationID string) error {
-	err := s.store.DeleteGithubInstallationSubject(ctx, installationID, ownerSubject)
-	if errors.Is(err, repository.ErrNotFound) {
-		return ErrGithubUnauthorized
-	}
-	return err
-}
-
-func (s *GithubService) SyncInstallation(ctx context.Context, ownerSubject, installationID string) error {
+func (s *GithubService) SyncInstallation(ctx context.Context, installationID string) error {
 	if !s.cfg.Enabled {
 		return ErrGithubDisabled
-	}
-	accessible, err := s.store.ExistsGithubInstallationSubject(ctx, installationID, ownerSubject)
-	if err != nil {
-		return err
-	}
-	if !accessible {
-		return ErrGithubUnauthorized
 	}
 	installation, err := s.store.FetchGithubInstallationByID(ctx, installationID)
 	if err != nil {
@@ -162,7 +144,7 @@ func (s *GithubService) HandleWebhook(ctx context.Context, deliveryID, event, si
 		return ErrGithubDisabled
 	}
 	if !validateGithubWebhookSignature(s.cfg.WebhookSecret, signature, body) {
-		return ErrGithubUnauthorized
+		return ErrGithubInvalidSignature
 	}
 	var envelope struct {
 		Action       string `json:"action"`

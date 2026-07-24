@@ -32,8 +32,20 @@ func (app *App) newHTTPServer() *http.Server {
 func (app *App) newHTTPHandler() http.Handler {
 	router := chi.NewRouter()
 	apiHandler := http.StripPrefix(httpAPIPrefix, app.newHTTPAPIHandler())
-	router.Handle(httpAPIPrefix, apiHandler)
-	router.Handle(httpAPIPrefix+"/*", apiHandler)
+	protectedAPI := app.deps.auth.RequireAccess(apiHandler)
+	for _, publicPath := range []string{
+		httpAPIPrefix + "/health",
+		httpAPIPrefix + "/meta",
+		httpAPIPrefix + "/github/setup",
+		httpAPIPrefix + "/github/webhooks",
+	} {
+		router.Handle(publicPath, apiHandler)
+	}
+	router.Handle(httpAPIPrefix, protectedAPI)
+	router.Handle(httpAPIPrefix+"/*", protectedAPI)
+	authPrefix := app.deps.auth.PathPrefix()
+	router.Handle(authPrefix, app.deps.auth.Handler())
+	router.Handle(authPrefix+"/*", app.deps.auth.Handler())
 
 	if !frontend.RegisterRoutes(router, app.cfg.Server.HTTP.WebRoot) {
 		router.Get("/", func(w http.ResponseWriter, _ *http.Request) {
