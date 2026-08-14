@@ -6,37 +6,6 @@
 - Root: `internal`
 - Violations: `0`
 
-## APIs
-
-| Method   | Full Path                            | Mount | Operation Path                       | Operation                           | Tags   | Handler                  | Register          | File                                  |
-| -------- | ------------------------------------ | ----- | ------------------------------------ | ----------------------------------- | ------ | ------------------------ | ----------------- | ------------------------------------- |
-| `DELETE` | `/console/dependency-assets`         | `-`   | `/console/dependency-assets`         | `console-delete-dependency-assets`  |        | `deleteDependencyAssets` | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `GET`    | `/console/dependency-assets`         | `-`   | `/console/dependency-assets`         | `console-list-dependency-assets`    |        | `listDependencyAssets`   | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `POST`   | `/console/dependency-assets`         | `-`   | `/console/dependency-assets`         | `console-create-dependency-assets`  |        | `createDependencyAssets` | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `PUT`    | `/console/dependency-assets`         | `-`   | `/console/dependency-assets`         | `console-update-dependency-assets`  |        | `updateDependencyAssets` | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `POST`   | `/console/github/connections`        | `-`   | `/console/github/connections`        | `console-begin-github-connection`   |        | `beginConnection`        | `RegisterGithub`  | `internal/handler/github.handler.go`  |
-| `GET`    | `/console/github/installations`      | `-`   | `/console/github/installations`      | `console-list-github-installations` |        | `listInstallations`      | `RegisterGithub`  | `internal/handler/github.handler.go`  |
-| `POST`   | `/console/github/installations/sync` | `-`   | `/console/github/installations/sync` | `console-sync-github-installations` |        | `syncInstallations`      | `RegisterGithub`  | `internal/handler/github.handler.go`  |
-| `GET`    | `/console/github/repositories`       | `-`   | `/console/github/repositories`       | `console-list-github-repositories`  |        | `listRepositories`       | `RegisterGithub`  | `internal/handler/github.handler.go`  |
-| `GET`    | `/console/github/status`             | `-`   | `/console/github/status`             | `console-get-github-status`         |        | `status`                 | `RegisterGithub`  | `internal/handler/github.handler.go`  |
-| `DELETE` | `/console/hosts`                     | `-`   | `/console/hosts`                     | `console-delete-hosts`              |        | `deleteHosts`            | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `GET`    | `/console/hosts`                     | `-`   | `/console/hosts`                     | `console-list-hosts`                |        | `listHosts`              | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `POST`   | `/console/hosts`                     | `-`   | `/console/hosts`                     | `console-create-hosts`              |        | `createHosts`            | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `PUT`    | `/console/hosts`                     | `-`   | `/console/hosts`                     | `console-update-hosts`              |        | `updateHosts`            | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `DELETE` | `/console/port-groups`               | `-`   | `/console/port-groups`               | `console-delete-port-groups`        |        | `deletePortGroups`       | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `GET`    | `/console/port-groups`               | `-`   | `/console/port-groups`               | `console-list-port-groups`          |        | `listPortGroups`         | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `POST`   | `/console/port-groups`               | `-`   | `/console/port-groups`               | `console-create-port-groups`        |        | `createPortGroups`       | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `PUT`    | `/console/port-groups`               | `-`   | `/console/port-groups`               | `console-update-port-groups`        |        | `updatePortGroups`       | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `GET`    | `/console/port-groups/export.csv`    | `-`   | `/console/port-groups/export.csv`    | `console-export-port-groups`        |        | `exportPortGroups`       | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `DELETE` | `/console/service-groups`            | `-`   | `/console/service-groups`            | `console-delete-service-groups`     |        | `deleteServiceGroups`    | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `GET`    | `/console/service-groups`            | `-`   | `/console/service-groups`            | `console-list-service-groups`       |        | `listServiceGroups`      | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `POST`   | `/console/service-groups`            | `-`   | `/console/service-groups`            | `console-create-service-groups`     |        | `createServiceGroups`    | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `PUT`    | `/console/service-groups`            | `-`   | `/console/service-groups`            | `console-update-service-groups`     |        | `updateServiceGroups`    | `RegisterPortsvc` | `internal/handler/portsvc.handler.go` |
-| `GET`    | `/health`                            | `-`   | `/health`                            | `get-health`                        | System | `health`                 | `RegisterCore`    | `internal/handler/core.handler.go`    |
-| `GET`    | `/integrations/github/setup`         | `-`   | `/integrations/github/setup`         | `complete-github-connection`        |        | `completeConnection`     | `RegisterGithub`  | `internal/handler/github.handler.go`  |
-| `POST`   | `/integrations/github/webhooks`      | `-`   | `/integrations/github/webhooks`      | `receive-github-webhook`            |        | `webhook`                | `RegisterGithub`  | `internal/handler/github.handler.go`  |
-| `GET`    | `/meta`                              | `-`   | `/meta`                              | `get-meta`                          | System | `meta`                   | `RegisterCore`    | `internal/handler/core.handler.go`    |
-
 ## Handlers
 
 | Scope     | Handler          | Register          | File                                  | Methods                                                                                                                                                                                                                                                                                                                  |
