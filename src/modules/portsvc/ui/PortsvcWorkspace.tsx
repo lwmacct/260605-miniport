@@ -62,7 +62,7 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>();
-  const [sort, setSort] = useState<string>("port");
+  const [sort, setSort] = useState<NonNullable<PortsvcQuery["sort"]>>("port");
   const [portSegment, setPortSegment] = useState<number>();
   const [saving, setSaving] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<PortGroupItem | null>(null);
@@ -86,7 +86,7 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
     }
 
     return {
-      query: search.trim(),
+      q: search.trim(),
       sort,
       status,
     };
@@ -330,7 +330,7 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
         );
         break;
       case "portGroups":
-		content = <PortGroupsUsageSection groups={groups} onCreateGroup={openCreateGroup} />;
+        content = <PortGroupsUsageSection groups={groups} onCreateGroup={openCreateGroup} />;
         break;
       case "projects":
         content = (
@@ -385,7 +385,7 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
             <Typography.Text type="secondary">{description}</Typography.Text>
             {meta?.version ? (
               <Typography.Paragraph type="secondary" style={{ marginBottom: 0, marginTop: 8 }}>
-                {meta.version} · {meta.database}
+                {meta.name} · {meta.version}
               </Typography.Paragraph>
             ) : null}
           </div>
@@ -432,22 +432,22 @@ export function PortsvcWorkspace({ description, title, view }: PortsvcWorkspaceP
               导出 CSV
             </Button>
             {view === "hosts" ? (
-			  <Button type="primary" icon={<PlusOutlined />} onClick={openCreateHost}>
+              <Button type="primary" icon={<PlusOutlined />} onClick={openCreateHost}>
                 宿主机
               </Button>
             ) : null}
             {view === "dependencies" ? (
-			  <Button type="primary" icon={<PlusOutlined />} onClick={openCreateAsset}>
+              <Button type="primary" icon={<PlusOutlined />} onClick={openCreateAsset}>
                 依赖资产
               </Button>
             ) : null}
             {view === "projects" ? (
-			  <Button type="primary" icon={<PlusOutlined />} onClick={openCreateGroup}>
+              <Button type="primary" icon={<PlusOutlined />} onClick={openCreateGroup}>
                 运行环境
               </Button>
             ) : null}
             {view === "serviceGroups" ? (
-			  <Button type="primary" icon={<PlusOutlined />} onClick={openCreateServiceGroup}>
+              <Button type="primary" icon={<PlusOutlined />} onClick={openCreateServiceGroup}>
                 服务组
               </Button>
             ) : null}

@@ -1,140 +1,22 @@
-export type Meta = {
-  name: string;
-  version: string;
-  listen: string;
-  database: string;
-  docsPath: string;
-};
+import type { components, operations } from "@/shared/api/schema.gen";
 
-export type HostItem = {
-  id: string;
-  name: string;
-  ip: string;
-  spec: string;
-  status: string;
-  notes: string;
-};
+type Schema = components["schemas"];
 
-export type PortSlotItem = {
-  id?: string;
-  portGroupId?: string;
-  port: number;
-  name: string;
-  kind: string;
-  protocol: string;
-  containerName: string;
-  status: string;
-  notes: string;
-};
+export type Meta = Schema["MetaDTO"];
+export type HostItem = Schema["HostDTO"];
+export type PortSlotItem = Schema["PortSlotDTO"];
+export type DependencyAssetItem = Schema["DependencyAssetDTO"];
+export type PortGroupAssetLinkItem = Schema["PortGroupAssetLinkDTO"];
+export type GitHubRepositoryItem = Schema["GithubRepositoryDTO"];
+export type PortGroupRepositoryLinkItem = Schema["PortGroupRepositoryLinkDTO"];
+export type ServiceGroupPortGroupItem = Schema["ServiceGroupPortGroupDTO"];
+export type ServiceGroupItem = Schema["ServiceGroupDTO"];
+export type PortGroupItem = Schema["PortGroupDTO"];
 
-export type DependencyAssetItem = {
-  id?: string;
-  name: string;
-  assetKind: string;
-  assetType: string;
-  provider: string;
-  url: string;
-  fullName: string;
-  externalId: string;
-  visibility: string;
-  controllability: string;
-  status: string;
-  description: string;
-  metadata: string;
-  notes: string;
-};
-
-export type PortGroupAssetLinkItem = {
-  id?: string;
-  portGroupId?: string;
-  portSlotId?: string;
-  assetId: string;
-  asset?: DependencyAssetItem;
-  relationType: string;
-  required: boolean;
-  notes: string;
-};
-
-export type GitHubRepositoryItem = {
-  id: string;
-  installationId: string;
-  githubRepositoryId: number;
-  ownerLogin: string;
-  name: string;
-  fullName: string;
-  htmlUrl: string;
-  description: string;
-  defaultBranch: string;
-  visibility: string;
-  private: boolean;
-  fork: boolean;
-  archived: boolean;
-  disabled: boolean;
-  state: string;
-  pushedAt?: string;
-  remoteUpdatedAt?: string;
-  lastSeenAt: string;
-};
-
-export type PortGroupRepositoryLinkItem = {
-  id?: string;
-  portGroupId?: string;
-  portSlotId?: string;
-  repositoryId: string;
-  repository?: GitHubRepositoryItem;
-  relationType: string;
-  required: boolean;
-  notes: string;
-};
-
-export type ServiceGroupPortGroupItem = {
-  id?: string;
-  serviceGroupId?: string;
-  portGroupId: string;
-  portGroup?: PortGroupItem;
-  role: string;
-  notes: string;
-};
-
-export type ServiceGroupItem = {
-  id?: string;
-  name: string;
-  kind: string;
-  status: string;
-  description: string;
-  notes: string;
-  portGroups: ServiceGroupPortGroupItem[];
-};
-
-export type PortGroupItem = {
-  id: string;
-  hostId: string;
-  host?: HostItem;
-  portPrefix: number;
-  environmentName: string;
-  environmentOwner: string;
-  runtimeMode: string;
-  runtimeName: string;
-  serviceIp: string;
-  status: string;
-  tags: string;
-  notes: string;
-  slots: PortSlotItem[];
-  assetLinks: PortGroupAssetLinkItem[];
-  repositoryLinks: PortGroupRepositoryLinkItem[];
-};
-
-export type PortGroupForm = Partial<Omit<PortGroupItem, "id" | "host">> & {
-  environmentName?: string;
-};
-
-export type HostForm = Partial<HostItem> & {
-  name?: string;
-};
-
-export type ServiceGroupForm = Partial<ServiceGroupItem> & {
-  name?: string;
-};
+export type PortGroupForm = Schema["PortGroupCreateDTO"];
+export type HostForm = Schema["HostCreateDTO"];
+export type ServiceGroupForm = Schema["ServiceGroupCreateDTO"];
+export type PortsvcQuery = NonNullable<operations["console-list-port-groups"]["parameters"]["query"]>;
 
 export type PortsvcSnapshot = {
   meta: Meta;
@@ -143,12 +25,6 @@ export type PortsvcSnapshot = {
   dependencyAssets: DependencyAssetItem[];
   repositories: GitHubRepositoryItem[];
   serviceGroups: ServiceGroupItem[];
-};
-
-export type PortsvcQuery = {
-  query?: string;
-  sort?: string;
-  status?: string;
 };
 
 export type AppStats = {

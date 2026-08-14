@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/lwmacct/260605-miniport/internal/repository"
@@ -18,6 +19,50 @@ func NewPortsvcService(store *repository.Store) *PortsvcService {
 	return &PortsvcService{store: store}
 }
 
+func (s *PortsvcService) CreateHosts(ctx context.Context, payloads []HostPayload) ([]Host, error) {
+	items := make([]Host, 0, len(payloads))
+	err := s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
+		tx := &PortsvcService{store: txStore}
+		for _, payload := range payloads {
+			item, err := tx.CreateHost(ctx, payload)
+			if err != nil {
+				return err
+			}
+			items = append(items, *item)
+		}
+		return nil
+	})
+	return items, err
+}
+
+func (s *PortsvcService) UpdateHosts(ctx context.Context, inputs []HostUpdateInput) ([]Host, error) {
+	items := make([]Host, 0, len(inputs))
+	err := s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
+		tx := &PortsvcService{store: txStore}
+		for _, input := range inputs {
+			item, err := tx.UpdateHost(ctx, input.ID, input.Payload)
+			if err != nil {
+				return err
+			}
+			items = append(items, *item)
+		}
+		return nil
+	})
+	return items, err
+}
+
+func (s *PortsvcService) DeleteHosts(ctx context.Context, ids []string) error {
+	return s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
+		tx := &PortsvcService{store: txStore}
+		for _, id := range ids {
+			if err := tx.DeleteHost(ctx, id); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
 func (s *PortsvcService) ListHosts(ctx context.Context, params HostListParams) ([]Host, error) {
 	return s.store.ListPortsvcHosts(ctx, repository.PortsvcHostListFilter{Query: params.Query, Status: params.Status})
 }
@@ -30,7 +75,11 @@ func (s *PortsvcService) CreateHost(ctx context.Context, payload HostPayload) (*
 	now := utilNowUTC()
 	host.CreatedAt = now
 	host.UpdatedAt = now
-	return s.store.CreatePortsvcHost(ctx, host)
+	created, err := s.store.CreatePortsvcHost(ctx, host)
+	if err != nil {
+		return nil, utilWrapConflict(err, "host name already exists")
+	}
+	return created, nil
 }
 
 func (s *PortsvcService) UpdateHost(ctx context.Context, id string, payload HostPayload) (*Host, error) {
@@ -41,7 +90,10 @@ func (s *PortsvcService) UpdateHost(ctx context.Context, id string, payload Host
 	host.UpdatedAt = utilNowUTC()
 	out, err := s.store.UpdatePortsvcHost(ctx, id, host)
 	if err != nil {
-		return nil, utilWrapNotFound(err, "host not found")
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, utilPortsvcNotFound("host not found")
+		}
+		return nil, utilWrapConflict(err, "host name already exists")
 	}
 	return out, nil
 }
@@ -60,6 +112,50 @@ func (s *PortsvcService) ListDependencyAssets(ctx context.Context, params Depend
 	})
 }
 
+func (s *PortsvcService) CreateDependencyAssets(ctx context.Context, payloads []DependencyAssetPayload) ([]DependencyAsset, error) {
+	items := make([]DependencyAsset, 0, len(payloads))
+	err := s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
+		tx := &PortsvcService{store: txStore}
+		for _, payload := range payloads {
+			item, err := tx.CreateDependencyAsset(ctx, payload)
+			if err != nil {
+				return err
+			}
+			items = append(items, *item)
+		}
+		return nil
+	})
+	return items, err
+}
+
+func (s *PortsvcService) UpdateDependencyAssets(ctx context.Context, inputs []DependencyAssetUpdateInput) ([]DependencyAsset, error) {
+	items := make([]DependencyAsset, 0, len(inputs))
+	err := s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
+		tx := &PortsvcService{store: txStore}
+		for _, input := range inputs {
+			item, err := tx.UpdateDependencyAsset(ctx, input.ID, input.Payload)
+			if err != nil {
+				return err
+			}
+			items = append(items, *item)
+		}
+		return nil
+	})
+	return items, err
+}
+
+func (s *PortsvcService) DeleteDependencyAssets(ctx context.Context, ids []string) error {
+	return s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
+		tx := &PortsvcService{store: txStore}
+		for _, id := range ids {
+			if err := tx.DeleteDependencyAsset(ctx, id); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
 func (s *PortsvcService) CreateDependencyAsset(ctx context.Context, payload DependencyAssetPayload) (*DependencyAsset, error) {
 	asset, err := utilNormalizeDependencyAsset(payload)
 	if err != nil {
@@ -68,7 +164,11 @@ func (s *PortsvcService) CreateDependencyAsset(ctx context.Context, payload Depe
 	now := utilNowUTC()
 	asset.CreatedAt = now
 	asset.UpdatedAt = now
-	return s.store.CreatePortsvcDependencyAsset(ctx, asset)
+	created, err := s.store.CreatePortsvcDependencyAsset(ctx, asset)
+	if err != nil {
+		return nil, utilWrapConflict(err, "dependency asset name and kind already exist")
+	}
+	return created, nil
 }
 
 func (s *PortsvcService) UpdateDependencyAsset(ctx context.Context, id string, payload DependencyAssetPayload) (*DependencyAsset, error) {
@@ -83,7 +183,10 @@ func (s *PortsvcService) UpdateDependencyAsset(ctx context.Context, id string, p
 	asset.UpdatedAt = utilNowUTC()
 	updated, err := s.store.UpdatePortsvcDependencyAsset(ctx, id, asset)
 	if err != nil {
-		return nil, utilWrapNotFound(err, "dependency asset not found")
+		if errors.Is(err, repository.ErrNotFound) {
+			return nil, utilPortsvcNotFound("dependency asset not found")
+		}
+		return nil, utilWrapConflict(err, "dependency asset name and kind already exist")
 	}
 	return updated, nil
 }
@@ -103,6 +206,56 @@ func (s *PortsvcService) ListServiceGroups(ctx context.Context, params ServiceGr
 		return nil, err
 	}
 	return s.buildServiceGroupViews(ctx, groups)
+}
+
+func (s *PortsvcService) CreateServiceGroups(ctx context.Context, payloads []ServiceGroupPayload) ([]ServiceGroupView, error) {
+	ids := make([]string, 0, len(payloads))
+	err := s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
+		tx := &PortsvcService{store: txStore}
+		for _, payload := range payloads {
+			item, err := tx.CreateServiceGroup(ctx, payload)
+			if err != nil {
+				return err
+			}
+			ids = append(ids, item.ID)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, utilWrapConflict(err, "service group name already exists")
+	}
+	return s.serviceGroupViewsByIDs(ctx, ids)
+}
+
+func (s *PortsvcService) UpdateServiceGroups(ctx context.Context, inputs []ServiceGroupUpdateInput) ([]ServiceGroupView, error) {
+	ids := make([]string, 0, len(inputs))
+	err := s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
+		tx := &PortsvcService{store: txStore}
+		for _, input := range inputs {
+			item, err := tx.UpdateServiceGroup(ctx, input.ID, input.Payload)
+			if err != nil {
+				return err
+			}
+			ids = append(ids, item.ID)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return s.serviceGroupViewsByIDs(ctx, ids)
+}
+
+func (s *PortsvcService) DeleteServiceGroups(ctx context.Context, ids []string) error {
+	return s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
+		tx := &PortsvcService{store: txStore}
+		for _, id := range ids {
+			if err := tx.DeleteServiceGroup(ctx, id); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 func (s *PortsvcService) GetServiceGroup(ctx context.Context, id string) (*ServiceGroupView, error) {
@@ -139,7 +292,7 @@ func (s *PortsvcService) CreateServiceGroup(ctx context.Context, payload Service
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, utilWrapConflict(err, "service group name already exists")
 	}
 	return s.GetServiceGroup(ctx, createdID)
 }
@@ -166,7 +319,7 @@ func (s *PortsvcService) UpdateServiceGroup(ctx context.Context, id string, payl
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, utilWrapConflict(err, "service group name already exists")
 	}
 	return s.GetServiceGroup(ctx, id)
 }
@@ -186,6 +339,56 @@ func (s *PortsvcService) ListPortGroups(ctx context.Context, params PortGroupLis
 		return nil, err
 	}
 	return s.buildPortGroupViews(ctx, groups)
+}
+
+func (s *PortsvcService) CreatePortGroups(ctx context.Context, payloads []PortGroupPayload) ([]PortGroupView, error) {
+	ids := make([]string, 0, len(payloads))
+	err := s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
+		tx := &PortsvcService{store: txStore}
+		for _, payload := range payloads {
+			item, err := tx.CreatePortGroup(ctx, payload)
+			if err != nil {
+				return err
+			}
+			ids = append(ids, item.ID)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return s.portGroupViewsByIDs(ctx, ids)
+}
+
+func (s *PortsvcService) UpdatePortGroups(ctx context.Context, inputs []PortGroupUpdateInput) ([]PortGroupView, error) {
+	ids := make([]string, 0, len(inputs))
+	err := s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
+		tx := &PortsvcService{store: txStore}
+		for _, input := range inputs {
+			item, err := tx.UpdatePortGroup(ctx, input.ID, input.Payload)
+			if err != nil {
+				return err
+			}
+			ids = append(ids, item.ID)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return s.portGroupViewsByIDs(ctx, ids)
+}
+
+func (s *PortsvcService) DeletePortGroups(ctx context.Context, ids []string) error {
+	return s.store.RunInTx(ctx, func(ctx context.Context, txStore *repository.Store) error {
+		tx := &PortsvcService{store: txStore}
+		for _, id := range ids {
+			if err := tx.DeletePortGroup(ctx, id); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 func (s *PortsvcService) GetPortGroup(ctx context.Context, id string) (*PortGroupView, error) {
@@ -222,7 +425,7 @@ func (s *PortsvcService) CreatePortGroup(ctx context.Context, payload PortGroupP
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, utilWrapConflict(err, "port group is already allocated")
 	}
 	return s.GetPortGroup(ctx, createdID)
 }
@@ -249,7 +452,7 @@ func (s *PortsvcService) UpdatePortGroup(ctx context.Context, id string, payload
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, utilWrapConflict(err, "port group is already allocated")
 	}
 	return s.GetPortGroup(ctx, id)
 }
@@ -265,50 +468,6 @@ func (s *PortsvcService) DeletePortGroup(ctx context.Context, id string) error {
 		}
 		return txStore.DeletePortsvcPortGroups(ctx, []string{id})
 	})
-}
-
-func (s *PortsvcService) CreatePortSlot(ctx context.Context, groupID string, payload PortSlotPayload) (*PortSlot, error) {
-	group, err := s.store.FetchPortsvcPortGroupByID(ctx, groupID)
-	if err != nil {
-		return nil, utilWrapNotFound(err, "port group not found")
-	}
-	slot, err := utilNormalizePortSlot(*group, payload)
-	if err != nil {
-		return nil, err
-	}
-	now := utilNowUTC()
-	slot.CreatedAt = now
-	slot.UpdatedAt = now
-	return s.store.CreatePortsvcPortSlot(ctx, slot)
-}
-
-func (s *PortsvcService) UpdatePortSlot(ctx context.Context, id string, payload PortSlotPayload) (*PortSlot, error) {
-	current, err := s.store.FetchPortsvcPortSlotByID(ctx, id)
-	if err != nil {
-		return nil, utilWrapNotFound(err, "port slot not found")
-	}
-	group, err := s.store.FetchPortsvcPortGroupByID(ctx, current.PortGroupID)
-	if err != nil {
-		return nil, err
-	}
-	slot, err := utilNormalizePortSlot(*group, payload)
-	if err != nil {
-		return nil, err
-	}
-	slot.PortGroupID = current.PortGroupID
-	slot.UpdatedAt = utilNowUTC()
-	return s.store.UpdatePortsvcPortSlot(ctx, id, slot)
-}
-
-func (s *PortsvcService) DeletePortSlot(ctx context.Context, id string) error {
-	_, err := s.store.FetchPortsvcPortSlotByID(ctx, id)
-	if err != nil {
-		return utilWrapNotFound(err, "port slot not found")
-	}
-	if err := s.store.DeletePortsvcPortSlot(ctx, id); err != nil {
-		return utilWrapNotFound(err, "port slot not found")
-	}
-	return nil
 }
 
 func (s *PortsvcService) ExportPortGroupsCSV(ctx context.Context, params PortGroupListParams) ([]byte, error) {
@@ -372,6 +531,18 @@ func (s *PortsvcService) buildServiceGroupViews(ctx context.Context, groups []Se
 	return views, nil
 }
 
+func (s *PortsvcService) serviceGroupViewsByIDs(ctx context.Context, ids []string) ([]ServiceGroupView, error) {
+	groups := make([]ServiceGroup, 0, len(ids))
+	for _, id := range ids {
+		group, err := s.store.FetchPortsvcServiceGroupByID(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		groups = append(groups, *group)
+	}
+	return s.buildServiceGroupViews(ctx, groups)
+}
+
 func (s *PortsvcService) replaceServiceGroupPortGroups(ctx context.Context, group ServiceGroup, payload ServiceGroupPayload, now time.Time) error {
 	portGroups, err := utilNormalizeServiceGroupPortGroups(ctx, s.store, group, payload.PortGroups)
 	if err != nil {
@@ -412,6 +583,18 @@ func (s *PortsvcService) buildPortGroupViews(ctx context.Context, groups []PortG
 		views[idx].RepositoryLinks = child.RepositoryLinks
 	}
 	return views, nil
+}
+
+func (s *PortsvcService) portGroupViewsByIDs(ctx context.Context, ids []string) ([]PortGroupView, error) {
+	groups := make([]PortGroup, 0, len(ids))
+	for _, id := range ids {
+		group, err := s.store.FetchPortsvcPortGroupByID(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		groups = append(groups, *group)
+	}
+	return s.buildPortGroupViews(ctx, groups)
 }
 
 func (s *PortsvcService) replacePortGroupChildren(ctx context.Context, group PortGroup, payload PortGroupPayload, now time.Time) error {

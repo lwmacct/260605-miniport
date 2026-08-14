@@ -1,67 +1,32 @@
-import { apiGet, apiSend } from "@/shared/api/client";
+import { apiClient, apiData } from "@/shared/api/client";
+import type { components, operations } from "@/shared/api/schema.gen";
 
-export type GitHubStatus = {
-  enabled: boolean;
-  appSlug: string;
-  installUrl: string;
-};
+type Schema = components["schemas"];
 
-export type GitHubInstallation = {
-  id: string;
-  githubInstallationId: number;
-  accountId: number;
-  accountLogin: string;
-  accountType: string;
-  avatarUrl: string;
-  repositorySelection: "all" | "selected" | string;
-  status: string;
-  suspendedAt?: string;
-  lastSyncedAt?: string;
-  lastSyncError?: string;
-};
+export type GitHubStatus = Schema["GithubStatusDTO"];
+export type GitHubInstallation = Schema["GithubInstallationDTO"];
+export type GitHubRepository = Schema["GithubRepositoryDTO"];
+export type GitHubRepositoryFilters = NonNullable<operations["console-list-github-repositories"]["parameters"]["query"]>;
 
-export type GitHubRepository = {
-  id: string;
-  installationId: string;
-  githubRepositoryId: number;
-  ownerLogin: string;
-  name: string;
-  fullName: string;
-  htmlUrl: string;
-  description: string;
-  defaultBranch: string;
-  visibility: string;
-  private: boolean;
-  fork: boolean;
-  archived: boolean;
-  disabled: boolean;
-  state: string;
-  pushedAt?: string;
-  remoteUpdatedAt?: string;
-  lastSeenAt: string;
-};
-
-export function loadGitHubStatus() {
-  return apiGet<GitHubStatus>("/api/github/status");
+export async function loadGitHubStatus() {
+  return apiData(apiClient.GET("/console/github/status"));
 }
 
-export function loadGitHubInstallations() {
-  return apiGet<GitHubInstallation[]>("/api/github/installations");
+export async function loadGitHubInstallations() {
+  const result = await apiData(apiClient.GET("/console/github/installations"));
+  return result.items;
 }
 
-export function loadGitHubRepositories(query = "") {
-  const search = new URLSearchParams();
-  if (query.trim()) {
-    search.set("q", query.trim());
-  }
-  const suffix = search.size ? `?${search.toString()}` : "";
-  return apiGet<GitHubRepository[]>(`/api/github/repositories${suffix}`);
+export async function loadGitHubRepositories(query = "") {
+  const filters: GitHubRepositoryFilters = query.trim() ? { q: query.trim() } : {};
+  const result = await apiData(apiClient.GET("/console/github/repositories", { params: { query: filters } }));
+  return result.items;
 }
 
 export function beginGitHubConnection() {
-  return apiSend<{ url: string }>("/api/github/connections", { method: "POST" });
+  return apiData(apiClient.POST("/console/github/connections"));
 }
 
 export function syncGitHubInstallation(id: string) {
-  return apiSend<GitHubInstallation>(`/api/github/installations/${id}/sync`, { method: "POST" });
+  return apiData(apiClient.POST("/console/github/installations/sync", { body: { ids: [id] } }));
 }

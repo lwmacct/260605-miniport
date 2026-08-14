@@ -16,6 +16,7 @@ const (
 	allocationPortPrefixMax   = 5999
 	allocationGroupSize       = 10
 	defaultHostStatus         = "active"
+	hostStatusStopped         = "stopped"
 	defaultPortGroupStatus    = "available"
 	defaultRuntimeMode        = "dind"
 	defaultSlotKind           = "app"
@@ -51,6 +52,11 @@ type HostPayload struct {
 	Notes  string
 }
 
+type HostUpdateInput struct {
+	ID      string
+	Payload HostPayload
+}
+
 type PortSlotPayload struct {
 	ID            string
 	Port          int
@@ -76,6 +82,11 @@ type DependencyAssetPayload struct {
 	Description     string
 	Metadata        string
 	Notes           string
+}
+
+type DependencyAssetUpdateInput struct {
+	ID      string
+	Payload DependencyAssetPayload
 }
 
 type PortGroupAssetLinkPayload struct {
@@ -112,6 +123,11 @@ type PortGroupPayload struct {
 	RepositoryLinks  []PortGroupRepositoryLinkPayload
 }
 
+type PortGroupUpdateInput struct {
+	ID      string
+	Payload PortGroupPayload
+}
+
 type ServiceGroupPortGroupPayload struct {
 	ID          string
 	PortGroupID string
@@ -126,6 +142,11 @@ type ServiceGroupPayload struct {
 	Description string
 	Notes       string
 	PortGroups  []ServiceGroupPortGroupPayload
+}
+
+type ServiceGroupUpdateInput struct {
+	ID      string
+	Payload ServiceGroupPayload
 }
 
 type PortGroupView struct {
@@ -168,6 +189,7 @@ type ServiceGroupListParams struct {
 
 var (
 	ErrPortsvcBadRequest = errors.New("portsvc bad request")
+	ErrPortsvcConflict   = errors.New("portsvc conflict")
 	ErrPortsvcNotFound   = errors.New("portsvc not found")
 )
 
@@ -184,6 +206,10 @@ func utilBadPortsvcRequest(message string) error {
 }
 func utilPortsvcNotFound(message string) error {
 	return PortsvcError{Kind: ErrPortsvcNotFound, Message: message}
+}
+
+func utilPortsvcConflict(message string) error {
+	return PortsvcError{Kind: ErrPortsvcConflict, Message: message}
 }
 
 func utilNowUTC() time.Time {
@@ -203,6 +229,9 @@ func utilNormalizeHost(payload HostPayload) (*Host, error) {
 	}
 	if host.Status == "" {
 		host.Status = defaultHostStatus
+	}
+	if host.Status != defaultHostStatus && host.Status != hostStatusStopped {
+		return nil, utilBadPortsvcRequest("host status must be active or stopped")
 	}
 	return host, nil
 }
@@ -331,7 +360,7 @@ func utilValidatePortGroup(ctx context.Context, store *repository.Store, current
 		return err
 	}
 	if count > 0 {
-		return utilBadPortsvcRequest("port group is already allocated")
+		return utilPortsvcConflict("port group is already allocated")
 	}
 	return nil
 }
@@ -530,6 +559,13 @@ func utilPortGroupBounds(portPrefix int) (int, int) {
 func utilWrapNotFound(err error, message string) error {
 	if errors.Is(err, repository.ErrNotFound) {
 		return utilPortsvcNotFound(message)
+	}
+	return err
+}
+
+func utilWrapConflict(err error, message string) error {
+	if repository.IsUniqueViolation(err) {
+		return utilPortsvcConflict(message)
 	}
 	return err
 }

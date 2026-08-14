@@ -58,7 +58,19 @@ tasks:
       - build:web
       - build:server
 
-  test:
-    desc: Run backend tests
+  generate:api:
+    desc: Generate OpenAPI and TypeScript API types
     cmds:
-      - go list ./... | grep -v '/node_modules/' | xargs go test
+      - pnpm generate:api
+
+  check:api:
+    desc: Check OpenAPI and generated TypeScript API types
+    cmds:
+      - pnpm check:api
+
+  test:
+    desc: Run contract, frontend, and backend checks
+    cmds:
+      - pnpm check:api
+      - pnpm typecheck
+      - go test -count=1 ./...

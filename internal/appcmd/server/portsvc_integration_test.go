@@ -19,31 +19,34 @@ func TestPortsvcWriteAllowsAuthenticatedUser(t *testing.T) {
 	handler := setupPortsvcTestApp(t)
 	cookie := createTestSessionCookie(t, handler)
 
-	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "http://localhost/api/port-groups", strings.NewReader(`{"portPrefix":1000,"environmentName":"miniport","runtimeMode":"dind","runtimeName":"miniport-dind-01","serviceIp":"172.22.11.12","slots":[{"port":10000,"name":"redis","kind":"cache","protocol":"redis"}]}`))
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "http://localhost/api/console/port-groups", strings.NewReader(`{"items":[{"portPrefix":1000,"environmentName":"miniport","runtimeMode":"dind","runtimeName":"miniport-dind-01","serviceIp":"172.22.11.12","slots":[{"port":10000,"name":"redis","kind":"cache","protocol":"redis"}]}]}`))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Origin", "http://localhost")
 	req.RemoteAddr = "127.0.0.1:12345"
 	req.AddCookie(cookie)
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
-	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+	require.Equal(t, http.StatusCreated, rec.Code, rec.Body.String())
 
 	var body struct {
-		EnvironmentName string `json:"environmentName"`
-		Slots           []struct {
-			Name string `json:"name"`
-		} `json:"slots"`
+		Items []struct {
+			EnvironmentName string `json:"environmentName"`
+			Slots           []struct {
+				Name string `json:"name"`
+			} `json:"slots"`
+		} `json:"items"`
 	}
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
-	require.Equal(t, "miniport", body.EnvironmentName)
-	require.Len(t, body.Slots, 1)
-	require.Equal(t, "redis", body.Slots[0].Name)
+	require.Len(t, body.Items, 1)
+	require.Equal(t, "miniport", body.Items[0].EnvironmentName)
+	require.Len(t, body.Items[0].Slots, 1)
+	require.Equal(t, "redis", body.Items[0].Slots[0].Name)
 }
 
 func TestPortsvcReadRejectsMissingSession(t *testing.T) {
 	handler := setupPortsvcTestApp(t)
 
-	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "http://localhost/api/port-groups", nil)
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "http://localhost/api/console/port-groups", nil)
 	req.RemoteAddr = "127.0.0.1:12345"
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
@@ -54,7 +57,7 @@ func TestGithubStatusUsesLocalSession(t *testing.T) {
 	handler := setupPortsvcTestApp(t)
 	cookie := createTestSessionCookie(t, handler)
 
-	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "http://localhost/api/github/status", nil)
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "http://localhost/api/console/github/status", nil)
 	req.RemoteAddr = "127.0.0.1:12345"
 	req.AddCookie(cookie)
 	rec := httptest.NewRecorder()
@@ -66,7 +69,7 @@ func TestGithubStatusUsesLocalSession(t *testing.T) {
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &status))
 	require.False(t, status.Enabled)
 
-	req = httptest.NewRequestWithContext(t.Context(), http.MethodGet, "http://localhost/api/github/status", nil)
+	req = httptest.NewRequestWithContext(t.Context(), http.MethodGet, "http://localhost/api/console/github/status", nil)
 	req.RemoteAddr = "127.0.0.1:12345"
 	rec = httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
@@ -76,11 +79,110 @@ func TestGithubStatusUsesLocalSession(t *testing.T) {
 func TestGithubSetupDoesNotRequireSessionCookie(t *testing.T) {
 	handler := setupPortsvcTestApp(t)
 
-	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "http://localhost/api/github/setup?installation_id=42&state=one-time-state", nil)
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "http://localhost/api/integrations/github/setup?installation_id=42&state=one-time-state", nil)
 	req.RemoteAddr = "127.0.0.1:12345"
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 	require.Equal(t, http.StatusServiceUnavailable, rec.Code, rec.Body.String())
+}
+
+func TestPortsvcBatchWriteRollsBackOnValidationFailure(t *testing.T) {
+	handler := setupPortsvcTestApp(t)
+	cookie := createTestSessionCookie(t, handler)
+
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "http://localhost/api/console/hosts", strings.NewReader(`{"items":[{"name":"valid-host"},{"name":" "}]}`))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Origin", "http://localhost")
+	req.RemoteAddr = "127.0.0.1:12345"
+	req.AddCookie(cookie)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusBadRequest, rec.Code, rec.Body.String())
+
+	req = httptest.NewRequestWithContext(t.Context(), http.MethodGet, "http://localhost/api/console/hosts", nil)
+	req.RemoteAddr = "127.0.0.1:12345"
+	req.AddCookie(cookie)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+	var body struct {
+		Items []json.RawMessage `json:"items"`
+	}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
+	require.Empty(t, body.Items)
+}
+
+func TestPortsvcBatchConflictRollsBack(t *testing.T) {
+	handler := setupPortsvcTestApp(t)
+	cookie := createTestSessionCookie(t, handler)
+
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "http://localhost/api/console/hosts", strings.NewReader(`{"items":[{"name":"duplicate-host"},{"name":"duplicate-host"}]}`))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Origin", "http://localhost")
+	req.RemoteAddr = "127.0.0.1:12345"
+	req.AddCookie(cookie)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusConflict, rec.Code, rec.Body.String())
+	var problem struct {
+		Type string `json:"type"`
+	}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &problem))
+	require.Equal(t, "urn:problem:portsvc-resource-conflict", problem.Type)
+
+	req = httptest.NewRequestWithContext(t.Context(), http.MethodGet, "http://localhost/api/console/hosts", nil)
+	req.RemoteAddr = "127.0.0.1:12345"
+	req.AddCookie(cookie)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+	var body struct {
+		Items []json.RawMessage `json:"items"`
+	}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
+	require.Empty(t, body.Items)
+}
+
+func TestPortsvcPortGroupBatchRollsBackAggregateWrites(t *testing.T) {
+	handler := setupPortsvcTestApp(t)
+	cookie := createTestSessionCookie(t, handler)
+
+	payload := `{"items":[` +
+		`{"portPrefix":1000,"environmentName":"first","runtimeMode":"dind","slots":[{"port":10000,"name":"api"}]},` +
+		`{"portPrefix":1000,"environmentName":"conflict","runtimeMode":"dind"}` +
+		`]}`
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "http://localhost/api/console/port-groups", strings.NewReader(payload))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Origin", "http://localhost")
+	req.RemoteAddr = "127.0.0.1:12345"
+	req.AddCookie(cookie)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusConflict, rec.Code, rec.Body.String())
+
+	req = httptest.NewRequestWithContext(t.Context(), http.MethodGet, "http://localhost/api/console/port-groups", nil)
+	req.RemoteAddr = "127.0.0.1:12345"
+	req.AddCookie(cookie)
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+	var body struct {
+		Items []json.RawMessage `json:"items"`
+	}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
+	require.Empty(t, body.Items)
+}
+
+func TestLegacyAPIPathIsNotRegistered(t *testing.T) {
+	handler := setupPortsvcTestApp(t)
+	cookie := createTestSessionCookie(t, handler)
+
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "http://localhost/api/port-groups", nil)
+	req.RemoteAddr = "127.0.0.1:12345"
+	req.AddCookie(cookie)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusNotFound, rec.Code, rec.Body.String())
 }
 
 func setupPortsvcTestApp(t *testing.T) http.Handler {

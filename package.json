@@ -4,7 +4,9 @@
   "packageManager": "pnpm@11.20.0",
   "scripts": {
     "build": "vite build",
+    "check:api": "go run ./cmd/openapi -check && pnpm --dir tools/openapi exec openapi-typescript ../../openapi/openapi.json -o ../../src/shared/api/schema.gen.ts --check",
     "dev": "vite",
+    "generate:api": "go run ./cmd/openapi && pnpm --dir tools/openapi exec openapi-typescript ../../openapi/openapi.json -o ../../src/shared/api/schema.gen.ts",
     "preview": "vite preview",
     "typecheck": "tsc -b"
   },
@@ -18,6 +20,7 @@
     "@lwmacct/260627-antd-workbench": "^0.56.260718",
     "@tanstack/react-query": "^5.101.4",
     "antd": "^6.5.3",
+    "openapi-fetch": "^0.17.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2"

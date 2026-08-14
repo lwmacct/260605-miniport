@@ -16,6 +16,20 @@ repos:
 
   - repo: local
     hooks:
+      - id: api-contract
+        name: OpenAPI contract drift
+        entry: pnpm check:api
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: frontend-typecheck
+        name: frontend typecheck
+        entry: pnpm typecheck
+        language: system
+        pass_filenames: false
+        always_run: true
+
       - id: tddcheck
         name: tddcheck architecture tests
         entry: go test -count=1 ./internal/testutil/tddcheck

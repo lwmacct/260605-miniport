@@ -14,14 +14,19 @@ type githubHandler struct {
 }
 
 func RegisterGithub(api huma.API, githubService *service.GithubService) {
-	handler := githubHandler{service: githubService}
-	huma.Register(api, huma.Operation{OperationID: "get-github-status", Method: http.MethodGet, Path: "/github/status", Tags: []string{"github"}}, handler.status)
-	huma.Register(api, huma.Operation{OperationID: "begin-github-connection", Method: http.MethodPost, Path: "/github/connections", Tags: []string{"github"}}, handler.beginConnection)
-	huma.Register(api, huma.Operation{OperationID: "complete-github-connection", Method: http.MethodGet, Path: "/github/setup", Tags: []string{"github"}}, handler.completeConnection)
-	huma.Register(api, huma.Operation{OperationID: "list-github-installations", Method: http.MethodGet, Path: "/github/installations", Tags: []string{"github"}}, handler.listInstallations)
-	huma.Register(api, huma.Operation{OperationID: "sync-github-installation", Method: http.MethodPost, Path: "/github/installations/{id}/sync", Tags: []string{"github"}}, handler.syncInstallation)
-	huma.Register(api, huma.Operation{OperationID: "list-github-repositories", Method: http.MethodGet, Path: "/github/repositories", Tags: []string{"github"}}, handler.listRepositories)
-	huma.Register(api, huma.Operation{OperationID: "receive-github-webhook", Method: http.MethodPost, Path: "/github/webhooks", Tags: []string{"github"}, MaxBodyBytes: 2 << 20}, handler.webhook)
+	h := githubHandler{service: githubService}
+	console := huma.NewGroup(api, "/console")
+	tags := []string{"Console", "GitHub"}
+	huma.Register(console, huma.Operation{OperationID: "console-get-github-status", Method: http.MethodGet, Path: "/github/status", Summary: "Get GitHub status", Tags: tags}, h.status)
+	huma.Register(console, huma.Operation{OperationID: "console-begin-github-connection", Method: http.MethodPost, Path: "/github/connections", Summary: "Begin GitHub connection", Tags: tags}, h.beginConnection)
+	huma.Register(console, huma.Operation{OperationID: "console-list-github-installations", Method: http.MethodGet, Path: "/github/installations", Summary: "List GitHub installations", Tags: tags}, h.listInstallations)
+	huma.Register(console, huma.Operation{OperationID: "console-sync-github-installations", Method: http.MethodPost, Path: "/github/installations/sync", Summary: "Sync GitHub installations", Tags: tags}, h.syncInstallations)
+	huma.Register(console, huma.Operation{OperationID: "console-list-github-repositories", Method: http.MethodGet, Path: "/github/repositories", Summary: "List GitHub repositories", Tags: tags}, h.listRepositories)
+
+	integrations := huma.NewGroup(api, "/integrations/github")
+	integrationTags := []string{"GitHub Integration"}
+	huma.Register(integrations, huma.Operation{OperationID: "complete-github-connection", Method: http.MethodGet, Path: "/setup", DefaultStatus: http.StatusSeeOther, Summary: "Complete GitHub connection", Tags: integrationTags}, h.completeConnection)
+	huma.Register(integrations, huma.Operation{OperationID: "receive-github-webhook", Method: http.MethodPost, Path: "/webhooks", Summary: "Receive GitHub webhook", Tags: integrationTags, MaxBodyBytes: 2 << 20}, h.webhook)
 }
 
 func (h githubHandler) status(_ context.Context, _ *struct{}) (*BodyDTO[GithubStatusDTO], error) {
@@ -44,41 +49,33 @@ func (h githubHandler) completeConnection(ctx context.Context, input *GithubSetu
 	return &RedirectDTO{Status: http.StatusSeeOther, Location: h.service.SetupReturnURL()}, nil
 }
 
-func (h githubHandler) listInstallations(ctx context.Context, _ *struct{}) (*BodyDTO[[]GithubInstallationDTO], error) {
+func (h githubHandler) listInstallations(ctx context.Context, _ *struct{}) (*BodyDTO[GithubInstallationListDTO], error) {
 	items, err := h.service.ListInstallations(ctx)
 	if err != nil {
 		return nil, utilGithubAPIError(err)
 	}
-	return &BodyDTO[[]GithubInstallationDTO]{Body: ToGithubInstallationDTOs(items)}, nil
+	return &BodyDTO[GithubInstallationListDTO]{Body: GithubInstallationListDTO{Items: ToGithubInstallationDTOs(items)}}, nil
 }
 
-func (h githubHandler) syncInstallation(ctx context.Context, input *GithubInstallationInputDTO) (*BodyDTO[GithubInstallationDTO], error) {
-	if syncErr := h.service.SyncInstallation(ctx, input.ID); syncErr != nil {
-		return nil, utilGithubAPIError(syncErr)
-	}
-	items, err := h.service.ListInstallations(ctx)
+func (h githubHandler) syncInstallations(ctx context.Context, input *GithubInstallationSyncInputDTO) (*BodyDTO[GithubInstallationBatchDTO], error) {
+	items, err := h.service.SyncInstallations(ctx, input.Body.IDs)
 	if err != nil {
 		return nil, utilGithubAPIError(err)
 	}
-	for _, item := range items {
-		if item.ID == input.ID {
-			return &BodyDTO[GithubInstallationDTO]{Body: ToGithubInstallationDTO(item)}, nil
-		}
-	}
-	return nil, huma.Error404NotFound("github installation not found")
+	return &BodyDTO[GithubInstallationBatchDTO]{Body: GithubInstallationBatchDTO{Items: ToGithubInstallationDTOs(items)}}, nil
 }
 
-func (h githubHandler) listRepositories(ctx context.Context, input *GithubRepositoryListInputDTO) (*BodyDTO[[]GithubRepositoryDTO], error) {
+func (h githubHandler) listRepositories(ctx context.Context, input *GithubRepositoryListInputDTO) (*BodyDTO[GithubRepositoryListDTO], error) {
 	items, err := h.service.ListRepositories(ctx, input.Query, input.State)
 	if err != nil {
 		return nil, utilGithubAPIError(err)
 	}
-	return &BodyDTO[[]GithubRepositoryDTO]{Body: ToGithubRepositoryDTOs(items)}, nil
+	return &BodyDTO[GithubRepositoryListDTO]{Body: GithubRepositoryListDTO{Items: ToGithubRepositoryDTOs(items)}}, nil
 }
 
-func (h githubHandler) webhook(ctx context.Context, input *GithubWebhookInputDTO) (*BodyDTO[DeleteDTO], error) {
+func (h githubHandler) webhook(ctx context.Context, input *GithubWebhookInputDTO) (*ActionOutputDTO, error) {
 	if err := h.service.HandleWebhook(ctx, input.Delivery, input.Event, input.Signature, input.RawBody); err != nil {
 		return nil, utilGithubAPIError(err)
 	}
-	return &BodyDTO[DeleteDTO]{Body: DeleteDTO{Deleted: false}}, nil
+	return &ActionOutputDTO{Body: ActionDTO{OK: true}}, nil
 }

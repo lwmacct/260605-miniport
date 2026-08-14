@@ -9,7 +9,7 @@ type GithubStatusDTO struct {
 }
 
 type GithubConnectionStartDTO struct {
-	URL string `json:"url"`
+	URL string `json:"url" format:"uri"`
 }
 
 type GithubInstallationDTO struct {
@@ -18,12 +18,20 @@ type GithubInstallationDTO struct {
 	AccountID            int64     `json:"accountId"`
 	AccountLogin         string    `json:"accountLogin"`
 	AccountType          string    `json:"accountType"`
-	AvatarURL            string    `json:"avatarUrl"`
-	RepositorySelection  string    `json:"repositorySelection"`
+	AvatarURL            string    `json:"avatarUrl" format:"uri"`
+	RepositorySelection  string    `json:"repositorySelection" enum:"all,selected"`
 	Status               string    `json:"status"`
 	SuspendedAt          time.Time `json:"suspendedAt,omitzero"`
 	LastSyncedAt         time.Time `json:"lastSyncedAt,omitzero"`
 	LastSyncError        string    `json:"lastSyncError,omitempty"`
+}
+
+type GithubInstallationListDTO struct {
+	Items []GithubInstallationDTO `json:"items" nullable:"false"`
+}
+
+type GithubInstallationBatchDTO struct {
+	Items []GithubInstallationDTO `json:"items" nullable:"false"`
 }
 
 type GithubRepositoryDTO struct {
@@ -33,7 +41,7 @@ type GithubRepositoryDTO struct {
 	OwnerLogin         string    `json:"ownerLogin"`
 	Name               string    `json:"name"`
 	FullName           string    `json:"fullName"`
-	HTMLURL            string    `json:"htmlUrl"`
+	HTMLURL            string    `json:"htmlUrl" format:"uri"`
 	Description        string    `json:"description"`
 	DefaultBranch      string    `json:"defaultBranch"`
 	Visibility         string    `json:"visibility"`
@@ -47,15 +55,17 @@ type GithubRepositoryDTO struct {
 	LastSeenAt         time.Time `json:"lastSeenAt"`
 }
 
-type GithubSetupInputDTO struct {
-	InstallationID int64  `query:"installation_id" required:"true"`
-	SetupAction    string `query:"setup_action"`
-	State          string `query:"state" required:"true"`
+type GithubRepositoryListDTO struct {
+	Items []GithubRepositoryDTO `json:"items" nullable:"false"`
 }
 
-type GithubInstallationInputDTO struct {
-	ID string `path:"id"`
+type GithubSetupInputDTO struct {
+	InstallationID int64  `query:"installation_id" required:"true" minimum:"1"`
+	SetupAction    string `query:"setup_action"`
+	State          string `query:"state" required:"true" minLength:"1"`
 }
+
+type GithubInstallationSyncInputDTO struct{ Body BatchIDsDTO }
 
 type GithubRepositoryListInputDTO struct {
 	Query string `query:"q"`
@@ -71,5 +81,5 @@ type GithubWebhookInputDTO struct {
 
 type RedirectDTO struct {
 	Status   int
-	Location string `header:"Location"`
+	Location string `header:"Location" format:"uri"`
 }

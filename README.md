@@ -19,8 +19,8 @@ Miniport 是一个端口服务资产管理应用，用来管理宿主机、固�
 - [数据模型](#数据模型) `:27+10`
 - [GitHub App](#github-app) `:37+12`
 - [单操作员认证](#单操作员认证) `:49+14`
-- [本地运行](#本地运行) `:63+28`
-- [API](#api) `:91+41`
+- [本地运行](#本地运行) `:63+29`
+- [API](#api) `:92+33`
 
 <!--TOC-->
 
@@ -39,8 +39,8 @@ Miniport 是一个端口服务资产管理应用，用来管理宿主机、固�
 仓库同步使用 GitHub App Installation Token，不接收用户 Personal Access Token。GitHub App 注册时配置：
 
 - Repository permissions：`Metadata: Read-only`。
-- Setup URL：`https://<miniport-host>/api/github/setup`。
-- Webhook URL：`https://<miniport-host>/api/github/webhooks`。
+- Setup URL：`https://<miniport-host>/api/integrations/github/setup`。
+- Webhook URL：`https://<miniport-host>/api/integrations/github/webhooks`。
 - Webhook events：`installation`、`installation_repositories`、`repository`。
 - 安装范围：`Any account`。
 
@@ -66,6 +66,7 @@ openssl rand -base64 32 | tr '+/' '-_' | tr -d '=\n'
 go run . server
 corepack enable
 pnpm install
+pnpm generate:api
 pnpm run dev
 ```
 
@@ -90,7 +91,14 @@ API_PROXY_TARGET=http://localhost:40240 pnpm run dev
 
 ## API
 
-主要接口挂载在 `/api` 下：
+Huma 路由和 DTO 是 API 契约的唯一来源。`openapi/openapi.json` 和 `src/shared/api/schema.gen.ts` 是提交到仓库的生成文件：
+
+```bash
+pnpm generate:api
+pnpm check:api
+```
+
+应用接口挂载在 `/api` 下；`/authme` 由认证组件独立管理：
 
 - `GET /authme/session`
 - `POST /authme/login/token`
@@ -98,34 +106,19 @@ API_PROXY_TARGET=http://localhost:40240 pnpm run dev
 - `DELETE /authme/session`
 - `GET /api/health`
 - `GET /api/meta`
-- `GET /api/github/status`
-- `POST /api/github/connections`
-- `GET /api/github/setup`
-- `GET /api/github/installations`
-- `POST /api/github/installations/{id}/sync`
-- `GET /api/github/repositories`
-- `POST /api/github/webhooks`
-- `GET /api/hosts`
-- `POST /api/hosts`
-- `PUT /api/hosts/{id}`
-- `DELETE /api/hosts/{id}`
-- `GET /api/dependency-assets`
-- `POST /api/dependency-assets`
-- `PUT /api/dependency-assets/{id}`
-- `DELETE /api/dependency-assets/{id}`
-- `GET /api/port-groups`
-- `POST /api/port-groups`
-- `GET /api/port-groups/{id}`
-- `PUT /api/port-groups/{id}`
-- `DELETE /api/port-groups/{id}`
-- `POST /api/port-groups/{id}/slots`
-- `PUT /api/port-slots/{id}`
-- `DELETE /api/port-slots/{id}`
-- `GET /api/port-groups/export.csv`
-- `GET /api/service-groups`
-- `POST /api/service-groups`
-- `GET /api/service-groups/{id}`
-- `PUT /api/service-groups/{id}`
-- `DELETE /api/service-groups/{id}`
+- `GET /api/console/github/status`
+- `POST /api/console/github/connections`
+- `GET /api/console/github/installations`
+- `POST /api/console/github/installations/sync`
+- `GET /api/console/github/repositories`
+- `GET /api/integrations/github/setup`
+- `POST /api/integrations/github/webhooks`
+- `GET/POST/PUT/DELETE /api/console/hosts`
+- `GET/POST/PUT/DELETE /api/console/dependency-assets`
+- `GET/POST/PUT/DELETE /api/console/port-groups`
+- `GET /api/console/port-groups/export.csv`
+- `GET/POST/PUT/DELETE /api/console/service-groups`
+
+普通资源写操作全部使用批量请求。创建和更新使用 `{ "items": [...] }`，删除使用 `{ "ids": [...] }`；单条操作传单元素数组。一个批次在同一数据库事务内全部成功或全部回滚。端口槽位和关联关系只作为端口组聚合的一部分写入。
 
 端口组必须正好包含 10 个端口，端口起点在系统内全局唯一。端口槽位的端口必须落在端口组范围内，且同一端口组内端口不能重复。依赖资产、服务组和 GitHub 安装均为全局数据，端口组通过关系引用它们。认证身份不会写入业务表或业务 API。

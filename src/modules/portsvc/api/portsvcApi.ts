@@ -1,66 +1,37 @@
-import { apiGet, apiSend } from "@/shared/api/client";
+import { apiClient, apiData } from "@/shared/api/client";
+import type { components, paths } from "@/shared/api/schema.gen";
 import type {
   DependencyAssetItem,
-  GitHubRepositoryItem,
   HostForm,
   HostItem,
-  Meta,
   PortGroupForm,
   PortGroupItem,
-  ServiceGroupForm,
-  ServiceGroupItem,
   PortsvcQuery,
   PortsvcSnapshot,
+  ServiceGroupForm,
+  ServiceGroupItem,
 } from "../model/portsvcTypes";
 
-function buildQueryString(params: Record<string, string | number | undefined>) {
-  const search = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (value === undefined || value === "") {
-      continue;
-    }
-    search.set(key, String(value));
-  }
-  const text = search.toString();
-  return text ? `?${text}` : "";
-}
+type Schema = components["schemas"];
+type APIPath = keyof paths;
 
 export async function loadPortsvc(query: PortsvcQuery): Promise<PortsvcSnapshot> {
-  const groupsPath = "/api/port-groups" + buildQueryString({
-    q: query.query,
-    sort: query.sort,
-    status: query.status,
-  });
-  const serviceGroupsPath = "/api/service-groups" + buildQueryString({
-    q: query.query,
-    status: query.status,
-  });
-
+  const serviceGroupFilters = { q: query.q, status: query.status };
   const [meta, hosts, portGroups, dependencyAssets, serviceGroups, repositories] = await Promise.all([
-    apiGet<Meta>("/api/meta"),
-    apiGet<HostItem[]>("/api/hosts"),
-    apiGet<PortGroupItem[]>(groupsPath),
-    apiGet<DependencyAssetItem[]>("/api/dependency-assets"),
-    apiGet<ServiceGroupItem[]>(serviceGroupsPath),
-    apiGet<GitHubRepositoryItem[]>("/api/github/repositories"),
+    apiData(apiClient.GET("/meta")),
+    apiData(apiClient.GET("/console/hosts", { params: { query: {} } })),
+    apiData(apiClient.GET("/console/port-groups", { params: { query } })),
+    apiData(apiClient.GET("/console/dependency-assets", { params: { query: {} } })),
+    apiData(apiClient.GET("/console/service-groups", { params: { query: serviceGroupFilters } })),
+    apiData(apiClient.GET("/console/github/repositories", { params: { query: {} } })),
   ]);
-
   return {
     meta,
-    hosts: hosts ?? [],
-    dependencyAssets: dependencyAssets ?? [],
-    repositories: repositories ?? [],
-    portGroups: (portGroups ?? []).map((item) => ({
-      ...item,
-      assetLinks: item.assetLinks ?? [],
-      repositoryLinks: item.repositoryLinks ?? [],
-      slots: item.slots ?? [],
-      tags: item.tags ?? "",
-    })),
-    serviceGroups: (serviceGroups ?? []).map((item) => ({
-      ...item,
-      portGroups: item.portGroups ?? [],
-    })),
+    hosts: hosts.items,
+    dependencyAssets: dependencyAssets.items,
+    repositories: repositories.items,
+    portGroups: portGroups.items,
+    serviceGroups: serviceGroups.items,
   };
 }
 
@@ -79,18 +50,16 @@ export function savePortGroup(group: PortGroupForm, editingGroup?: PortGroupItem
     slots: group.slots ?? [],
     status: group.status ?? "available",
     tags: group.tags ?? "",
-  };
-  return apiSend<PortGroupItem>(
-    editingGroup ? `/api/port-groups/${editingGroup.id}` : "/api/port-groups",
-    {
-      method: editingGroup ? "PUT" : "POST",
-      body: JSON.stringify(payload),
-    },
-  );
+  } satisfies Schema["PortGroupCreateDTO"];
+  if (editingGroup) {
+    const update = { ...payload, id: editingGroup.id } satisfies Schema["PortGroupUpdateDTO"];
+    return apiData(apiClient.PUT("/console/port-groups", { body: { items: [update] } }));
+  }
+  return apiData(apiClient.POST("/console/port-groups", { body: { items: [payload] } }));
 }
 
 export function removePortGroup(group: PortGroupItem) {
-  return apiSend<{ deleted: boolean }>(`/api/port-groups/${group.id}`, { method: "DELETE" });
+  return apiData(apiClient.DELETE("/console/port-groups", { body: { ids: [group.id] } }));
 }
 
 export function saveServiceGroup(group: ServiceGroupForm, editingGroup?: ServiceGroupItem | null) {
@@ -101,18 +70,16 @@ export function saveServiceGroup(group: ServiceGroupForm, editingGroup?: Service
     notes: group.notes ?? "",
     portGroups: group.portGroups ?? [],
     status: group.status ?? "active",
-  };
-  return apiSend<ServiceGroupItem>(
-    editingGroup?.id ? `/api/service-groups/${editingGroup.id}` : "/api/service-groups",
-    {
-      method: editingGroup?.id ? "PUT" : "POST",
-      body: JSON.stringify(payload),
-    },
-  );
+  } satisfies Schema["ServiceGroupCreateDTO"];
+  if (editingGroup) {
+    const update = { ...payload, id: editingGroup.id } satisfies Schema["ServiceGroupUpdateDTO"];
+    return apiData(apiClient.PUT("/console/service-groups", { body: { items: [update] } }));
+  }
+  return apiData(apiClient.POST("/console/service-groups", { body: { items: [payload] } }));
 }
 
 export function removeServiceGroup(group: ServiceGroupItem) {
-  return apiSend<{ deleted: boolean }>(`/api/service-groups/${group.id}`, { method: "DELETE" });
+  return apiData(apiClient.DELETE("/console/service-groups", { body: { ids: [group.id] } }));
 }
 
 export function saveHost(host: HostForm, editingHost?: HostItem | null) {
@@ -122,15 +89,16 @@ export function saveHost(host: HostForm, editingHost?: HostItem | null) {
     notes: host.notes ?? "",
     spec: host.spec ?? "",
     status: host.status ?? "active",
-  };
-  return apiSend<HostItem>(editingHost ? `/api/hosts/${editingHost.id}` : "/api/hosts", {
-    method: editingHost ? "PUT" : "POST",
-    body: JSON.stringify(payload),
-  });
+  } satisfies Schema["HostCreateDTO"];
+  if (editingHost) {
+    const update = { ...payload, id: editingHost.id } satisfies Schema["HostUpdateDTO"];
+    return apiData(apiClient.PUT("/console/hosts", { body: { items: [update] } }));
+  }
+  return apiData(apiClient.POST("/console/hosts", { body: { items: [payload] } }));
 }
 
 export function removeHost(host: HostItem) {
-  return apiSend<{ deleted: boolean }>(`/api/hosts/${host.id}`, { method: "DELETE" });
+  return apiData(apiClient.DELETE("/console/hosts", { body: { ids: [host.id] } }));
 }
 
 export function saveDependencyAsset(asset: Partial<DependencyAssetItem>, editingAsset?: DependencyAssetItem | null) {
@@ -148,24 +116,24 @@ export function saveDependencyAsset(asset: Partial<DependencyAssetItem>, editing
     status: asset.status ?? "active",
     url: asset.url ?? "",
     visibility: asset.visibility ?? "unknown",
-  };
-  return apiSend<DependencyAssetItem>(
-    editingAsset ? `/api/dependency-assets/${editingAsset.id}` : "/api/dependency-assets",
-    {
-      method: editingAsset ? "PUT" : "POST",
-      body: JSON.stringify(payload),
-    },
-  );
+  } satisfies Schema["DependencyAssetCreateDTO"];
+  if (editingAsset) {
+    const update = { ...payload, id: editingAsset.id } satisfies Schema["DependencyAssetUpdateDTO"];
+    return apiData(apiClient.PUT("/console/dependency-assets", { body: { items: [update] } }));
+  }
+  return apiData(apiClient.POST("/console/dependency-assets", { body: { items: [payload] } }));
 }
 
 export function removeDependencyAsset(asset: DependencyAssetItem) {
-  return apiSend<{ deleted: boolean }>(`/api/dependency-assets/${asset.id}`, { method: "DELETE" });
+  return apiData(apiClient.DELETE("/console/dependency-assets", { body: { ids: [asset.id] } }));
 }
 
 export function exportPortGroupsURL(query: PortsvcQuery) {
-  return "/api/port-groups/export.csv" + buildQueryString({
-    q: query.query,
-    sort: query.sort,
-    status: query.status,
-  });
+  const path: APIPath = "/console/port-groups/export.csv";
+  const search = new URLSearchParams();
+  if (query.q) search.set("q", query.q);
+  if (query.sort) search.set("sort", query.sort);
+  if (query.status) search.set("status", query.status);
+  const suffix = search.toString();
+  return `/api${path}${suffix ? `?${suffix}` : ""}`;
 }

@@ -118,6 +118,29 @@ func (s *GithubService) SyncInstallation(ctx context.Context, installationID str
 	return s.syncInstallation(ctx, *refreshed)
 }
 
+func (s *GithubService) SyncInstallations(ctx context.Context, installationIDs []string) ([]GithubInstallation, error) {
+	for _, installationID := range installationIDs {
+		if err := s.SyncInstallation(ctx, installationID); err != nil {
+			return nil, err
+		}
+	}
+	items, err := s.ListInstallations(ctx)
+	if err != nil {
+		return nil, err
+	}
+	selected := make(map[string]struct{}, len(installationIDs))
+	for _, id := range installationIDs {
+		selected[id] = struct{}{}
+	}
+	out := make([]GithubInstallation, 0, len(installationIDs))
+	for _, item := range items {
+		if _, ok := selected[item.ID]; ok {
+			out = append(out, item)
+		}
+	}
+	return out, nil
+}
+
 func (s *GithubService) Reconcile(ctx context.Context) error {
 	if !s.cfg.Enabled {
 		return nil

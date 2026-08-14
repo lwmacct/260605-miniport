@@ -3,22 +3,20 @@ package handler
 import (
 	"errors"
 
-	"github.com/danielgtaylor/huma/v2"
-
 	"github.com/lwmacct/260605-miniport/internal/service"
 )
 
 func utilGithubAPIError(err error) error {
 	switch {
 	case errors.Is(err, service.ErrGithubDisabled):
-		return huma.Error503ServiceUnavailable(err.Error())
+		return utilProblem(503, "github-disabled", err.Error())
 	case errors.Is(err, service.ErrGithubInvalidSignature):
-		return huma.Error403Forbidden(err.Error())
+		return utilProblem(403, "invalid-github-signature", err.Error())
 	case errors.Is(err, service.ErrGithubInvalidState):
-		return huma.Error400BadRequest(err.Error())
+		return utilProblem(400, "invalid-github-state", err.Error())
 	case errors.Is(err, service.ErrGithubNotFound):
-		return huma.Error404NotFound(err.Error())
+		return utilProblem(404, "github-resource-not-found", err.Error())
 	default:
-		return err
+		return utilProblem(500, "internal-server-error", "internal server error")
 	}
 }

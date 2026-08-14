@@ -6,7 +6,6 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/danielgtaylor/huma/v2/adapters/humago"
 	"github.com/go-chi/chi/v5"
-	"github.com/lwmacct/251207-go-pkg-version/pkg/version"
 	"github.com/lwmacct/260630-go-hsr-shared/pkg/httpserver"
 
 	"github.com/lwmacct/260605-miniport/internal/infra/frontend"
@@ -36,8 +35,8 @@ func (app *App) newHTTPHandler() http.Handler {
 	for _, publicPath := range []string{
 		httpAPIPrefix + "/health",
 		httpAPIPrefix + "/meta",
-		httpAPIPrefix + "/github/setup",
-		httpAPIPrefix + "/github/webhooks",
+		httpAPIPrefix + "/integrations/github/setup",
+		httpAPIPrefix + "/integrations/github/webhooks",
 	} {
 		router.Handle(publicPath, apiHandler)
 	}
@@ -66,7 +65,7 @@ func (app *App) newHTTPAPIHandler() http.Handler {
 }
 
 func httpAPIConfig() huma.Config {
-	cfg := huma.DefaultConfig("Miniport API", version.AppVersion)
+	cfg := huma.DefaultConfig("Miniport API", "1.0.0")
 	cfg.Servers = []*huma.Server{{URL: httpAPIPrefix}}
 	return cfg
 }
