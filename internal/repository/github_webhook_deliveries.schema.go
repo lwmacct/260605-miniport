@@ -9,7 +9,8 @@ import (
 type GithubWebhookDeliveriesModel struct {
 	bun.BaseModel `bun:"table:github_webhook_deliveries,alias:github_webhook_delivery"`
 
-	DeliveryID     string    `bun:"delivery_id,pk" json:"deliveryId"`
+	ID             string    `bun:"id,pk,type:uuid" json:"id"`
+	DeliveryID     string    `bun:"delivery_id,notnull" json:"deliveryId"`
 	Event          string    `bun:"event,notnull" json:"event"`
 	Action         string    `bun:"action" json:"action"`
 	InstallationID int64     `bun:"installation_id" json:"installationId"`
@@ -23,6 +24,7 @@ func GithubWebhookDeliveriesSchema() []any { return []any{(*GithubWebhookDeliver
 
 func GithubWebhookDeliveriesIndexesSchema() []string {
 	return []string{
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_github_webhook_deliveries_delivery ON github_webhook_deliveries(delivery_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_github_webhook_deliveries_received ON github_webhook_deliveries(received_at)`,
 		`CREATE INDEX IF NOT EXISTS idx_github_webhook_deliveries_status ON github_webhook_deliveries(status)`,
 	}

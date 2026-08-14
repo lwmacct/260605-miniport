@@ -38,6 +38,9 @@ func TestGithubCompleteConnectionSyncsPrivateRepositories(t *testing.T) {
 	now := time.Date(2026, 7, 10, 8, 0, 0, 0, time.UTC)
 	state := "one-time-state"
 	require.NoError(t, store.AddGithubConnectionState(ctx, utilHashGithubState(state), now.Add(time.Minute), now))
+	connectionState, err := store.FetchGithubConnectionStateByHash(ctx, utilHashGithubState(state), now)
+	require.NoError(t, err)
+	require.True(t, repository.IsUUID7(connectionState.ID))
 
 	githubService := &GithubService{
 		store: store,

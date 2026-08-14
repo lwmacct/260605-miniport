@@ -116,7 +116,7 @@ func (s *Store) AddGithubConnectionState(ctx context.Context, stateHash string, 
 	if err != nil {
 		return err
 	}
-	row := &GithubConnectionStatesModel{StateHash: stateHash, ExpiresAt: expiresAt, CreatedAt: now}
+	row := &GithubConnectionStatesModel{ID: idgen.NewUUID7(), StateHash: stateHash, ExpiresAt: expiresAt, CreatedAt: now}
 	_, err = s.db.NewInsert().Model(row).Exec(ctx)
 	return err
 }
@@ -226,7 +226,7 @@ func (s *Store) AddGithubWebhookDelivery(ctx context.Context, item GithubWebhook
 		return err
 	}
 	row := &GithubWebhookDeliveriesModel{
-		DeliveryID: item.DeliveryID, Event: item.Event, Action: item.Action,
+		ID: idgen.NewUUID7(), DeliveryID: item.DeliveryID, Event: item.Event, Action: item.Action,
 		InstallationID: item.InstallationID, Status: item.Status, ReceivedAt: item.ReceivedAt,
 	}
 	result, err := s.db.NewInsert().Model(row).On("CONFLICT (delivery_id) DO NOTHING").Exec(ctx)

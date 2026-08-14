@@ -9,7 +9,8 @@ import (
 type GithubConnectionStatesModel struct {
 	bun.BaseModel `bun:"table:github_connection_states,alias:github_connection_state"`
 
-	StateHash string    `bun:"state_hash,pk" json:"stateHash"`
+	ID        string    `bun:"id,pk,type:uuid" json:"id"`
+	StateHash string    `bun:"state_hash,notnull" json:"stateHash"`
 	ExpiresAt time.Time `bun:"expires_at,notnull" json:"expiresAt"`
 	CreatedAt time.Time `bun:"created_at,notnull" json:"createdAt"`
 }
@@ -17,5 +18,8 @@ type GithubConnectionStatesModel struct {
 func GithubConnectionStatesSchema() []any { return []any{(*GithubConnectionStatesModel)(nil)} }
 
 func GithubConnectionStatesIndexesSchema() []string {
-	return []string{`CREATE INDEX IF NOT EXISTS idx_github_connection_states_expiry ON github_connection_states(expires_at)`}
+	return []string{
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_github_connection_states_hash ON github_connection_states(state_hash)`,
+		`CREATE INDEX IF NOT EXISTS idx_github_connection_states_expiry ON github_connection_states(expires_at)`,
+	}
 }

@@ -416,6 +416,7 @@ func utilNormalizePortSlot(group PortGroup, payload PortSlotPayload) (*PortSlot,
 func utilNormalizePortSlots(group PortGroup, payloads []PortSlotPayload) ([]PortSlot, error) {
 	out := make([]PortSlot, 0, len(payloads))
 	ports := map[int]struct{}{}
+	ids := map[string]struct{}{}
 	for _, payload := range payloads {
 		if strings.TrimSpace(payload.Name) == "" && payload.Port == 0 {
 			continue
@@ -426,6 +427,12 @@ func utilNormalizePortSlots(group PortGroup, payloads []PortSlotPayload) ([]Port
 		}
 		if _, exists := ports[slot.Port]; exists {
 			return nil, utilBadPortsvcRequest("slot ports must be unique inside a port group")
+		}
+		if slot.ID != "" {
+			if _, exists := ids[slot.ID]; exists {
+				return nil, utilBadPortsvcRequest("slot ids must be unique inside a port group")
+			}
+			ids[slot.ID] = struct{}{}
 		}
 		ports[slot.Port] = struct{}{}
 		out = append(out, *slot)

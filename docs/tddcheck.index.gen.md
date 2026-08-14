@@ -64,10 +64,10 @@
 | Table                         | Model                           | Scope                         | File                                                        | Alias                      | Fields | Foreign Keys |
 | ----------------------------- | ------------------------------- | ----------------------------- | ----------------------------------------------------------- | -------------------------- | ------ | ------------ |
 | `dependency_assets`           | `DependenciesModel`             | `dependencies`                | `internal/repository/dependencies.schema.go`                | `asset`                    | 17     | 0            |
-| `github_connection_states`    | `GithubConnectionStatesModel`   | `github_connection_states`    | `internal/repository/github_connection_states.schema.go`    | `github_connection_state`  | 3      | 0            |
+| `github_connection_states`    | `GithubConnectionStatesModel`   | `github_connection_states`    | `internal/repository/github_connection_states.schema.go`    | `github_connection_state`  | 4      | 0            |
 | `github_installations`        | `GithubInstallationsModel`      | `github_installations`        | `internal/repository/github_installations.schema.go`        | `github_installation`      | 14     | 0            |
 | `github_repositories`         | `GithubRepositoriesModel`       | `github_repositories`         | `internal/repository/github_repositories.schema.go`         | `github_repository`        | 22     | 1            |
-| `github_webhook_deliveries`   | `GithubWebhookDeliveriesModel`  | `github_webhook_deliveries`   | `internal/repository/github_webhook_deliveries.schema.go`   | `github_webhook_delivery`  | 8      | 0            |
+| `github_webhook_deliveries`   | `GithubWebhookDeliveriesModel`  | `github_webhook_deliveries`   | `internal/repository/github_webhook_deliveries.schema.go`   | `github_webhook_delivery`  | 9      | 0            |
 | `hosts`                       | `HostsModel`                    | `hosts`                       | `internal/repository/hosts.schema.go`                       | `host`                     | 8      | 0            |
 | `port_group_asset_links`      | `PortGroupAssetLinksModel`      | `port_group_asset_links`      | `internal/repository/port_group_asset_links.schema.go`      | `asset_link`               | 12     | 3            |
 | `port_group_repository_links` | `PortGroupRepositoryLinksModel` | `port_group_repository_links` | `internal/repository/port_group_repository_links.schema.go` | `repository_link`          | 12     | 3            |
@@ -112,7 +112,8 @@
 
 | Field       | Column       | Go Type     | Attributes |
 | ----------- | ------------ | ----------- | ---------- |
-| `StateHash` | `state_hash` | `string`    | [pk]       |
+| `ID`        | `id`         | `string`    | [pk]       |
+| `StateHash` | `state_hash` | `string`    | [notnull]  |
 | `ExpiresAt` | `expires_at` | `time.Time` | [notnull]  |
 | `CreatedAt` | `created_at` | `time.Time` | [notnull]  |
 
@@ -185,7 +186,8 @@ Foreign keys:
 
 | Field            | Column            | Go Type     | Attributes |
 | ---------------- | ----------------- | ----------- | ---------- |
-| `DeliveryID`     | `delivery_id`     | `string`    | [pk]       |
+| `ID`             | `id`              | `string`    | [pk]       |
+| `DeliveryID`     | `delivery_id`     | `string`    | [notnull]  |
 | `Event`          | `event`           | `string`    | [notnull]  |
 | `Action`         | `action`          | `string`    |            |
 | `InstallationID` | `installation_id` | `int64`     |            |

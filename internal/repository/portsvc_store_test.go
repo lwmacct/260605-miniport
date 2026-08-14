@@ -95,10 +95,11 @@ func TestPortGroupRepositoryLinksLoadRepositoryAndPreserveSlotID(t *testing.T) {
 	})
 	require.NoError(t, err)
 	slotID := "018f2f9c-2222-7000-8000-000000000001"
-	require.NoError(t, store.AddPortsvcPortSlots(ctx, []PortsvcPortSlotRecord{{
+	err = store.AddPortsvcPortSlots(ctx, []PortsvcPortSlotRecord{{
 		ID: slotID, PortGroupID: group.ID, Port: 10000, Name: "api", Kind: "app", Protocol: "http",
 		Status: "running", CreatedAt: now, UpdatedAt: now,
-	}}))
+	}})
+	require.NoError(t, err)
 	require.NoError(t, store.AddPortsvcPortGroupRepositoryLinks(ctx, []PortsvcPortGroupRepositoryLinkRecord{{
 		PortGroupID: group.ID, PortSlotID: slotID, RepositoryID: repositories[0].ID,
 		RelationType: "source", Required: true, CreatedAt: now, UpdatedAt: now,

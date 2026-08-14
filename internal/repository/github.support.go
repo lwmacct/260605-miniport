@@ -49,12 +49,14 @@ type GithubRepositoryRecord struct {
 }
 
 type GithubConnectionStateRecord struct {
+	ID        string
 	StateHash string
 	ExpiresAt time.Time
 	CreatedAt time.Time
 }
 
 type GithubWebhookDeliveryRecord struct {
+	ID             string
 	DeliveryID     string
 	Event          string
 	Action         string
@@ -98,6 +100,6 @@ func utilGithubConnectionStateRecord(model *GithubConnectionStatesModel) *Github
 		return nil
 	}
 	return &GithubConnectionStateRecord{
-		StateHash: model.StateHash, ExpiresAt: model.ExpiresAt, CreatedAt: model.CreatedAt,
+		ID: model.ID, StateHash: model.StateHash, ExpiresAt: model.ExpiresAt, CreatedAt: model.CreatedAt,
 	}
 }

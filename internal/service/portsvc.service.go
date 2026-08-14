@@ -5,6 +5,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/lwmacct/260630-go-hsr-shared/pkg/idgen"
+
 	"github.com/lwmacct/260605-miniport/internal/repository"
 )
 
@@ -613,7 +615,15 @@ func (s *PortsvcService) replacePortGroupChildren(ctx context.Context, group Por
 	if err := s.store.ReplacePortsvcPortGroupChildren(ctx, group.ID); err != nil {
 		return err
 	}
+	slotIDs := make(map[string]string, len(slots))
 	for idx := range slots {
+		originalID := slots[idx].ID
+		if !repository.IsUUID7(originalID) {
+			slots[idx].ID = idgen.NewUUID7()
+		}
+		if originalID != "" {
+			slotIDs[originalID] = slots[idx].ID
+		}
 		slots[idx].CreatedAt = now
 		slots[idx].UpdatedAt = now
 	}
@@ -621,6 +631,9 @@ func (s *PortsvcService) replacePortGroupChildren(ctx context.Context, group Por
 		return err
 	}
 	for idx := range links {
+		if linkID, ok := slotIDs[links[idx].PortSlotID]; ok {
+			links[idx].PortSlotID = linkID
+		}
 		links[idx].CreatedAt = now
 		links[idx].UpdatedAt = now
 	}

@@ -645,7 +645,7 @@ func (s *Store) AddPortsvcPortSlots(ctx context.Context, slots []PortsvcPortSlot
 	rows := make([]ServicesModel, 0, len(slots))
 	for _, slot := range slots {
 		id := slot.ID
-		if id == "" {
+		if !IsUUID7(id) {
 			id = idgen.NewUUID7()
 		}
 		rows = append(rows, ServicesModel{
