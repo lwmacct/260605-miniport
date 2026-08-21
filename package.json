@@ -1,7 +1,7 @@
 {
   "name": "webapp-web",
   "private": true,
-  "packageManager": "pnpm@11.20.0",
+  "packageManager": "pnpm@11.22.0",
   "scripts": {
     "build": "vite build",
     "check:api": "go run ./cmd/openapi -check && pnpm --dir tools/openapi exec openapi-typescript ../../openapi/openapi.json -o ../../src/shared/api/schema.gen.ts --check",
@@ -14,23 +14,23 @@
     "npm": "please-use-pnpm"
   },
   "type": "module",
-  "version": "0.48.260814",
+  "version": "0.49.260821",
   "dependencies": {
     "@ant-design/icons": "^6.3.2",
-    "@lwmacct/260627-antd-workbench": "^0.56.260718",
+    "@lwmacct/260627-antd-workbench": "^0.57.260821",
     "@tanstack/react-query": "^5.101.4",
-    "antd": "^6.5.3",
+    "antd": "^6.6.1",
     "openapi-fetch": "^0.17.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2"
   },
   "devDependencies": {
-    "@types/node": "^26.1.2",
+    "@types/node": "^26.2.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
-    "@vitejs/plugin-react": "^6.0.5",
+    "@vitejs/plugin-react": "^6.1.0",
     "typescript": "^7.0.2",
-    "vite": "^8.2.0"
+    "vite": "^8.2.2"
   }
 }
